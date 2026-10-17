@@ -13,11 +13,11 @@ Claude Code is the only supported agent until Phase 5.
 
 ### Must-Have Features
 
-- [ ] Local server + Vite React scaffold - `npm run dev` starts server and UI with hot reload `XS`
-- [ ] node-pty spawns `claude` on Windows - Resolve `claude.exe`/`claude.cmd`, Ctrl-C works `S`
-- [ ] PTY over WebSocket to xterm.js inside a React Flow node - Typing, resize, scroll, pan and zoom `S`
-- [ ] Zoom rendering test - Semantic zoom vs refit, pick one; check WebGL context limits with 12 consoles `S`
-- [ ] HTTP hook round trip - `claude --session-id <uuid> --settings <tmpfile>` POSTs to the local server `XS`
+- [x] Local server + Vite React scaffold - `npm run dev` starts server and UI with hot reload `XS`
+- [x] node-pty spawns `claude` on Windows - Resolve `claude.exe`/`claude.cmd`, Ctrl-C works `S`
+- [x] PTY over WebSocket to xterm.js inside a React Flow node - Typing, resize, scroll, pan and zoom `S`
+- [x] Zoom rendering test - Semantic zoom vs refit, pick one; check WebGL context limits with 12 consoles `S`
+- [x] HTTP hook round trip - `claude --session-id <uuid> --settings <tmpfile>` POSTs to the local server `XS`
 
 ### Dependencies
 
@@ -30,23 +30,23 @@ Claude Code is the only supported agent until Phase 5.
 
 ### Must-Have Features
 
-- [ ] Board - Infinite pan/zoom canvas, drag, resize, close consoles, minimap `M`
-- [ ] New console - Pick a folder, optional name, launches `claude` there `S`
-- [ ] Hook-driven status - Working / needs you / resting / error / exited badges and colored borders `M`
-- [ ] Mission list sidebar - All consoles with status; click to fly to and focus a console `S`
-- [ ] Needs-you notifications - Browser notification + tab title/favicon badge; clicking it focuses the console `S`
-- [ ] Persistence and resume - Save board to versioned JSON; on restart relaunch with `claude --resume <id>` `M`
-- [ ] Local security - 127.0.0.1 only, per-run token, Origin/Host checks `S`
-- [ ] npm release - `npx agentarmy` starts the server and opens the browser; README with install steps `S`
+- [x] Board - Infinite pan/zoom canvas, drag, resize, close consoles, minimap `M`
+- [x] New console - Pick a folder, optional name, launches `claude` there `S`
+- [x] Hook-driven status - Working / needs you / resting / error / exited badges and colored borders `M`
+- [x] Mission list sidebar - All consoles with status; click to fly to and focus a console `S`
+- [x] Needs-you notifications - Browser notification + tab title/favicon badge; clicking it focuses the console `S`
+- [x] Persistence and resume - Save board to versioned JSON; on restart relaunch with `claude --resume <id>` `M`
+- [x] Local security - 127.0.0.1 only, per-run token, Origin/Host checks `S`
+- [x] npm release - `npx agentarmy` starts the server and opens the browser; README with install steps `S`
 
 ### Should-Have Features
 
 - [ ] CI on macOS and Linux - Same test matrix as Windows `S`
 - [ ] PWA window mode - Install as an app window, frees most browser shortcuts `XS`
-- [ ] Keyboard shortcuts - New console, cycle focus, zoom to fit, jump to next "needs you" `XS`
-- [ ] Command bar - Bottom prompt input that sends text to the selected console (@mention to pick) `S`
-- [ ] Auto names - Friendly agent names (Ada, Bex, Cy…) when none is given `XS`
-- [ ] "Resume all?" prompt - On startup, ask before relaunching saved conversations `XS`
+- [x] Keyboard shortcuts - New console, cycle focus, zoom to fit, jump to next "needs you" `XS`
+- [x] Command bar - Bottom prompt input that sends text to the selected console (@mention to pick) `S`
+- [x] Auto names - Friendly agent names (Ada, Bex, Cy…) when none is given `XS`
+- [x] "Resume all?" prompt - On startup, ask before relaunching saved conversations `XS`
 - [ ] Settings - Default shell, font size, theme (light/dark), launch flags for `claude` `S`
 
 ### Dependencies
