@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+/* Raw palette lives in CSS variables so light mode only has to swap values, not classes */
+:root {
+  --aa-canvas: #0a0b0e;
+  --aa-dots: #23262e;
+  --aa-surface: #111318;
+  --aa-surface-2: #161920;
+  --aa-elevated: #1b1e26;
+  --aa-hover: #20242d;
+  --aa-line: #252932;
+  --aa-line-strong: #343945;
+  --aa-fg: #e6e8ee;
+  --aa-fg-muted: #9aa0ad;
+  --aa-fg-subtle: #646b79;
+  --aa-accent: #8b93ff;
+  --aa-accent-fg: #0b0c10;
+  --aa-term: #0d0f13;
+  --aa-working: #4c8dff;
+  --aa-needs: #f5a524;
+  --aa-resting: #2fbf71;
+  --aa-idle: #7d8494;
+  --aa-error: #f04c5a;
+  --aa-exited: #4b5160;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --aa-canvas: #f3f4f6;
+    --aa-dots: #cfd3da;
+    --aa-surface: #ffffff;
+    --aa-surface-2: #f7f8fa;
+    --aa-elevated: #ffffff;
+    --aa-hover: #eef0f3;
+    --aa-line: #e2e5ea;
+    --aa-line-strong: #cdd2da;
+    --aa-fg: #14161b;
+    --aa-fg-muted: #586070;
+    --aa-fg-subtle: #8a909c;
+    --aa-accent: #5b63e6;
+    --aa-accent-fg: #ffffff;
+    --aa-idle: #8a909c;
+    --aa-exited: #a3a8b2;
+    color-scheme: light;
+  }
+}
+
+@theme inline {
+  --color-canvas: var(--aa-canvas);
+  --color-surface: var(--aa-surface);
+  --color-surface-2: var(--aa-surface-2);
+  --color-elevated: var(--aa-elevated);
+  --color-hover: var(--aa-hover);
+  --color-line: var(--aa-line);
+  --color-line-strong: var(--aa-line-strong);
+  --color-fg: var(--aa-fg);
+  --color-fg-muted: var(--aa-fg-muted);
+  --color-fg-subtle: var(--aa-fg-subtle);
+  --color-accent: var(--aa-accent);
+  --color-accent-fg: var(--aa-accent-fg);
+  --color-term: var(--aa-term);
+  --color-working: var(--aa-working);
+  --color-needs: var(--aa-needs);
+  --color-resting: var(--aa-resting);
+  --color-idle: var(--aa-idle);
+  --color-error: var(--aa-error);
+  --color-exited: var(--aa-exited);
+  --font-sans: 'Inter Variable', 'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono:
+    'JetBrains Mono Variable', 'JetBrains Mono', 'Cascadia Mono', 'Cascadia Code', Consolas, 'SF Mono', Menlo, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--aa-canvas);
+  color: var(--aa-fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ---------- React Flow theming ---------- */
+.react-flow {
+  --xy-background-color: var(--aa-canvas);
+  --xy-minimap-background-color: var(--aa-surface);
+  --xy-minimap-mask-background-color: color-mix(in srgb, var(--aa-canvas) 70%, transparent);
+  --xy-minimap-mask-stroke-color: var(--aa-line-strong);
+  --xy-controls-button-background-color: var(--aa-surface);
+  --xy-controls-button-background-color-hover: var(--aa-hover);
+  --xy-controls-button-color: var(--aa-fg-muted);
+  --xy-controls-button-color-hover: var(--aa-fg);
+  --xy-controls-button-border-color: var(--aa-line);
+  --xy-attribution-background-color: transparent;
+  --xy-resize-background-color: var(--aa-accent);
+}
+
+.react-flow__controls,
+.react-flow__minimap {
+  border: 1px solid var(--aa-line);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+}
+
+.react-flow__attribution a {
+  color: var(--aa-fg-subtle);
+}
+
+/* Resize affordance stays invisible until the pointer is near the node edge */
+.react-flow__node-terminal .react-flow__resize-control.line {
+  border-color: transparent;
+}
+
+.react-flow__node-terminal .react-flow__resize-control.handle {
+  width: 10px;
+  height: 10px;
+  border: none;
+  background: transparent;
+}
+
+.react-flow__node-terminal:hover .react-flow__resize-control.handle.bottom.right {
+  background: var(--aa-line-strong);
+  border-radius: 3px;
+}
+
+/* ---------- Status effects ---------- */
+@keyframes aa-needs-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px var(--aa-needs),
+      0 0 28px 2px color-mix(in srgb, var(--aa-needs) 30%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px var(--aa-needs),
+      0 0 48px 8px color-mix(in srgb, var(--aa-needs) 45%, transparent);
+  }
+}
+
+.aa-needs-glow {
+  animation: aa-needs-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes aa-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+.aa-ping::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: inherit;
+  animation: aa-ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aa-needs-glow,
+  .aa-ping::after {
+    animation: none;
+  }
+}
+
+/* ---------- xterm ---------- */
+.aa-term-host .xterm {
+  height: 100%;
+  padding: 6px 0 0 8px;
+}
+
+.aa-term-host .xterm-viewport {
+  background-color: var(--aa-term) !important;
+}
+
+.aa-term-host .xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+.aa-term-host .xterm-viewport::-webkit-scrollbar-thumb {
+  background: #2a2e38;
+  border-radius: 4px;
+}
+
+/* Thin scrollbars for app chrome */
+.aa-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--aa-line-strong) transparent;
+}

@@ -1,0 +1,18 @@
+{
+  "name": "AgentArmy",
+  "short_name": "AgentArmy",
+  "description": "A board of live Claude Code terminals.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0b0e",
+  "theme_color": "#0a0b0e",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
