@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgentArmy: run many Claude Code agents from one board</title>
+  <meta name="description" content="AgentArmy is a free, open-source board for running many Claude Code agents in parallel. Real terminals, orchestrators that hand out jobs, an inbox for permission prompts. Runs locally on your own Claude login.">
+  <link rel="canonical" href="https://agentarmy-site.vercel.app/">
+  <meta name="theme-color" content="#0c0a09">
+  <meta name="color-scheme" content="dark">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="AgentArmy">
+  <meta property="og:title" content="AgentArmy: run many Claude Code agents from one board">
+  <meta property="og:description" content="Free and open source. Real Claude Code terminals on a pan-and-zoom board, orchestrators that hand out jobs, and one inbox for every permission prompt.">
+  <meta property="og:url" content="https://agentarmy-site.vercel.app/">
+  <meta property="og:image" content="https://agentarmy-site.vercel.app/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="The AgentArmy board: an orchestrator agent sending jobs to worker agents over glowing lines">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="AgentArmy: run many Claude Code agents from one board">
+  <meta name="twitter:description" content="Free and open source. Real Claude Code terminals on a pan-and-zoom board, orchestrators that hand out jobs, and one inbox for every permission prompt.">
+  <meta name="twitter:image" content="https://agentarmy-site.vercel.app/assets/og.png">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="preload" as="image" href="/assets/shots/hero-1600.webp" imagesrcset="/assets/shots/hero-800.webp 800w, /assets/shots/hero-1600.webp 1600w, /assets/shots/hero-2400.webp 2400w" imagesizes="(min-width: 1240px) 1180px, 94vw" fetchpriority="high">
+  <link rel="stylesheet" href="/styles.css">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "AgentArmy",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Windows 10, Windows 11",
+    "softwareVersion": "0.0.1",
+    "license": "https://opensource.org/licenses/MIT",
+    "url": "https://agentarmy-site.vercel.app/",
+    "downloadUrl": "https://github.com/customerimpact/agentarmy/releases/latest",
+    "codeRepository": "https://github.com/customerimpact/agentarmy",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "description": "Free, open-source board for running many Claude Code agents in parallel, locally, on your own Claude Code login."
+  }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="bg" aria-hidden="true"><div class="glow g1"></div><div class="glow g2"></div></div>
+
+  <header class="nav" id="top">
+    <div class="wrap nav-in">
+      <a class="brand" href="#top" aria-label="AgentArmy home">
+        <img src="/assets/icon.svg" width="30" height="30" alt="">
+        <span>AgentArmy</span>
+      </a>
+      <nav class="links" aria-label="Main">
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#tour">Tour</a>
+        <a href="#install">Install</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="btn ghost sm star" href="https://github.com/customerimpact/agentarmy" rel="noopener" aria-label="Star AgentArmy on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+          <span>Star</span>
+          <span class="count" data-stars hidden></span>
+        </a>
+        <a class="btn primary sm" href="https://github.com/customerimpact/agentarmy/releases/latest" rel="noopener">Download</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="wrap">
+        <p class="pill"><span class="dot"></span> Free &amp; open source · MIT · Windows app out now</p>
+        <h1>Run a whole team of <span class="hl">Claude Code</span> agents from one board.</h1>
+        <p class="lede">AgentArmy puts every agent in a real terminal on a pan-and-zoom canvas. Orchestrators hand out jobs, workers report back, and one inbox tells you who needs you. It runs on your PC with your own Claude Code login.</p>
+        <div class="ctas">
+          <a class="btn primary lg" href="https://github.com/customerimpact/agentarmy/releases/latest" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.1 10.4 4v7.2H3V5.1Zm0 13.8 7.4 1.1v-7.1H3v6Zm8.2 1.2L21 21.5V12.9h-9.8v7.2Zm0-16.2v7.3H21V2.5l-9.8 1.4Z"/></svg>
+            Download for Windows
+          </a>
+          <a class="btn ghost lg" href="https://github.com/customerimpact/agentarmy" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            View on GitHub
+          </a>
+        </div>
+        <p class="fine"><span class="mono">AgentArmy-Setup-0.0.1.exe</span> · Windows 10/11 x64 · macOS &amp; Linux: run from source</p>
+      </div>
+
+      <div class="wrap wide">
+        <figure class="frame hero-shot">
+          <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>AgentArmy · Acme Shop</span></div>
+          <img src="/assets/shots/hero-1600.webp"
+               srcset="/assets/shots/hero-800.webp 800w, /assets/shots/hero-1600.webp 1600w, /assets/shots/hero-2400.webp 2400w"
+               sizes="(min-width: 1240px) 1180px, 94vw"
+               width="1600" height="1000"
+               alt="AgentArmy board: the orchestrator Ada sends jobs such as 'Orders API endpoint' and 'Stripe webhook handler' to worker agents Fay and Gus, drawn as glowing lines. A sidebar lists 13 agents with running, done and needs-you badges."
+               fetchpriority="high">
+        </figure>
+        <ul class="proof" aria-label="Highlights">
+          <li><b>No API keys</b><span>Uses your Claude Code login</span></li>
+          <li><b>100% local</b><span>Nothing goes to our servers</span></li>
+          <li><b>Real terminals</b><span>The actual <span class="mono">claude</span> CLI</span></li>
+          <li><b>MIT licensed</b><span>Free forever, fork it</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section" id="how">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="eyebrow">How it works</p>
+          <h2>One orchestrator. As many workers as you like.</h2>
+          <p class="sub">Give the orchestrator a goal. It splits the work and sends jobs to the other agents. You watch it happen on the board, and step in only when someone needs you.</p>
+          <ol class="steps">
+            <li><span class="n">1</span><div><b>Launch a team</b><p>Pick a folder and a template like <em>Dev HQ</em>: one orchestrator plus Frontend, Backend and Reviewer agents, each in its own terminal.</p></div></li>
+            <li><span class="n">2</span><div><b>Jobs fly across the board</b><p>The orchestrator hands each worker a job. Every job is a live line from sender to worker, labeled with what it is.</p></div></li>
+            <li><span class="n">3</span><div><b>Workers report back</b><p>When a worker finishes, its report is typed into the orchestrator's terminal, which plans the next step.</p></div></li>
+          </ol>
+        </div>
+        <div class="diagram" role="img" aria-label="Diagram: an orchestrator agent at the top sends jobs down to three worker agents (Frontend, Backend, Reviewer), and their reports flow back up.">
+          <svg viewBox="0 0 520 440" aria-hidden="true">
+            <defs>
+              <linearGradient id="og" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffa36e"/><stop offset="1" stop-color="#e2623a"/></linearGradient>
+              <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+            </defs>
+            <path id="p1" d="M260 118 C 260 190, 90 190, 90 282" class="wire"/>
+            <path id="p2" d="M260 118 L 260 282" class="wire"/>
+            <path id="p3" d="M260 118 C 260 190, 430 190, 430 282" class="wire"/>
+            <path d="M260 118 C 260 190, 90 190, 90 282" class="wire hot"/>
+            <path d="M260 118 L 260 282" class="wire hot d2"/>
+            <path d="M260 118 C 260 190, 430 190, 430 282" class="wire hot d3"/>
+
+            <g class="pulse"><circle r="5" fill="#ff8a4c"/><circle r="11" fill="#ff8a4c" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#p1"/></animateMotion></g>
+            <g class="pulse"><circle r="5" fill="#ff8a4c"/><circle r="11" fill="#ff8a4c" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" begin="0.9s" repeatCount="indefinite"><mpath href="#p2"/></animateMotion></g>
+            <g class="pulse"><circle r="5" fill="#ff8a4c"/><circle r="11" fill="#ff8a4c" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" begin="1.7s" repeatCount="indefinite"><mpath href="#p3"/></animateMotion></g>
+            <g class="pulse"><circle r="4.5" fill="#4ade80"/>
+              <animateMotion dur="3.2s" begin="1.3s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p1"/></animateMotion></g>
+            <g class="pulse"><circle r="4.5" fill="#4ade80"/>
+              <animateMotion dur="3.2s" begin="2.6s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p3"/></animateMotion></g>
+
+            <rect x="232" y="186" width="56" height="20" rx="10" class="tag"/><text x="260" y="200" class="tag-t">job</text>
+            <rect x="96" y="176" width="70" height="20" rx="10" class="tag"/><text x="131" y="190" class="tag-t">checkout</text>
+            <rect x="360" y="176" width="64" height="20" rx="10" class="tag g"/><text x="392" y="190" class="tag-t">report</text>
+
+            <g class="node orch">
+              <rect x="150" y="26" width="220" height="92" rx="16"/>
+              <circle cx="176" cy="54" r="11" fill="url(#og)"/>
+              <text x="196" y="59" class="nt">Ada</text>
+              <text x="236" y="58" class="nr">orchestrator</text>
+              <rect x="166" y="78" width="188" height="7" rx="3.5" class="ln"/>
+              <rect x="166" y="94" width="124" height="7" rx="3.5" class="ln"/>
+            </g>
+            <g class="node w">
+              <rect x="20" y="282" width="140" height="100" rx="16"/>
+              <text x="38" y="310" class="nt">Bex</text><text x="38" y="328" class="nr">Frontend</text>
+              <rect x="38" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="38" y="356" width="70" height="7" rx="3.5" class="ln"/>
+              <circle cx="140" cy="306" r="5" class="st work"/>
+            </g>
+            <g class="node w">
+              <rect x="190" y="282" width="140" height="100" rx="16"/>
+              <text x="208" y="310" class="nt">Fay</text><text x="208" y="328" class="nr">Backend</text>
+              <rect x="208" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="208" y="356" width="80" height="7" rx="3.5" class="ln"/>
+              <circle cx="310" cy="306" r="5" class="st work"/>
+            </g>
+            <g class="node w">
+              <rect x="360" y="282" width="140" height="100" rx="16"/>
+              <text x="378" y="310" class="nt">Jo</text><text x="378" y="328" class="nr">Reviewer</text>
+              <rect x="378" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="378" y="356" width="60" height="7" rx="3.5" class="ln"/>
+              <circle cx="480" cy="306" r="5" class="st done"/>
+            </g>
+            <text x="260" y="420" class="cap">Jobs go down. Reports come back up.</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section" id="features">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">Features</p>
+          <h2>Everything you need to supervise a fleet of agents</h2>
+          <p class="sub">Built for people who run five, ten or twenty Claude Code sessions at once and are tired of juggling terminal windows.</p>
+        </div>
+        <ul class="grid">
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 10 3 2.5L7 15M13 15h4"/></svg></span>
+            <h3>Real Claude Code terminals</h3>
+            <p>Every agent is the real <span class="mono">claude</span> CLI in its own terminal. Slash commands, permission prompts and the TUI work as usual.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="12" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v9M12 9c0 4-7 3.5-7 7.5M12 9c0 4 7 3.5 7 7.5"/></svg></span>
+            <h3>Orchestrators that delegate</h3>
+            <p>An orchestrator sends jobs to worker agents. Each job shows as an animated line, and the worker's report goes straight back.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+            <h3>Templates &amp; project frames</h3>
+            <p>Launch <em>Dev HQ</em> (13 agents), <em>Bug squad</em>, <em>Docs crew</em> and more in one click. Teams sit in labeled frames on the board.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1Z"/></svg></span>
+            <h3>Actions inbox</h3>
+            <p>Answer permission prompts and questions from one list. No more hunting for the terminal that has been waiting for ten minutes.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+            <h3>Stuck-agent alerts</h3>
+            <p>Spots agents that stall or run far too long, and lets you nudge, interrupt or ignore them from the inbox.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="18" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 12h7M8 11c3-1 4-6 7.5-6M8 13c3 1 4 6 7.5 6"/></svg></span>
+            <h3>Progress &amp; Mission Map</h3>
+            <p>Todo progress per team, plus a map of orchestrator, teams and agents you can filter by Working, Needs you, Idle or Done.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></svg></span>
+            <h3>Usage &amp; budgets</h3>
+            <p>Token use per board, account and model, read from Claude Code's local logs. Set daily, 5-hour or weekly budgets.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14a6.5 6.5 0 0 1 3 6"/></svg></span>
+            <h3>Several Claude accounts</h3>
+            <p>Run agents on different Claude logins. When one hits its plan limit, the agent can move to the next account and pick up where it stopped.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 7.5v9M18 11.5c0 4-6 3-11 5.5"/></svg></span>
+            <h3>A worktree per agent</h3>
+            <p>Optionally give each agent its own git worktree and branch, then review the diff, commit and merge from a panel.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 9h20M6 6.5h.01M9 6.5h.01"/><path d="m11 13 6 2-2.5 1-1 2.5Z"/></svg></span>
+            <h3>Live browser tiles</h3>
+            <p>Browser tiles on the board that agents can drive, with a visible cursor. Start a dev server and a preview tile offers itself.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/><path d="M14.5 6.5 10 11h4l-4.5 4.5"/></svg></span>
+            <h3>Recaps &amp; phone pings</h3>
+            <p>A daily recap to Slack or Discord. "Needs you" alerts to Slack, Discord or your phone through the free ntfy app.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2.5"/><path d="M8 21h8M12 17v4"/><circle cx="18" cy="7" r="2.5" fill="currentColor" stroke="none"/></svg></span>
+            <h3>A real Windows app</h3>
+            <p>Tray icon, taskbar badge and native notifications. Pop consoles out to a second monitor, and pick from four themes.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Tour -->
+    <section class="section" id="tour">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">Take the tour</p>
+          <h2>See it in action</h2>
+          <p class="sub">Screenshots from a demo board with 13 agents working on a fictional web shop.</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Screenshots">
+          <button role="tab" id="t-board" aria-controls="tour-panel" aria-selected="true" data-shot="board" data-cap="The board: an orchestrator, three teams in frames, jobs drawn as lines, and a live preview of the shop an agent is building.">Board</button>
+          <button role="tab" id="t-map" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="map" data-cap="Mission Map: orchestrator, teams and agents as a graph, with filters for Working, Needs you, Idle and Done.">Mission Map</button>
+          <button role="tab" id="t-actions" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="actions" data-cap="Actions inbox: answer a permission prompt right from the sidebar, without finding the terminal.">Actions inbox</button>
+          <button role="tab" id="t-progress" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="progress" data-cap="Progress: todo lists per team and agent, plus usage and budgets.">Progress</button>
+          <button role="tab" id="t-preview" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="preview" data-cap="Live preview: an agent started the dev server, and the site opened in a browser tile next to its terminal.">Live preview</button>
+          <button role="tab" id="t-accounts" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="accounts" data-cap="Accounts: several Claude logins, each with its own usage. Agents can switch when one hits its limit.">Accounts</button>
+          <button role="tab" id="t-integrations" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="integrations" data-cap="Settings › Integrations: Slack and Discord webhooks, phone pushes via ntfy, and a daily recap.">Settings</button>
+        </div>
+        <figure class="frame tour" id="tour-panel" role="tabpanel" aria-labelledby="t-board">
+          <img id="tour-img" src="/assets/shots/board-1600.webp"
+               srcset="/assets/shots/board-800.webp 800w, /assets/shots/board-1600.webp 1600w"
+               sizes="(min-width: 1240px) 1180px, 94vw" width="1600" height="1000" loading="lazy" decoding="async"
+               alt="The board: an orchestrator, three teams in frames, jobs drawn as lines, and a live preview of the shop an agent is building.">
+          <figcaption id="tour-cap">The board: an orchestrator, three teams in frames, jobs drawn as lines, and a live preview of the shop an agent is building.</figcaption>
+        </figure>
+
+        <div class="themes">
+          <div class="themes-copy">
+            <h3>Four themes</h3>
+            <p>Ember is the default. Prefer cool blues, northern-lights green or a light board? Switch any time.</p>
+            <div class="swatches" role="radiogroup" aria-label="Theme preview">
+              <button role="radio" aria-checked="true" data-theme="ember"><i style="--c:#e8774a"></i>Ember</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="midnight"><i style="--c:#3b82f6"></i>Midnight</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="aurora"><i style="--c:#2dd4a0"></i>Aurora</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="paper"><i style="--c:#f3efe6"></i>Paper</button>
+            </div>
+          </div>
+          <figure class="frame theme-shot">
+            <img id="theme-img" src="/assets/shots/board-800.webp" srcset="/assets/shots/board-800.webp 800w, /assets/shots/board-1600.webp 1600w" sizes="(min-width: 960px) 640px, 94vw" width="1600" height="1000" loading="lazy" decoding="async" alt="The board in the Ember theme">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Free & local -->
+    <section class="section" id="local">
+      <div class="wrap">
+        <div class="local">
+          <div class="local-copy">
+            <p class="eyebrow">Free &amp; local</p>
+            <h2>Your machine. Your login. Your code.</h2>
+            <p class="sub">AgentArmy is a local app, not a service. There is no account to create and nothing to pay for.</p>
+          </div>
+          <ul class="checks">
+            <li><b>No API keys.</b> Agents run on your Claude Code subscription login. AgentArmy even hides <span class="mono">ANTHROPIC_API_KEY</span> from its terminals so you don't get billed per token by accident.</li>
+            <li><b>Nothing in the cloud.</b> The board is a local server bound to 127.0.0.1 with a per-run token. Your code goes only where Claude Code itself sends it.</li>
+            <li><b>Your settings stay yours.</b> Hooks are passed per agent with a temporary settings file. Nothing in <span class="mono">~/.claude</span> is changed.</li>
+            <li><b>MIT and open source.</b> Read every line, file issues, send pull requests, fork it.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Install -->
+    <section class="section" id="install">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">Get started</p>
+          <h2>Up and running in two minutes</h2>
+        </div>
+        <div class="install">
+          <div class="req card">
+            <h3>Requirements</h3>
+            <ul>
+              <li><b>Windows 10 or 11</b> (x64) for the desktop app</li>
+              <li><b><a href="https://docs.claude.com/en/docs/claude-code" rel="noopener">Claude Code</a></b> installed and logged in. Run <span class="mono">claude</span> once in a terminal first.</li>
+              <li><b>macOS / Linux:</b> run from source for now (needs Node 20+)</li>
+            </ul>
+          </div>
+          <ol class="howto">
+            <li class="card">
+              <span class="n">1</span>
+              <div>
+                <h3>Download the installer</h3>
+                <p>Get <span class="mono">AgentArmy-Setup-0.0.1.exe</span> from the latest GitHub release.</p>
+                <a class="btn primary" href="https://github.com/customerimpact/agentarmy/releases/latest" rel="noopener">Download for Windows</a>
+              </div>
+            </li>
+            <li class="card">
+              <span class="n">2</span>
+              <div>
+                <h3>Run it, and get past SmartScreen</h3>
+                <p>It installs for your user only, no admin needed. The app isn't code-signed yet, so Windows may show <em>"Windows protected your PC"</em>. Click <b>More info</b>, then <b>Run anyway</b>.</p>
+              </div>
+            </li>
+            <li class="card">
+              <span class="n">3</span>
+              <div>
+                <h3>Launch a team</h3>
+                <p>Open AgentArmy, click <b>Templates</b>, pick a folder and start <em>Dev HQ</em>, or add a single agent with <b>New agent</b>.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+        <div class="source card">
+          <div class="source-head">
+            <h3>Run from source <span class="muted">(Windows, macOS, Linux)</span></h3>
+            <button class="copy-btn" type="button" data-copy="git clone https://github.com/customerimpact/agentarmy && cd agentarmy && npm install && npm run build && npm start">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Copy</span>
+            </button>
+          </div>
+          <pre><code><span class="pr">$</span> git clone https://github.com/customerimpact/agentarmy
+<span class="pr">$</span> cd agentarmy
+<span class="pr">$</span> npm install &amp;&amp; npm run build
+<span class="pr">$</span> npm start   <span class="cm"># opens the board in your browser</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section" id="faq">
+      <div class="wrap narrow">
+        <div class="head">
+          <p class="eyebrow">FAQ</p>
+          <h2>Questions, answered</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>Is it really free?</summary>
+            <p>Yes. AgentArmy is MIT-licensed open source. There is no subscription, no account and no license check. You only need your own Claude Code plan.</p>
+          </details>
+          <details>
+            <summary>Does it use my API credits?</summary>
+            <p>No. Agents run the <span class="mono">claude</span> CLI on your Claude subscription login, just like in a normal terminal. AgentArmy hides <span class="mono">ANTHROPIC_API_KEY</span> and <span class="mono">ANTHROPIC_AUTH_TOKEN</span> from its terminals so Claude Code doesn't switch to pay-per-token billing by surprise.</p>
+          </details>
+          <details>
+            <summary>Does it auto-approve permissions?</summary>
+            <p>No. Every agent keeps its own permission prompts. AgentArmy tells you when one is waiting and lets you answer it from the Actions inbox.</p>
+          </details>
+          <details>
+            <summary>Is there a Mac version?</summary>
+            <p>A packaged Mac app is coming; it needs Apple code signing first. Until then you can run AgentArmy from source on macOS and Linux and use it in your browser.</p>
+          </details>
+          <details>
+            <summary>Where is my data stored?</summary>
+            <p>On your PC. The board layout and settings live in <span class="mono">~/.agentarmy</span>. Conversations stay in Claude Code's own folders. The desktop app makes one network call of its own: checking GitHub Releases for updates.</p>
+          </details>
+          <details>
+            <summary>Why does Windows say "Windows protected your PC"?</summary>
+            <p>The installer isn't code-signed yet, so SmartScreen doesn't recognise it. Click <b>More info</b>, then <b>Run anyway</b>. The full source and the build workflow are on GitHub if you'd rather check or build it yourself.</p>
+          </details>
+          <details>
+            <summary>Is AgentArmy affiliated with Anthropic?</summary>
+            <p>No. It's an independent open-source project and is not affiliated with or endorsed by Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="section final">
+      <div class="wrap">
+        <div class="final-card">
+          <img src="/assets/icon.svg" width="64" height="64" alt="" loading="lazy">
+          <h2>Ready to lead your army?</h2>
+          <p class="sub">Free, open source and running on your own machine in two minutes.</p>
+          <div class="ctas">
+            <a class="btn primary lg" href="https://github.com/customerimpact/agentarmy/releases/latest" rel="noopener">Download for Windows</a>
+            <a class="btn ghost lg" href="https://github.com/customerimpact/agentarmy" rel="noopener">Star on GitHub</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap foot-in">
+      <div class="foot-brand">
+        <a class="brand" href="#top"><img src="/assets/icon.svg" width="26" height="26" alt=""><span>AgentArmy</span></a>
+        <p>MIT licensed. An independent open-source project, not affiliated with or endorsed by Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic.</p>
+      </div>
+      <nav class="foot-links" aria-label="Footer">
+        <a href="https://github.com/customerimpact/agentarmy" rel="noopener">GitHub</a>
+        <a href="https://github.com/customerimpact/agentarmy/releases" rel="noopener">Releases</a>
+        <a href="https://github.com/customerimpact/agentarmy/issues" rel="noopener">Report an issue</a>
+        <a href="https://github.com/customerimpact/agentarmy/blob/main/LICENSE" rel="noopener">License</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

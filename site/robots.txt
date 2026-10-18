@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://agentarmy-site.vercel.app/sitemap.xml
