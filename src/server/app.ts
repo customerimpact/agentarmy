@@ -48,6 +48,16 @@ async function pickPort(preferred: number): Promise<number> {
   return port;
 }
 
+// Another AgentArmy (a terminal or the desktop app) already owns this home folder
+export class AlreadyRunningError extends Error {
+  constructor(
+    readonly port: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 // Shared by the CLI (`npx agentarmy`) and the desktop app's main process
 export async function startAgentArmy(options: StartOptions = {}): Promise<AgentArmyHandle> {
   const log = options.log ?? ((message: string) => console.log(message));
@@ -59,7 +69,8 @@ export async function startAgentArmy(options: StartOptions = {}): Promise<AgentA
   const port = await pickPort(preferred);
   const lock = acquireInstanceLock(port);
   if ('heldBy' in lock) {
-    throw new Error(
+    throw new AlreadyRunningError(
+      lock.heldBy.port,
       `AgentArmy is already running (pid ${lock.heldBy.pid}, port ${lock.heldBy.port}). ` +
         `Stop it first, or delete ${path.join(agentArmyHome(), 'server.lock')} if it is stale.`,
     );

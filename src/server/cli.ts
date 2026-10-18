@@ -1,5 +1,7 @@
 import { DEFAULT_PORT } from '../shared/protocol.js';
-import { startAgentArmy } from './app.js';
+import open from 'open';
+import { AlreadyRunningError, startAgentArmy } from './app.js';
+import { loadOrCreateToken } from './token-file.js';
 
 interface CliArgs {
   port: number;
@@ -59,7 +61,16 @@ async function main(): Promise<void> {
   process.on('SIGHUP', () => shutdown('SIGHUP'));
 }
 
-main().catch((err: unknown) => {
+main().catch(async (err: unknown) => {
+  // A second `npx agentarmy` should simply open the board that is already running
+  if (err instanceof AlreadyRunningError && err.port) {
+    const args = parseArgs(process.argv.slice(2));
+    const token = process.env.AGENTARMY_TOKEN || loadOrCreateToken({ rotate: false });
+    const url = `http://127.0.0.1:${err.port}/?token=${token}`;
+    console.log(`AgentArmy is already running (desktop app or another terminal): ${url}`);
+    if (args.open) await open(url).catch(() => undefined);
+    process.exit(0);
+  }
   console.error(err instanceof Error ? err.message : err);
   process.exit(1);
 });
