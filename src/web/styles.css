@@ -719,3 +719,14 @@ mark.aa-hit {
   background: color-mix(in srgb, var(--aa-accent) 30%, transparent);
   color: inherit;
 }
+
+/* Desktop app (src/desktop): the title strip drags the window; anything clickable in it must not */
+.aa-titlebar {
+  -webkit-app-region: drag;
+}
+
+.aa-titlebar button,
+.aa-titlebar a,
+.aa-titlebar input {
+  -webkit-app-region: no-drag;
+}

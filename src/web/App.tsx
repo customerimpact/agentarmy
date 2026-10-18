@@ -3,6 +3,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { ApiError, api } from './lib/api';
 import { clearToken, getToken } from './lib/auth';
 import { startNotifications } from './lib/notify';
+import { startDesktopBoard } from './lib/desktop';
 import { useServerSettings } from './lib/settings';
 import { socket } from './lib/socket';
 import { useBoard } from './lib/store';
@@ -88,6 +89,7 @@ export function App() {
           // Only the main board pings; pop-outs would otherwise chime once per window
           startNotifications();
           startPopoutTracking();
+          startDesktopBoard();
         } else {
           startPopoutPresence(VIEW);
         }

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { ActionItem, ConsoleInfo } from '../../shared/protocol';
+import { desktop } from './desktop';
 import { openAttention } from './inbox-focus';
 import { attentionCount, projectOf } from './fleet';
 import { getPrefs } from './prefs';
@@ -123,6 +124,8 @@ function ping(consoleId: string | null, title: string, body: string, tag: string
     if (Date.now() - last < PING_DEDUPE_MS) return;
     lastPingByConsole.set(consoleId, Date.now());
   }
+  // Desktop app tray: "Pause notifications 1 h" silences the chime and the toasts
+  if (desktop?.notificationsPaused()) return;
   beep();
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   // Looking right at the board already shows the glow; only notify when the user is elsewhere
@@ -131,6 +134,8 @@ function ping(consoleId: string | null, title: string, body: string, tag: string
     const notification = new Notification(title, { body, tag, icon: '/icon.svg' });
     notification.onclick = () => {
       window.focus();
+      // The desktop window may be hidden in the tray; window.focus() alone cannot show it
+      desktop?.focusWindow();
       notification.close();
       // Answerable dialogs and stuck alerts open their Actions item; the rest fly to the console
       openAttention(consoleId);

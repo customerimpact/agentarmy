@@ -23,6 +23,7 @@ This is a local web app (browser UI + local Node server), so it overrides the gl
 - **Icon library:** Lucide (React)
 - **Tests:** Vitest (unit), Playwright (end-to-end in the browser)
 - **Distribution:** npm package, run with `npx agentarmy` (starts server, opens browser)
+- **Desktop app (Windows):** Electron + electron-builder (NSIS per-user installer), electron-updater from GitHub Releases; same server in the main process (DEC-003)
 - **App-like window (optional):** installable PWA so it gets its own window and fewer browser shortcut clashes
 - **Application hosting:** n/a (runs locally)
 - **Database hosting:** n/a

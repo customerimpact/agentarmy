@@ -1,0 +1,73 @@
+# Desktop app packaging (Windows first). Build: npm run desktop:dist -> release/AgentArmy-Setup-<version>.exe
+appId: com.agentarmy.app # also the AppUserModelId set in src/desktop/main.ts (native toasts)
+productName: AgentArmy
+copyright: Copyright (c) AgentArmy contributors (MIT)
+directories:
+  output: release
+  buildResources: build
+
+# Only the built app goes in: dist/desktop (main + preload), dist/web (UI), plus production
+# node_modules (fastify, node-pty, ...). Electron, electron-updater etc. are devDependencies
+# (electron-updater is bundled into dist/desktop/main.js by tsup.desktop.config.ts).
+files:
+  - package.json
+  - dist/desktop/**
+  - dist/web/**
+  - '!**/*.map'
+  # node-pty: keep the prebuilt binaries, drop sources and debug symbols
+  - '!node_modules/node-pty/{src,deps,third_party,scripts,typings}/**'
+  - '!node_modules/node-pty/binding.gyp'
+  - '!node_modules/node-pty/**/*.pdb'
+  - '!node_modules/node-pty/**/*.test.js'
+  - '!node_modules/node-pty/build/**' # a local node-gyp build; the prebuilds are what we ship
+  - '!node_modules/node-pty/prebuilds/darwin-*/**'
+  # x64 only for now; an arm64 build must keep prebuilds/win32-arm64 instead
+  - '!node_modules/node-pty/prebuilds/win32-arm64/**'
+extraMetadata:
+  main: dist/desktop/main.js
+  author:
+    name: AgentArmy contributors
+extraResources:
+  - from: build/icons
+    to: icons
+# The UI is English; Chromium's other 50+ locale packs only add download size
+electronLanguages:
+  - en-US
+asar: true
+# Native .node files and conpty's OpenConsole.exe must be real files on disk
+asarUnpack:
+  - node_modules/node-pty/**
+
+# node-pty >= 1.0 is a Node-API addon and ships prebuilt binaries (prebuilds/win32-x64), which are
+# ABI-stable across Node and Electron, so no rebuild against Electron's headers is needed (and none
+# touches the node_modules the CLI uses). If a future node-pty needs it, set npmRebuild: true:
+# electron-builder then runs @electron/rebuild (install-app-deps) for Electron's ABI at package time.
+npmRebuild: false
+nodeGypRebuild: false
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icons/icon.ico
+  artifactName: AgentArmy-Setup-${version}.${ext}
+  # Unsigned for now. To sign, set CSC_LINK (path/URL/base64 of the .pfx) and CSC_KEY_PASSWORD in the
+  # environment (CI secrets); electron-builder then signs the app and installer automatically.
+
+nsis:
+  oneClick: true # per-user install to %LOCALAPPDATA%\Programs, no admin prompt, no wizard
+  perMachine: false
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: AgentArmy
+  runAfterFinish: true
+  deleteAppDataOnUninstall: false # the board lives in ~/.agentarmy and is shared with `npx agentarmy`
+  installerIcon: build/icons/icon.ico
+  uninstallerIcon: build/icons/icon.ico
+
+publish:
+  provider: github
+  owner: customerimpact
+  repo: agentarmy
+  releaseType: draft
+  tagNamePrefix: desktop-v # npm releases use v*, desktop releases desktop-v* (see src/desktop/updater.ts)

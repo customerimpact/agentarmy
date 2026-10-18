@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { settingsDir } from './hook-settings.js';
+import { isElectron, nodeScriptCommand } from './node-runtime.js';
 
 // The agentarmy MCP server that runs inside every console. Claude Code starts it over stdio
 // (newline-delimited JSON-RPC 2.0). It is a thin, dependency-free proxy: tools are listed from
@@ -144,8 +145,9 @@ export function buildMcpConfig(
   baseUrl: string,
   consoleId: string,
   token: string,
-): { mcpServers: Record<string, { command: string; args: string[] }> } {
-  return { mcpServers: { agentarmy: { command: node, args: [script, baseUrl, consoleId, token] } } };
+  electron = isElectron(),
+): { mcpServers: Record<string, { command: string; args: string[]; env?: Record<string, string> }> } {
+  return { mcpServers: { agentarmy: nodeScriptCommand(script, [baseUrl, consoleId, token], node, electron) } };
 }
 
 // One config per console: the console id and token travel as argv to the proxy
