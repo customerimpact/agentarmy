@@ -49,6 +49,9 @@ interface BoardStore {
   // How many consoles the folder picker creates (1, or 4 for "Spawn 4")
   newAgentCount: number;
   helpOpen: boolean;
+  // Settings window (Ctrl+, / sidebar gear). settingsCategory: nav item to show when it opens.
+  settingsOpen: boolean;
+  settingsCategory: string | null;
   confirm: ConfirmRequest | null;
   toasts: Toast[];
 
@@ -75,6 +78,8 @@ interface BoardStore {
   setSidebarOpen: (open: boolean) => void;
   setNewAgentOpen: (open: boolean, count?: number) => void;
   setHelpOpen: (open: boolean) => void;
+  openSettings: (category?: string) => void;
+  closeSettings: () => void;
   askConfirm: (request: ConfirmRequest | null) => void;
   toast: (message: string) => void;
   dismissToast: (id: number) => void;
@@ -109,7 +114,8 @@ export const useBoard = create<BoardStore>((set, get) => ({
   projects: {},
   browsers: {},
   selectedIds: [],
-  sidebarTab: getPrefs().defaultSidebarTab,
+  // Settings is a window now, not a sidebar tab; an old "opens on Settings" pref falls back to Agents
+  sidebarTab: getPrefs().defaultSidebarTab === 'settings' ? 'agents' : getPrefs().defaultSidebarTab,
   missionMapOpen: false,
   templatesOpen: false,
   viewport: null,
@@ -120,6 +126,8 @@ export const useBoard = create<BoardStore>((set, get) => ({
   newAgentOpen: false,
   newAgentCount: 1,
   helpOpen: false,
+  settingsOpen: false,
+  settingsCategory: null,
   confirm: null,
   toasts: [],
 
@@ -194,7 +202,11 @@ export const useBoard = create<BoardStore>((set, get) => ({
         ? s.selectedIds.filter((x) => x !== id)
         : [...s.selectedIds, id],
     })),
-  setSidebarTab: (sidebarTab) => set({ sidebarTab, sidebarOpen: true }),
+  // 'settings' opens the Settings window (old callers keep working)
+  setSidebarTab: (sidebarTab) =>
+    sidebarTab === 'settings'
+      ? set({ settingsOpen: true, settingsCategory: null })
+      : set({ sidebarTab, sidebarOpen: true }),
   setMissionMapOpen: (missionMapOpen) => set({ missionMapOpen }),
   setTemplatesOpen: (templatesOpen) => set({ templatesOpen }),
 
@@ -217,6 +229,8 @@ export const useBoard = create<BoardStore>((set, get) => ({
   setNewAgentOpen: (newAgentOpen, newAgentCount = 1) =>
     set({ newAgentOpen, newAgentCount, helpOpen: false }),
   setHelpOpen: (helpOpen) => set({ helpOpen }),
+  openSettings: (category) => set({ settingsOpen: true, settingsCategory: category ?? null, helpOpen: false }),
+  closeSettings: () => set({ settingsOpen: false, settingsCategory: null }),
   askConfirm: (confirm) => set({ confirm }),
   toast: (message) => {
     const id = ++toastSeq;

@@ -4,6 +4,8 @@ import path from 'node:path';
 import { HOOK_EVENTS } from './hook-status.js';
 
 const HOOK_TIMEOUT_SECONDS = 5;
+// Covers node start-up plus two forwarder attempts on a loaded machine
+const SESSION_START_TIMEOUT_SECONDS = 20;
 // Allows every tool of the 'agentarmy' MCP server (see mcp-bridge.ts)
 export const AGENTARMY_MCP_PERMISSION = 'mcp__agentarmy';
 
@@ -14,7 +16,10 @@ let body = '';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (chunk) => { body += chunk; });
 process.stdin.on('end', () => {
-  fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(3000) })
+  // A busy machine can delay our server; retry once so the console doesn't stay 'starting'
+  const post = () => fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body, signal: AbortSignal.timeout(8000) });
+  post()
+    .catch(() => post())
     .catch(() => {})
     .finally(() => process.exit(0));
 });
@@ -37,7 +42,7 @@ export function buildHookSettings(
             // exec form (args) bypasses the shell, so no quoting issues with spaces on Windows
             command: forwarder.node,
             args: [forwarder.script, url],
-            timeout: HOOK_TIMEOUT_SECONDS,
+            timeout: SESSION_START_TIMEOUT_SECONDS,
           }
         : { type: 'http', url, timeout: HOOK_TIMEOUT_SECONDS };
     hooks[event] = [{ matcher: '', hooks: [hook] }];

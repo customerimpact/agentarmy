@@ -19,9 +19,14 @@ import {
   projectColorVar,
 } from '../lib/status';
 import { lockLayout, unlockLayout, useBoard, useClock } from '../lib/store';
+import { usePoppedOut } from '../lib/popout';
+import { PopOutButton, PoppedOutOverlay, consoleView } from './PopoutControls';
 import { StatusCard } from './StatusCard';
 import { StatusDot } from './StatusDot';
 import { TerminalView } from './TerminalView';
+import { UsageChip } from './UsageChip';
+import { ConsoleAccountChip } from './AccountChip';
+import { BranchChip } from './ReviewPanel';
 
 export type TerminalFlowNode = Node<Record<string, never>, 'terminal'>;
 
@@ -103,6 +108,8 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
   const compact = useStore((s) => s.transform[2] < COMPACT_ZOOM);
   const atNativeZoom = useStore((s) => Math.abs(s.transform[2] - 1) < 0.01);
   const bodyRef = useRef<HTMLDivElement>(null);
+  // Lives in a pop-out window: no terminal here, so the two windows never fight over its size
+  const poppedOut = usePoppedOut(id);
 
   // Terminals swallow wheel events (nowheel); keep ctrl/cmd+wheel zooming the board instead of the page
   useEffect(() => {
@@ -130,9 +137,13 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
   const askClose = () =>
     useBoard.getState().askConfirm({
       title: `Close ${c.name}?`,
-      message: isDormant(c.status)
+      message:
+        (isDormant(c.status)
         ? 'The console is removed from the board.'
-        : 'This stops the Claude Code process and removes the console from the board. You can resume the conversation later with claude --resume.',
+        : 'This stops the Claude Code process and removes the console from the board. You can resume the conversation later with claude --resume.') +
+        (c.git
+          ? ` Its branch ${c.git.branch} and worktree folder are kept, so no work is lost. Use Review > Discard branch to delete them.`
+          : ''),
       confirmLabel: 'Close console',
       danger: true,
       onConfirm: () => closeConsole(id),
@@ -232,6 +243,9 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
               {basename(c.cwd)}
             </span>
             <span className="ml-auto" />
+            <ConsoleAccountChip console={c} />
+            <UsageChip id={id} />
+            {c.git && <BranchChip console={c} />}
             <span
               data-testid="console-status"
               className={`aa-label relative inline-flex h-5 shrink-0 items-center gap-1.5 overflow-hidden rounded-full px-2 ${meta.pill}`}
@@ -262,6 +276,7 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
                 <RotateCcw size={13} />
               </IconButton>
             )}
+            <PopOutButton view={consoleView(id)} testId="console-popout" />
             <IconButton testId="console-close" label="Close console" onClick={askClose} danger>
               <X size={15} />
             </IconButton>
@@ -279,7 +294,11 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
             className={`relative min-h-0 flex-1 bg-term ${compact ? '' : 'nodrag nowheel nopan cursor-text'}`}
             onMouseDown={onBodyMouseDown}
           >
-            <TerminalView id={id} hidden={compact} webgl={focused && atNativeZoom} />
+            {poppedOut ? (
+              <PoppedOutOverlay popoutKeyName={poppedOut} name={c.name} />
+            ) : (
+              <TerminalView id={id} hidden={compact} webgl={focused && atNativeZoom} />
+            )}
             {!compact && c.status === 'suspended' && (
               <div className="absolute inset-0 grid place-items-center bg-term/90 p-6 text-center">
                 <div>

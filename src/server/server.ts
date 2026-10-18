@@ -16,9 +16,15 @@ import { listDirectory } from './fs-list.js';
 import { registerBrowserRoutes } from './browsers/routes.js';
 import { registerOrchestrationRoutes } from './orchestration-routes.js';
 import { registerWorkspaceRoutes } from './workspace-routes.js';
+import { registerGitReviewRoutes } from './git-review-routes.js';
 import { registerSettingsRoutes } from './settings-routes.js';
+import { registerUsageRoutes } from './usage-routes.js';
+import { registerAccountRoutes } from './account-routes.js';
 import { SettingsStore } from './settings.js';
 import { WebhookNotifier } from './webhooks.js';
+import { NtfyNotifier, registerNtfyRoutes } from './ntfy.js';
+import { registerPreviewRoutes } from './previews/preview-service.js';
+import { registerRecapRoutes } from './recap.js';
 import type { HookPayload } from './hook-status.js';
 import {
   isAllowedHost,
@@ -154,6 +160,7 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
 
   const settings = options.settings ?? new SettingsStore(null);
   const notifier = new WebhookNotifier(manager, settings, options.port);
+  const ntfy = new NtfyNotifier(manager, settings, options.port);
   settings.on('change', () =>
     broadcast({ type: 'settings', settings: settings.publicView({ port: options.port }) }),
   );
@@ -202,9 +209,29 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
 
   app.get('/api/state', async () => manager.getState());
 
+  // Usage first: its preHandler gates send_job while a budget is used up
+  await registerUsageRoutes(app, { manager, settings, broadcast });
   await registerOrchestrationRoutes(app, { manager, port: options.port, token: options.token });
-  await registerWorkspaceRoutes(app, { manager });
+  const worktrees = await registerGitReviewRoutes(app, { manager });
+  await registerWorkspaceRoutes(app, { manager, worktrees });
   await registerSettingsRoutes(app, { settings, notifier, port: options.port });
+  // Claude Code accounts live next to settings.json; an in-memory settings store means a throwaway server
+  await registerAccountRoutes(app, { manager, broadcast, dataDir: settings.filePath ? path.dirname(settings.filePath) : null });
+  await registerNtfyRoutes(app, { settings, notifier: ntfy });
+  // Daily recap log sits next to settings.json; an in-memory settings store means a throwaway server
+  const recap = registerRecapRoutes(app, {
+    manager,
+    settings,
+    dir: settings.filePath ? path.join(path.dirname(settings.filePath), 'recaps') : null,
+  });
+  registerPreviewRoutes(app, {
+    manager,
+    browsers: browsers.impl,
+    settings: () => settings.get(),
+    broadcast,
+    ignorePorts: [options.port],
+    onOpened: (consoleId, url) => recap.recordPreview(consoleId, url),
+  });
 
   app.post('/api/consoles', async (request, reply) => {
     const body = request.body as CreateConsoleRequest | undefined;
@@ -212,6 +239,8 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
       return reply.code(400).send({ error: 'cwd is required' });
     }
     try {
+      // Isolated branch: make a git worktree first, then launch claude inside it
+      if (body.worktree === true) return await worktrees.createConsole(body);
       return manager.create(body);
     } catch (err) {
       return sendError(reply, err);

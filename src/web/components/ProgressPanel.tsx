@@ -15,6 +15,8 @@ import {
 import { useBoard, useClock } from '../lib/store';
 import { ProgressBar } from './AgentBadges';
 import { StatusDot } from './StatusDot';
+import { RecapButton } from './RecapModal';
+import { UsageSection } from './UsageSection';
 
 export function TodoList({ todos }: { todos: TodoItem[] }) {
   return (
@@ -200,6 +202,7 @@ export function ProgressPanel() {
       <div className="shrink-0 px-3 pt-3 pb-2">
         <div className="flex items-baseline gap-2">
           <span className="text-[13px] font-semibold text-fg">Progress</span>
+          <RecapButton />
           <span className="ml-auto text-[11.5px] text-fg-subtle tabular-nums">
             {overall.done}/{overall.total} steps
           </span>
@@ -214,6 +217,7 @@ export function ProgressPanel() {
       </div>
 
       <div className="aa-scroll flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-3">
+        <UsageSection />
         {buckets.length === 0 && (
           <p className="px-3 py-10 text-center text-fg-subtle">
             Progress shows up here once agents start planning their work.

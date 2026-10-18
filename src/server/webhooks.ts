@@ -20,8 +20,20 @@ export function formatActionMessage(
   info: { console?: Pick<ConsoleInfo, 'name'>; projectName?: string; port: number },
 ): string {
   const who = info.console?.name ?? 'An agent';
-  const verb = action.kind === 'needs_you' ? 'needs you' : action.kind === 'error' ? 'hit an error' : 'asks for something';
-  const detail = action.kind === 'request' ? [action.title, action.detail].filter(Boolean).join(' — ') : (action.detail ?? '');
+  const verb =
+    action.kind === 'needs_you'
+      ? 'needs you'
+      : action.kind === 'error'
+        ? 'hit an error'
+        : action.kind === 'stuck'
+          ? 'may be stuck'
+          : 'asks for something';
+  const detail =
+    action.kind === 'request'
+      ? [action.title, action.detail].filter(Boolean).join(' — ')
+      : action.kind === 'stuck'
+        ? (action.detail ?? action.title)
+      : [action.question, action.detail].filter(Boolean).join(' — ');
   const parts = ['AgentArmy', info.projectName, `${who} ${verb}`].filter(Boolean).join(' · ');
   const body = detail ? `${parts}: ${clip(detail, MAX_DETAIL)}` : parts;
   return `${body}\nhttp://127.0.0.1:${info.port}/`;

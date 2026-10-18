@@ -1,7 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import { Minus, Plus } from 'lucide-react';
+import { ChevronDown, Minus, Plus } from 'lucide-react';
 
-// Small controls for the Settings tab. All colors come from the semantic theme tokens.
+// Controls for the Settings window (Cursor-style rows: label left, control right).
+// All colors come from the semantic theme tokens so every theme works.
+
+const focusRing = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent';
 
 export function Highlight({ text, tokens }: { text: string; tokens: string[] }) {
   if (tokens.length === 0 || !text) return <>{text}</>;
@@ -22,6 +25,7 @@ export function Highlight({ text, tokens }: { text: string; tokens: string[] }) 
   );
 }
 
+// Pill switch
 export function Toggle({
   checked,
   onChange,
@@ -41,12 +45,14 @@ export function Toggle({
       aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`h-5 w-9 shrink-0 rounded-full p-0.5 transition-colors disabled:opacity-40
-                  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
-                  ${checked ? 'bg-accent' : 'bg-line-strong'}`}
+      className={`relative h-[22px] w-[38px] shrink-0 rounded-full border transition-colors duration-150
+                  disabled:cursor-not-allowed disabled:opacity-40 ${focusRing}
+                  ${checked ? 'border-accent bg-accent' : 'border-line-strong bg-hover hover:border-fg-subtle'}`}
     >
       <span
-        className={`block size-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : ''}`}
+        className={`absolute top-1/2 left-[2px] block size-4 -translate-y-1/2 rounded-full shadow-[0_1px_2px_rgb(0_0_0/0.35)]
+                    transition-transform duration-150
+                    ${checked ? 'translate-x-4 bg-white' : 'bg-fg-muted'}`}
       />
     </button>
   );
@@ -66,7 +72,12 @@ export function Segmented<T extends string | number>({
   disabled?: boolean;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex shrink-0 rounded-md border border-line bg-canvas p-0.5">
+    <div
+      role="radiogroup"
+      aria-label={label}
+      className={`flex h-8 shrink-0 items-center gap-0.5 rounded-lg border border-line bg-surface p-[3px]
+                  ${disabled ? 'opacity-40' : ''}`}
+    >
       {options.map((option) => {
         const active = option.value === value;
         return (
@@ -77,8 +88,9 @@ export function Segmented<T extends string | number>({
             aria-checked={active}
             disabled={disabled}
             onClick={() => onChange(option.value)}
-            className={`rounded px-2 py-0.5 text-[11.5px] font-medium whitespace-nowrap tabular-nums disabled:opacity-40
-                        ${active ? 'bg-hover text-fg shadow-sm' : 'text-fg-muted hover:text-fg'}`}
+            className={`h-full rounded-md px-2.5 text-[12px] font-medium whitespace-nowrap tabular-nums transition-colors
+                        disabled:cursor-not-allowed ${focusRing}
+                        ${active ? 'bg-elevated text-fg shadow-[0_1px_2px_var(--aa-shadow)] ring-1 ring-line-strong' : 'text-fg-muted hover:text-fg'}`}
           >
             {option.label}
           </button>
@@ -88,6 +100,7 @@ export function Segmented<T extends string | number>({
   );
 }
 
+// Native select (keyboard + screen reader friendly) dressed with a chevron
 export function Select<T extends string>({
   value,
   options,
@@ -102,20 +115,28 @@ export function Select<T extends string>({
   disabled?: boolean;
 }) {
   return (
-    <select
-      aria-label={label}
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value as T)}
-      className="h-7 max-w-44 shrink-0 rounded-md border border-line-strong bg-canvas px-1.5 text-[12px] text-fg outline-none
-                 focus:border-accent disabled:opacity-40"
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+    <div className="relative shrink-0">
+      <select
+        aria-label={label}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value as T)}
+        className="h-8 max-w-56 min-w-36 cursor-pointer appearance-none rounded-lg border border-line-strong bg-surface pr-8 pl-2.5
+                   text-[12.5px] text-fg outline-none transition-colors
+                   hover:border-fg-subtle focus:border-accent disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+      <ChevronDown
+        size={14}
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 text-fg-subtle"
+      />
+    </div>
   );
 }
 
@@ -138,22 +159,30 @@ export function Stepper({
 }) {
   const round = (v: number) => Math.round(v * 1000) / 1000;
   const set = (v: number) => onChange(round(Math.min(max, Math.max(min, v))));
-  const button = `grid size-6 place-items-center rounded text-fg-muted disabled:opacity-30
-                  hover:bg-hover hover:text-fg`;
+  const button = `grid size-[26px] place-items-center rounded-md text-fg-muted transition-colors
+                  hover:bg-hover hover:text-fg disabled:cursor-not-allowed disabled:opacity-30 ${focusRing}`;
   return (
-    <div role="group" aria-label={label} className="flex shrink-0 items-center rounded-md border border-line bg-canvas p-0.5">
+    <div
+      role="group"
+      aria-label={label}
+      className="flex h-8 shrink-0 items-center rounded-lg border border-line-strong bg-surface p-[2px]"
+    >
       <button type="button" aria-label={`Decrease ${label}`} disabled={value <= min} onClick={() => set(value - step)} className={button}>
-        <Minus size={12} />
+        <Minus size={13} />
       </button>
-      <span className="w-12 text-center text-[12px] font-medium text-fg tabular-nums" aria-live="polite">
+      <span className="w-14 text-center text-[12.5px] font-medium text-fg tabular-nums" aria-live="polite">
         {format(value)}
       </span>
       <button type="button" aria-label={`Increase ${label}`} disabled={value >= max} onClick={() => set(value + step)} className={button}>
-        <Plus size={12} />
+        <Plus size={13} />
       </button>
     </div>
   );
 }
+
+const inputClass = `h-8 min-w-0 rounded-lg border border-line-strong bg-surface px-2.5 text-[12.5px] text-fg outline-none
+                    transition-colors placeholder:text-fg-subtle hover:border-fg-subtle focus:border-accent
+                    disabled:cursor-not-allowed disabled:opacity-40`;
 
 // Text input that only commits on Save / Enter, so half-typed paths are never applied
 export function TextSave({
@@ -187,7 +216,7 @@ export function TextSave({
     }
   };
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2">
       <input
         aria-label={label}
         type={type}
@@ -199,18 +228,21 @@ export function TextSave({
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') void save();
-          if (e.key === 'Escape') setDraft(value);
+          if (e.key === 'Escape' && dirty) {
+            // First Esc reverts the draft; the next one closes the window
+            e.stopPropagation();
+            setDraft(value);
+          }
         }}
-        className={`h-7 min-w-0 flex-1 rounded-md border border-line-strong bg-canvas px-2 text-[12px] text-fg outline-none
-                    placeholder:text-fg-subtle focus:border-accent disabled:opacity-40
-                    ${mono ? 'font-mono' : ''}`}
+        className={`${inputClass} flex-1 ${mono ? 'font-mono text-[12px]' : ''}`}
       />
       <button
         type="button"
         disabled={!dirty || busy || disabled}
         onClick={() => void save()}
-        className="h-7 shrink-0 rounded-md bg-accent px-2.5 text-[12px] font-semibold text-accent-fg disabled:opacity-30
-                   hover:brightness-110"
+        className={`h-8 shrink-0 rounded-lg px-3 text-[12.5px] font-semibold transition-colors ${focusRing}
+                    ${dirty ? 'bg-accent text-accent-fg hover:brightness-110' : 'border border-line-strong bg-transparent text-fg-subtle'}
+                    disabled:cursor-not-allowed ${dirty ? 'disabled:opacity-50' : ''}`}
       >
         Save
       </button>
@@ -228,20 +260,38 @@ export function SmallButton({
   children: ReactNode;
   onClick: () => void;
   disabled?: boolean;
-  tone?: 'default' | 'danger';
+  tone?: 'default' | 'primary' | 'danger';
   testId?: string;
 }) {
+  const toneClass =
+    tone === 'danger'
+      ? 'border-error/45 text-error hover:bg-error/10'
+      : tone === 'primary'
+        ? 'border-accent bg-accent text-accent-fg hover:brightness-110'
+        : 'border-line-strong bg-elevated text-fg hover:bg-hover';
   return (
     <button
       type="button"
       data-testid={testId}
       disabled={disabled}
       onClick={onClick}
-      className={`inline-flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium disabled:opacity-40
-                  ${tone === 'danger' ? 'border-error/40 text-error hover:bg-error/10' : 'border-line-strong text-fg-muted hover:bg-hover hover:text-fg'}`}
+      className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-3 text-[12.5px] font-medium transition-colors
+                  disabled:cursor-not-allowed disabled:opacity-40 ${focusRing} ${toneClass}`}
     >
       {children}
     </button>
+  );
+}
+
+// "Applies to new agents" / "Restart needed" chips next to a row title
+export function Badge({ children, tone = 'info' }: { children: ReactNode; tone?: 'info' | 'warn' }) {
+  return (
+    <span
+      className={`inline-flex h-[18px] shrink-0 items-center rounded-full border px-1.5 text-[10.5px] leading-none font-medium whitespace-nowrap
+                  ${tone === 'warn' ? 'border-needs/35 bg-needs/10 text-needs' : 'border-line-strong bg-hover/60 text-fg-muted'}`}
+    >
+      {children}
+    </span>
   );
 }
 
@@ -251,6 +301,6 @@ export function Note({ children, tone = 'muted' }: { children: ReactNode; tone?:
       ? 'border-error/40 bg-error/10 text-error'
       : tone === 'warn'
         ? 'border-needs/40 bg-needs/10 text-needs'
-        : 'border-line bg-surface-2 text-fg-muted';
-  return <p className={`mt-1.5 rounded-md border px-2 py-1.5 text-[11.5px] leading-4 ${cls}`}>{children}</p>;
+        : 'border-line bg-canvas/60 text-fg-muted';
+  return <p className={`mt-2 rounded-lg border px-3 py-2 text-[12px] leading-[18px] ${cls}`}>{children}</p>;
 }

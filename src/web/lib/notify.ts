@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import type { ActionItem, ConsoleInfo } from '../../shared/protocol';
-import { flyTo } from './board-actions';
+import { openAttention } from './inbox-focus';
 import { attentionCount, projectOf } from './fleet';
 import { getPrefs } from './prefs';
 import { useBoard } from './store';
@@ -132,8 +132,8 @@ function ping(consoleId: string | null, title: string, body: string, tag: string
     notification.onclick = () => {
       window.focus();
       notification.close();
-      if (consoleId) void flyTo(consoleId);
-      else useBoard.getState().setSidebarTab('actions');
+      // Answerable dialogs and stuck alerts open their Actions item; the rest fly to the console
+      openAttention(consoleId);
     };
   } catch {
     // Some platforms (e.g. Android Chrome) only allow notifications from a service worker
@@ -156,7 +156,9 @@ function notifyAction(action: ActionItem): void {
       ? 'needs you'
       : action.kind === 'error'
         ? 'hit an error'
-        : 'asks for something';
+        : action.kind === 'stuck'
+          ? 'may be stuck'
+          : 'asks for something';
   const title = c ? titleFor(c, suffix) : action.title;
   const body = c
     ? [action.title, action.detail].filter(Boolean).join(' — ')

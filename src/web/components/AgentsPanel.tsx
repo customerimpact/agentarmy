@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   ChevronDown,
+  ExternalLink,
   FolderClosed,
   FolderOpen,
+  GitBranch,
   LayoutTemplate,
   MoreHorizontal,
   Pencil,
@@ -13,6 +15,8 @@ import {
 import type { ConsoleInfo, Project } from '../../shared/protocol';
 import { api } from '../lib/api';
 import { flyTo } from '../lib/board-actions';
+import { openPopout } from '../lib/popout';
+import { openReview } from '../lib/review';
 import {
   folderName,
   groupByProject,
@@ -61,6 +65,37 @@ function AgentRow({
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] leading-5 font-medium text-fg">{c.name}</span>
         <span className="block truncate text-[11.5px] leading-4 text-fg-subtle">{meta}</span>
+        {c.git && (
+          // Own branch: open the Review panel without flying to the console
+          <span
+            role="button"
+            tabIndex={0}
+            data-testid="mission-review"
+            title={`Review ${c.git.branch}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              openReview(c.id);
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              e.preventDefault();
+              e.stopPropagation();
+              openReview(c.id);
+            }}
+            className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-md border border-line px-1.5 text-[10.5px] leading-4 text-fg-muted
+                       hover:border-accent/60 hover:text-fg"
+          >
+            <GitBranch size={10} className="shrink-0 text-accent" />
+            <span className="truncate font-mono">{c.git.branch.replace(/^agentarmy\//, '')}</span>
+            {c.gitStats && (c.gitStats.added > 0 || c.gitStats.removed > 0) && (
+              <span className="shrink-0 font-mono tabular-nums">
+                <span className="text-project-green">+{c.gitStats.added}</span>{' '}
+                <span className="text-error">−{c.gitStats.removed}</span>
+              </span>
+            )}
+            <span className="shrink-0">Review</span>
+          </span>
+        )}
         {needs && c.statusDetail && (
           <span className="mt-0.5 line-clamp-2 block text-[11.5px] leading-4 text-needs/90">
             {c.statusDetail}
@@ -131,6 +166,7 @@ function ProjectMenu({
             api.openProject(project.id).then(upsertProject).catch(fail('Open project')),
           )}
       {item(<Pencil size={14} />, 'Rename', onRename)}
+      {item(<ExternalLink size={14} />, 'Pop out to a window', () => openPopout({ kind: 'project', id: project.id }))}
       {item(<Ungroup size={14} />, 'Ungroup', () =>
         api
           .deleteProject(project.id)

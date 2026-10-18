@@ -6,6 +6,8 @@ import { getRecentFolders } from '../lib/recent-folders';
 import { useBoard } from '../lib/store';
 import { FolderPicker, joinPath, repoNameFromUrl } from './FolderPicker';
 import { Modal } from './Modal';
+import { WorktreeToggle } from './WorktreeToggle';
+import { AccountPicker } from './settings/AccountsSettings';
 
 type Mode = 'folder' | 'clone';
 
@@ -51,6 +53,8 @@ export function NewAgentDialog() {
   const [cloneParent, setCloneParent] = useState<string | null>(null);
   const [repo, setRepo] = useState('');
   const [name, setName] = useState('');
+  const [isolated, setIsolated] = useState(false);
+  const [accountId, setAccountId] = useState('auto');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startFolder] = useState(() => getRecentFolders()[0]);
@@ -60,9 +64,9 @@ export function NewAgentDialog() {
   const repoName = repoNameFromUrl(repo);
   const clonePath = cloneParent && repoName ? joinPath(cloneParent, repoName) : null;
 
-  const launchIn = async (cwd: string) => {
-    if (count > 1) await createAgentGrid(cwd);
-    else await createAgent(cwd, name);
+  const launchIn = async (cwd: string, worktree = false) => {
+    if (count > 1) await createAgentGrid(cwd, 2, 2, { worktree, accountId });
+    else await createAgent(cwd, name, { worktree, accountId });
   };
 
   const create = async () => {
@@ -70,7 +74,7 @@ export function NewAgentDialog() {
     setBusy(true);
     setError(null);
     try {
-      await launchIn(target);
+      await launchIn(target, isolated);
       close();
     } catch (e) {
       setError((e as Error).message);
@@ -233,6 +237,10 @@ export function NewAgentDialog() {
             {mode === 'clone' ? (clonePath ?? cloneParent ?? ' ') : (target ?? ' ')}
           </div>
           {nameInput}
+          {mode === 'folder' && (
+            <WorktreeToggle path={target} checked={isolated} onChange={setIsolated} />
+          )}
+          <AccountPicker value={accountId} onChange={setAccountId} />
         </div>
         <button
           type="button"

@@ -1,12 +1,14 @@
 import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore, type Node, type NodeProps } from '@xyflow/react';
-import { Check, ChevronDown, FolderX, Pencil, Ungroup } from 'lucide-react';
+import { Check, ChevronDown, ExternalLink, FolderX, Pencil, Ungroup } from 'lucide-react';
 import { PROJECT_COLORS, type ProjectColor } from '../../shared/protocol';
 import { api } from '../lib/api';
 import { FRAME_TITLE } from '../lib/arrange';
 import { projectColor } from '../lib/board-ui';
 import { useBoard } from '../lib/store';
+import { openPopout } from '../lib/popout';
+import { ProjectPoppedOutTag } from './PopoutControls';
 
 export type FrameFlowNode = Node<{ projectId: string }, 'frame'>;
 
@@ -129,6 +131,19 @@ function FrameMenu({
       >
         <Pencil size={13} className="text-fg-subtle" />
         Rename
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        data-testid="project-popout"
+        className={item}
+        onClick={() => {
+          onClose();
+          openPopout({ kind: 'project', id: project.id });
+        }}
+      >
+        <ExternalLink size={13} className="text-fg-subtle" />
+        Pop out to a window
       </button>
       <div className="flex items-center gap-1.5 px-2 py-2">
         {PROJECT_COLORS.map((color) => (
@@ -254,6 +269,7 @@ function ProjectFrameImpl({ data }: NodeProps<FrameFlowNode>) {
           </span>
         )}
         <span className="shrink-0 text-fg-muted tabular-nums">{summary}</span>
+        <ProjectPoppedOutTag projectId={project.id} />
         <button
           ref={chevronRef}
           type="button"

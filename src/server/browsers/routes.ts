@@ -14,6 +14,7 @@ export interface BrowserSocketHandler {
 export interface BrowserService {
   forSocket(send: (msg: unknown) => void): BrowserSocketHandler;
   shutdown(): Promise<void>;
+  impl: BrowserServiceImpl; // for other server modules (auto previews)
 }
 
 const LAYOUT_KEYS = ['x', 'y', 'width', 'height'] as const;
@@ -81,5 +82,6 @@ export async function registerBrowserRoutes(
   return {
     forSocket: (send) => service.forSocket(send),
     shutdown: () => service.shutdown(),
+    impl: service,
   };
 }

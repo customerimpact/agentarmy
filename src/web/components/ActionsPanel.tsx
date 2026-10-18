@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ChevronRight,
   ClipboardList,
   Crosshair,
+  Gauge,
   Hand,
+  Hourglass,
   Check,
   RotateCcw,
   TriangleAlert,
   Volume2,
   VolumeX,
   type LucideIcon,
+  UserRound,
 } from 'lucide-react';
 import type { ActionItem, ActionKind } from '../../shared/protocol';
 import { api } from '../lib/api';
@@ -23,6 +26,8 @@ import {
 } from '../lib/fleet';
 import { setSoundEnabled, useSoundEnabled } from '../lib/notify';
 import { useBoard, useClock } from '../lib/store';
+import { useInboxFocus } from '../lib/inbox-focus';
+import { AnswerBox } from './AnswerBox';
 
 const KIND: Record<ActionKind, { icon: LucideIcon; box: string; label: string }> = {
   needs_you: { icon: Hand, box: 'bg-needs/15 text-needs ring-1 ring-needs/40', label: 'Needs you' },
@@ -36,6 +41,9 @@ const KIND: Record<ActionKind, { icon: LucideIcon; box: string; label: string }>
     box: 'bg-working/15 text-working ring-1 ring-working/40',
     label: 'Request',
   },
+  stuck: { icon: Hourglass, box: 'bg-needs/15 text-needs ring-1 ring-needs/40', label: 'Stuck' },
+  budget: { icon: Gauge, box: 'bg-needs/15 text-needs ring-1 ring-needs/40', label: 'Budget' },
+  account: { icon: UserRound, box: 'bg-working/15 text-working ring-1 ring-working/40', label: 'Account' },
 };
 
 const fail = (what: string) => (error: unknown) =>
@@ -71,11 +79,26 @@ function ActionCard({
   const Icon = kind.icon;
   const source = useSource(action);
   const hasConsole = useBoard((s) => !!(action.consoleId && s.consoles[action.consoleId]));
+  const answerable = !synthetic && !!action.options?.length && (action.kind === 'needs_you' || action.kind === 'stuck' || action.kind === 'account');
+  const ref = useRef<HTMLLIElement>(null);
+  const focusId = useInboxFocus((s) => (s.id === action.id ? s.seq : 0));
+  // A notification click asked for this item: bring it into view and give it the keyboard
+  useEffect(() => {
+    if (!focusId || !ref.current) return;
+    ref.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    ref.current.focus({ preventScroll: true });
+    useInboxFocus.getState().clear();
+  }, [focusId]);
   return (
     <li
+      ref={ref}
       data-testid="action-item"
       data-kind={action.kind}
-      className="rounded-xl border border-line bg-surface-2 p-2.5 transition-colors hover:border-line-strong"
+      data-action-id={action.id}
+      tabIndex={answerable ? 0 : undefined}
+      className="rounded-xl border border-line bg-surface-2 p-2.5 transition-colors outline-none
+                 hover:border-line-strong
+                 focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
     >
       <div className="flex gap-2.5">
         <span className={`grid size-7 shrink-0 place-items-center rounded-lg ${kind.box}`}>
@@ -98,6 +121,7 @@ function ActionCard({
           )}
         </div>
       </div>
+      {answerable && <AnswerBox action={action} itemRef={ref} />}
       <div className="mt-2 flex items-center gap-1.5 pl-[38px]">
         {hasConsole && (
           <button
@@ -110,7 +134,7 @@ function ActionCard({
             Go to
           </button>
         )}
-        {action.kind === 'needs_you' && (
+        {action.kind === 'needs_you' && !answerable && (
           <span className="text-[11px] text-fg-subtle">Answer in the terminal</span>
         )}
         {!synthetic && (

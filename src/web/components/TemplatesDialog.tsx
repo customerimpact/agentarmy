@@ -17,6 +17,8 @@ import { basename, projectColorVar } from '../lib/status';
 import { useBoard } from '../lib/store';
 import { FolderPicker } from './FolderPicker';
 import { Modal } from './Modal';
+import { WorktreeToggle } from './WorktreeToggle';
+import { AccountPicker } from './settings/AccountsSettings';
 
 export function agentCount(t: Pick<Template, 'orchestrator' | 'teams'>): number {
   return (t.orchestrator ? 1 : 0) + t.teams.reduce((sum, team) => sum + team.count, 0);
@@ -147,6 +149,8 @@ export function TemplatesDialog() {
   const [chosen, setChosen] = useState<Template | null>(null);
   const [cwd, setCwd] = useState<string | null>(null);
   const [projectName, setProjectName] = useState('');
+  const [isolated, setIsolated] = useState(false);
+  const [accountId, setAccountId] = useState('auto');
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startFolder] = useState(() => getRecentFolders()[0]);
@@ -204,6 +208,8 @@ export function TemplatesDialog() {
         cwd,
         projectName: projectName.trim() || undefined,
         origin: pickOrigin(chosen),
+        ...(isolated ? { worktrees: true } : {}),
+        ...(accountId !== 'auto' ? { accountId } : {}),
       });
       const store = useBoard.getState();
       for (const project of result.projects) store.upsertProject(project);
@@ -350,6 +356,13 @@ export function TemplatesDialog() {
                 className="mt-1 w-full rounded-md border border-line bg-surface px-2 py-1 text-fg outline-none placeholder:text-fg-subtle
                            focus:border-accent"
               />
+              <WorktreeToggle
+                path={cwd}
+                checked={isolated}
+                onChange={setIsolated}
+                label="Give each agent its own branch"
+              />
+              <AccountPicker value={accountId} onChange={setAccountId} />
             </div>
             <button
               type="button"

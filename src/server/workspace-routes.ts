@@ -8,6 +8,7 @@ import { NotFoundError, type ConsoleManager } from './consoles.js';
 import { cloneRepo } from './git-clone.js';
 import { ProjectService } from './projects.js';
 import { FirstPromptQueue, TemplateService } from './templates.js';
+import type { WorktreeService } from './git-review-routes.js';
 
 function sendError(reply: FastifyReply, err: unknown): FastifyReply {
   const message = err instanceof Error ? err.message : String(err);
@@ -21,9 +22,9 @@ function isFiniteNumber(value: unknown): value is number {
 // Projects, templates, git clone and POST /api/consoles/:id/send.
 export async function registerWorkspaceRoutes(
   app: FastifyInstance,
-  options: { manager: ConsoleManager },
+  options: { manager: ConsoleManager; worktrees?: WorktreeService },
 ): Promise<{ projects: ProjectService; templates: TemplateService }> {
-  const { manager } = options;
+  const { manager, worktrees } = options;
   const projects = new ProjectService(manager);
   const templates = new TemplateService(manager, projects, new FirstPromptQueue(manager));
 
@@ -99,11 +100,23 @@ export async function registerWorkspaceRoutes(
       return reply.code(400).send({ error: 'origin must be { x, y } numbers' });
     }
     try {
-      return templates.launch(id, {
+      const req = {
         cwd: body.cwd,
         projectName: body.projectName,
         origin: origin ? { x: origin.x, y: origin.y } : undefined,
-      });
+        accountId: typeof body.accountId === 'string' ? body.accountId : undefined,
+      };
+      const template = templates.templates.find((t) => t.id === id);
+      if (body.worktrees === true && worktrees && template) {
+        // Each agent gets its own branch; worktrees are made before any console starts
+        const plan = await worktrees.prepareTemplate(template, body.cwd);
+        try {
+          return templates.launch(id, req, plan);
+        } finally {
+          await plan.cleanup();
+        }
+      }
+      return templates.launch(id, req);
     } catch (err) {
       return sendError(reply, err);
     }

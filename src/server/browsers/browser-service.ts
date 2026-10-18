@@ -436,6 +436,12 @@ export class BrowserServiceImpl {
   private sessions = new Map<string, Session>();
   private starting = new Map<string, Promise<Session>>();
   private attached = new Map<string, Set<Send>>();
+  private lastUserInput = new Map<string, { at: number; nav: boolean }>();
+
+  // Last time the user typed/clicked in a tile (nav: they navigated it themselves)
+  userActivity(id: string): { at: number; nav: boolean } | undefined {
+    return this.lastUserInput.get(id);
+  }
   private executable: string | null | undefined;
 
   constructor(
@@ -619,6 +625,8 @@ export class BrowserServiceImpl {
   }
 
   async input(id: string, event: BrowserInputEvent): Promise<void> {
+    // Auto previews must not yank a tile away from a page the user is looking at
+    if (event.kind !== 'viewport') this.lastUserInput.set(id, { at: Date.now(), nav: event.kind === 'navigate' || event.kind === 'history' });
     const session = await this.session(id);
     await session.input(event);
   }

@@ -171,7 +171,11 @@ function findFreeSpot(
   return { ...origin, width, height };
 }
 
-export async function createAgent(cwd: string, name?: string): Promise<void> {
+export async function createAgent(
+  cwd: string,
+  name?: string,
+  options: { worktree?: boolean; accountId?: string } = {},
+): Promise<void> {
   const existing = Object.values(useBoard.getState().consoles).map((c) => c.layout);
   // Settings > Board > New console size (M keeps the classic default)
   const preset = getPrefs().defaultSize;
@@ -182,7 +186,13 @@ export async function createAgent(cwd: string, name?: string): Promise<void> {
     width: spot.width,
     height: spot.height,
   };
-  const created = await api.createConsole({ cwd, name: name?.trim() || undefined, layout });
+  const created = await api.createConsole({
+    cwd,
+    name: name?.trim() || undefined,
+    layout,
+    ...(options.worktree ? { worktree: true } : {}),
+    ...(options.accountId && options.accountId !== 'auto' ? { accountId: options.accountId } : {}),
+  });
   useBoard.getState().upsertConsole(created);
   rememberRecentFolder(cwd);
   // Let React Flow mount and measure the node before flying to it
@@ -190,7 +200,12 @@ export async function createAgent(cwd: string, name?: string): Promise<void> {
 }
 
 // "Spawn 4": a 2x2 block of consoles in one folder, placed as a unit so the grid stays intact
-export async function createAgentGrid(cwd: string, columns = 2, rows = 2): Promise<void> {
+export async function createAgentGrid(
+  cwd: string,
+  columns = 2,
+  rows = 2,
+  options: { worktree?: boolean; accountId?: string } = {},
+): Promise<void> {
   const { width, height } = DEFAULT_SIZE;
   const existing = Object.values(useBoard.getState().consoles).map((c) => c.layout);
   const block = findFreeSpot(existing, {
@@ -211,7 +226,12 @@ export async function createAgentGrid(cwd: string, columns = 2, rows = 2): Promi
   // Sequential so the server hands out friendly names in a stable order
   const created: ConsoleInfo[] = [];
   for (const layout of layouts) {
-    const c = await api.createConsole({ cwd, layout });
+    const c = await api.createConsole({
+      cwd,
+      layout,
+      ...(options.worktree ? { worktree: true } : {}),
+      ...(options.accountId && options.accountId !== 'auto' ? { accountId: options.accountId } : {}),
+    });
     useBoard.getState().upsertConsole(c);
     created.push(c);
   }
@@ -458,6 +478,12 @@ export function askKill(): void {
   if (targets.consoles.length) {
     parts.push(
       `Stops the Claude process and removes ${plural(targets.consoles.length, 'terminal')} from the board. Conversations can still be resumed later with claude --resume.`,
+    );
+  }
+  const branched = targets.consoles.filter((id) => useBoard.getState().consoles[id]?.git).length;
+  if (branched) {
+    parts.push(
+      `Git worktrees and branches are kept (${plural(branched, 'agent')} on its own branch); delete them with Review > Discard branch.`,
     );
   }
   if (targets.browsers.length) {

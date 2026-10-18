@@ -21,6 +21,7 @@ import {
   MAX_ZOOM,
   MIN_SIZE,
   MIN_ZOOM,
+  flyTo,
   isHiddenConsole,
   persistItemLayout,
   persistViewport,
@@ -30,6 +31,7 @@ import { projectColor, useBoardUi } from '../lib/board-ui';
 import { getPrefs, usePrefs } from '../lib/prefs';
 import { snapMove, snapResize, unionRect, type Rect } from '../lib/snap';
 import { STATUS_META } from '../lib/status';
+import { scopeToProject } from '../lib/views';
 import { consoleList, isLayoutLocked, lockLayout, unlockLayout, useBoard, useClock } from '../lib/store';
 import { AlignmentGuides } from './AlignmentGuides';
 import { BrowserNode } from './BrowserNode';
@@ -252,10 +254,15 @@ interface ResizeSession {
   others: Rect[];
 }
 
-export function Board() {
-  const consoles = useBoard((s) => s.consoles);
-  const browsers = useBoard((s) => s.browsers);
-  const projects = useBoard((s) => s.projects);
+// projectId: a pop-out board (?view=project) showing only that project, with its own viewport
+export function Board({ projectId }: { projectId?: string } = {}) {
+  const allConsoles = useBoard((s) => s.consoles);
+  const allBrowsers = useBoard((s) => s.browsers);
+  const allProjects = useBoard((s) => s.projects);
+  const { consoles, browsers, projects } = useMemo(
+    () => scopeToProject(projectId, allConsoles, allBrowsers, allProjects),
+    [projectId, allConsoles, allBrowsers, allProjects],
+  );
   const jobs = useBoard((s) => s.jobs);
   const selectedIds = useBoard((s) => s.selectedIds);
   const selectedId = useBoard((s) => s.selectedId);
@@ -272,7 +279,7 @@ export function Board() {
   const resizes = useRef(new Map<string, ResizeSession>());
   const edgeCache = useRef(new Map<string, { sig: string; edge: FlowLine }>());
   // Captured once: after mount the canvas owns the viewport and only reports it back
-  const initialViewport = useRef(useBoard.getState().viewport);
+  const initialViewport = useRef(projectId ? null : useBoard.getState().viewport);
 
   useEffect(() => {
     setFlowInstance(flow);
@@ -533,7 +540,12 @@ export function Board() {
     window.setTimeout(() => storeApi.setState({ nodesSelectionActive: false }), 0);
   }, [storeApi]);
 
-  const onMoveEnd = useCallback((_: unknown, viewport: Viewport) => persistViewport(viewport), []);
+  const onMoveEnd = useCallback(
+    (_: unknown, viewport: Viewport) => {
+      if (!projectId) persistViewport(viewport); // pop-outs keep their own view
+    },
+    [projectId],
+  );
 
   return (
     <ReactFlow<BoardNode>
@@ -546,6 +558,11 @@ export function Board() {
       onNodeDrag={onNodeDrag}
       onNodeDragStop={onNodeDragStop}
       onNodeClick={onNodeClick}
+      onNodeDoubleClick={(event, node) => {
+        // Double-click inside live terminal text keeps selecting words; anywhere else zooms in
+        if (node.type === 'frame' || (event.target as Element).closest('.xterm, input, textarea, button')) return;
+        void flyTo(node.id);
+      }}
       onSelectionEnd={onSelectionEnd}
       onPaneClick={() => {
         const board = useBoard.getState();

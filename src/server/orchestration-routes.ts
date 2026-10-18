@@ -10,11 +10,14 @@ import type {
 import { NotFoundError, type ConsoleManager } from './consoles.js';
 import { ActionInbox } from './actions.js';
 import { ActivityTracker } from './activity.js';
+import { activeSettings } from './settings.js';
+import { StuckWatcher, type StuckSettings } from './stuck.js';
 import { getBridgeTool, listBridgeTools, registerBridgeTool, textResult } from './bridge-tools.js';
 import { BridgeError, JobService, shortJobId } from './jobs.js';
 
 export interface OrchestrationOptions {
   manager: ConsoleManager;
+  stuckSettings?: () => StuckSettings; // defaults to the live settings store
   port: number;
   token: string;
 }
@@ -199,6 +202,8 @@ export async function registerOrchestrationRoutes(
   const jobs = new JobService(manager);
   const inbox = new ActionInbox(manager);
   new ActivityTracker(manager);
+  const stuck = new StuckWatcher(manager, inbox, options.stuckSettings ?? activeSettings);
+  app.addHook('onClose', async () => stuck.stop());
   registerTools(manager, jobs, inbox);
 
   // ---------- MCP bridge ----------
@@ -290,6 +295,20 @@ export async function registerOrchestrationRoutes(
   });
 
   app.post('/api/actions/clear-resolved', async () => ({ removed: inbox.clearResolved() }));
+
+  // Answer a dialog (or act on a stuck alert) from the Actions tab
+  app.post('/api/actions/:id/answer', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as Obj | undefined;
+    if (!body || typeof body !== 'object') return reply.code(400).send({ error: 'Expected a JSON object' });
+    if (body.key !== undefined && typeof body.key !== 'string') return reply.code(400).send({ error: 'key must be a string' });
+    if (body.text !== undefined && typeof body.text !== 'string') return reply.code(400).send({ error: 'text must be a string' });
+    try {
+      return inbox.answer(id, { key: body.key as string | undefined, text: body.text as string | undefined });
+    } catch (err) {
+      return bridgeFail(reply, err);
+    }
+  });
 
   app.delete('/api/jobs/:id', async (request, reply) => {
     const { id } = request.params as { id: string };

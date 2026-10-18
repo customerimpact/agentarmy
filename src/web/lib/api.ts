@@ -11,6 +11,7 @@ import type {
   FsListResponse,
   LaunchTemplateRequest,
   LaunchTemplateResponse,
+  NtfyTopic,
   Project,
   PublicSettings,
   SettingsPatch,
@@ -18,6 +19,8 @@ import type {
   UpdateConsoleRequest,
   UpdateProjectRequest,
   WebhookKind,
+  PreviewOffer,
+  RecapResponse,
 } from '../../shared/protocol';
 import { getToken } from './auth';
 
@@ -82,6 +85,8 @@ export const api = {
   resolveAction: (id: string, resolved: boolean) =>
     request<ActionItem>('PATCH', `/api/actions/${encodeURIComponent(id)}`, { resolved }),
   clearResolvedActions: () => request<{ removed: number }>('POST', '/api/actions/clear-resolved'),
+  answerAction: (id: string, answer: { key?: string; text?: string }) =>
+    request<ActionItem>('POST', `/api/actions/${encodeURIComponent(id)}/answer`, answer),
   deleteJob: (id: string) => request<{ ok: true }>('DELETE', `/api/jobs/${encodeURIComponent(id)}`),
   createProject: (req: CreateProjectRequest) => request<Project>('POST', '/api/projects', req),
   updateProject: (id: string, req: UpdateProjectRequest) =>
@@ -100,8 +105,19 @@ export const api = {
   getSettings: () => request<PublicSettings>('GET', '/api/settings'),
   patchSettings: (patch: SettingsPatch) => request<PublicSettings>('PATCH', '/api/settings', patch),
   resetSettings: () => request<PublicSettings>('POST', '/api/settings/reset'),
+  listPreviewOffers: () => request<PreviewOffer[]>('GET', '/api/previews/offers'),
+  acceptPreviewOffer: (id: string) =>
+    request<{ ok: true }>('POST', `/api/previews/offers/${encodeURIComponent(id)}/accept`),
+  dismissPreviewOffer: (id: string) =>
+    request<{ ok: true }>('DELETE', `/api/previews/offers/${encodeURIComponent(id)}`),
+  getRecap: (date?: string) =>
+    request<RecapResponse>('GET', date ? `/api/recap?date=${encodeURIComponent(date)}` : '/api/recap'),
+  sendRecap: (date: string, kind?: WebhookKind) =>
+    request<{ sent: WebhookKind[] }>('POST', '/api/recap/send', kind ? { date, kind } : { date }),
   testWebhook: (kind: WebhookKind) =>
     request<{ ok: true }>('POST', '/api/settings/test-webhook', { kind }),
+  testNtfy: () => request<{ ok: true }>('POST', '/api/settings/test-ntfy'),
+  ntfyTopic: () => request<NtfyTopic>('POST', '/api/settings/ntfy-topic'),
   listDir: (path?: string) =>
     request<FsListResponse>(
       'GET',

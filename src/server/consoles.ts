@@ -24,7 +24,7 @@ import { writeMcpConfigFile } from './mcp-bridge.js';
 import { statusFromHook, type HookPayload } from './hook-status.js';
 import { pickConsoleName } from './console-names.js';
 import { findFreeSlot, DEFAULT_SIZE } from './placement.js';
-import { isDismissInput, PromptDetector } from './prompt-detector.js';
+import { isDismissInput, PromptDetector, type ParsedDialog } from './prompt-detector.js';
 import { Scrollback } from './scrollback.js';
 
 const DEFAULT_COLS = 120;
@@ -50,6 +50,8 @@ export const DEFAULT_SEND_TIMING: SendTiming = {
 };
 // claude.exe takes ~3-4s to start on Windows before it reports a missing conversation
 const RESUME_FAILURE_WINDOW_MS = 10_000;
+const STARTING_FALLBACK_MS = 15_000;
+const STARTING_GIVE_UP_MS = 120_000;
 
 // Variables that tie a process to the Claude Code session that launched agentarmy;
 // inheriting them would make every console think it is a nested child session.
@@ -104,6 +106,8 @@ export interface ConsoleManagerEvents {
   removed: [string];
   hook: [string, HookPayload]; // raw hook payloads, after status handling (jobs, todos, actions listen)
   'model-switch': [string]; // the screen showed "Set model to ..." (a /model command ran)
+  output: [string, string]; // raw PTY output (id, data); previews/ watches it for dev-server URLs
+  dialog: [string]; // the numbered dialog on screen changed (see dialogFor)
   job: [Job];
   'job-removed': [string];
   action: [ActionItem];
@@ -125,9 +129,13 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   readonly browsers: BrowserTile[] = [];
   private shuttingDown = false;
   private claudePath: { override: string; path: string } | null = null;
+  // Set by accounts (account-routes.ts): resolves accountId 'auto' and returns CLAUDE_CONFIG_DIR for the console
+  accountEnv: ((info: ConsoleInfo, mode: 'new' | 'resume') => Record<string, string>) | null = null;
 
   constructor(private readonly options: ConsoleManagerOptions) {
     super();
+    // Every feature module (jobs, actions, stuck alerts, webhooks, ...) listens to the same events
+    this.setMaxListeners(50);
   }
 
   getState(): BoardState {
@@ -287,6 +295,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       statusChangedAt: now,
       layout: this.initialLayout(req.layout),
       createdAt: now,
+      ...(req.accountId || this.accountEnv ? { accountId: req.accountId || 'auto' } : {}),
     };
     const live = this.register(info);
     this.launch(live, 'new');
@@ -317,6 +326,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     this.clearSubmitCheck(live);
     live.listeners.clear();
     this.consoles.delete(id);
+    this.lastDialog.delete(id);
     removeSettingsFile(id);
     this.emit('removed', id);
     this.options.onChange();
@@ -332,6 +342,50 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
 
   detach(id: string, listener: OutputListener): void {
     this.consoles.get(id)?.listeners.delete(listener);
+  }
+
+  // The numbered dialog currently on screen (permission prompt, trust dialog, question), if any
+  dialogFor(id: string): ParsedDialog | null {
+    return this.consoles.get(id)?.detector.dialog() ?? null;
+  }
+
+  private lastDialog = new Map<string, string>();
+
+  private refreshDialog(live: LiveConsole): void {
+    const json = JSON.stringify(live.detector.dialog());
+    // While waiting, always re-announce: a resize repaint can leave an identical old dialog in the
+    // tail, so "unchanged" does not mean the inbox item has it (the inbox ignores no-op updates)
+    if (this.lastDialog.get(live.info.id) === json && live.info.status !== 'needs_you') return;
+    this.lastDialog.set(live.info.id, json);
+    this.emit('dialog', live.info.id);
+  }
+
+  // Answers a dialog from the Actions tab: presses the option's key, then types the text answer.
+  // A digit usually picks the option at once; if the same list is redrawn instead, press Enter.
+  answerPrompt(id: string, answer: { key?: string; text?: string }, delayMs = 400): boolean {
+    const live = this.consoles.get(id);
+    if (!live?.pty) return false;
+    const proc = live.pty;
+    if (answer.key) {
+      proc.write(answer.key === 'esc' ? '\x1b' : answer.key);
+      live.detector.reset();
+      if (live.promptPrevStatus) this.schedulePromptCheck(live);
+    }
+    const text = answer.text;
+    if (text) {
+      if (!answer.key) return this.sendText(id, text);
+      setTimeout(() => {
+        if (live.pty === proc) this.sendText(id, text);
+      }, delayMs).unref?.();
+    } else if (answer.key && answer.key !== 'esc') {
+      setTimeout(() => {
+        if (live.pty !== proc) return;
+        const still = live.detector.dialog();
+        // Only while still waiting: a repaint can show the old dialog after it was answered
+        if (live.info.status === 'needs_you' && still?.options.some((o) => o.key === answer.key)) proc.write('\r');
+      }, delayMs * 2).unref?.();
+    }
+    return true;
   }
 
   input(id: string, data: string): void {
@@ -414,6 +468,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
 
   private checkPrompt(live: LiveConsole): void {
     if (!this.consoles.has(live.info.id) || !live.pty) return;
+    this.refreshDialog(live);
     const detail = live.detector.detect();
     const { info } = live;
     if (live.promptPrevStatus) {
@@ -527,7 +582,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
         cols: live.cols,
         rows: live.rows,
         cwd: info.cwd,
-        env: this.childEnv(settings),
+        env: { ...this.childEnv(settings), ...this.accountEnv?.(info, mode) },
       });
     } catch (err) {
       info.status = 'exited';
@@ -540,10 +595,27 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     const startedAt = Date.now();
     this.changed(live);
 
+    // Safety net: if the SessionStart hook never reaches us, call the console ready once its
+    // screen has drawn and gone quiet, instead of showing 'starting' forever
+    const startWatch = setInterval(() => {
+      const now = Date.now();
+      if (live.pty !== proc || info.status !== 'starting' || now - startedAt > STARTING_GIVE_UP_MS) {
+        clearInterval(startWatch);
+        return;
+      }
+      if (now - startedAt < STARTING_FALLBACK_MS || live.lastOutputAt < startedAt || now - live.lastOutputAt < 1500) return;
+      clearInterval(startWatch);
+      info.status = 'idle';
+      info.statusChangedAt = now;
+      this.changed(live);
+    }, 1000);
+    startWatch.unref?.();
+
     proc.onData((data) => {
       if (live.pty !== proc) return;
       live.lastOutputAt = Date.now();
       this.watchModelSwitch(live, data);
+      if (this.listenerCount('output')) this.emit('output', live.info.id, data);
       live.scrollback.append(data);
       live.detector.feed(data);
       this.schedulePromptCheck(live);

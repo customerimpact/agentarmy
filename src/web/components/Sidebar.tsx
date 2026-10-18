@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import {
   Inbox,
+  LayoutDashboard,
   ListChecks,
   Network,
   PanelLeftClose,
@@ -11,15 +12,17 @@ import {
 } from 'lucide-react';
 import { attentionCount } from '../lib/fleet';
 import { useBoard, type SidebarTab } from '../lib/store';
+import { openPopout } from '../lib/popout';
 import { ActionsPanel } from './ActionsPanel';
 import { AgentsPanel } from './AgentsPanel';
 import { ProgressPanel } from './ProgressPanel';
-import { SettingsPanel } from './SettingsPanel';
+import { AccountSwitcherChip } from './AccountChip';
 
 const TABS: { key: SidebarTab; label: string; icon: LucideIcon; hotkey: string }[] = [
   { key: 'agents', label: 'Agents', icon: Users, hotkey: '1' },
   { key: 'actions', label: 'Actions', icon: Inbox, hotkey: '2' },
   { key: 'progress', label: 'Progress', icon: ListChecks, hotkey: '3' },
+  // Settings opens the Settings window (also Ctrl+,), it is not a panel in the sidebar
   { key: 'settings', label: 'Settings', icon: Settings, hotkey: '4' },
 ];
 
@@ -80,6 +83,7 @@ const iconButton = `grid size-8 place-items-center rounded-md text-fg-muted
 export function Sidebar() {
   const open = useBoard((s) => s.sidebarOpen);
   const tab = useBoard((s) => s.sidebarTab);
+  const settingsOpen = useBoard((s) => s.settingsOpen);
   const counts = useCounts();
   const { setSidebarOpen, setSidebarTab, setMissionMapOpen } = useBoard.getState();
   useSidebarKeys();
@@ -108,7 +112,7 @@ export function Sidebar() {
             <button
               key={t.key}
               type="button"
-              title={`${t.label} (${t.hotkey})`}
+              title={t.key === 'settings' ? 'Settings (4 or Ctrl+,)' : `${t.label} (${t.hotkey})`}
               aria-label={t.label}
               onClick={() => setSidebarTab(t.key)}
               className={`relative ${iconButton}`}
@@ -138,13 +142,13 @@ export function Sidebar() {
   return (
     <aside
       data-testid="sidebar"
-      // Settings rows need a label, a description and a control side by side, so that tab is wider
-      className={`flex shrink-0 flex-col border-r border-line bg-surface ${tab === 'settings' ? 'w-[420px]' : 'w-80'}`}
+      className="flex w-80 shrink-0 flex-col border-r border-line bg-surface"
     >
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line pr-2 pl-4">
         <img src="/icon.svg" alt="" className="size-5" />
         <span className="font-semibold tracking-tight text-fg">AgentArmy</span>
         <span className="ml-auto" />
+        <AccountSwitcherChip />
         <button
           type="button"
           data-testid="open-mission-map"
@@ -155,6 +159,16 @@ export function Sidebar() {
         >
           <Network size={14} />
           Map
+        </button>
+        <button
+          type="button"
+          data-testid="open-focus-wall"
+          title="Focus wall: every agent that needs you or is working, in its own window"
+          aria-label="Focus wall"
+          onClick={() => openPopout({ kind: 'focus' })}
+          className={iconButton}
+        >
+          <LayoutDashboard size={15} />
         </button>
         <button
           type="button"
@@ -170,9 +184,9 @@ export function Sidebar() {
       <div role="tablist" className="flex shrink-0 gap-1 border-b border-line px-2 pt-1.5">
         {TABS.map((t) => {
           const Icon = t.icon;
-          const active = tab === t.key;
-          // Settings is a gear-only tab at the end so the three work tabs keep their room
-          const iconOnly = t.key === 'settings' && !active;
+          const active = t.key === 'settings' ? settingsOpen : tab === t.key;
+          // Settings is a gear-only button at the end so the three work tabs keep their room
+          const iconOnly = t.key === 'settings';
           return (
             <button
               key={t.key}
@@ -181,7 +195,7 @@ export function Sidebar() {
               data-testid={`sidebar-tab-${t.key}`}
               aria-selected={active}
               aria-label={t.label}
-              title={`${t.label} (${t.hotkey})`}
+              title={t.key === 'settings' ? 'Settings (4 or Ctrl+,)' : `${t.label} (${t.hotkey})`}
               onClick={() => setSidebarTab(t.key)}
               className={`relative flex items-center justify-center gap-1.5 rounded-t-md px-2 pt-1.5 pb-2 text-[12.5px] font-medium transition-colors
                           ${iconOnly ? 'flex-none' : 'flex-1'}
@@ -204,7 +218,6 @@ export function Sidebar() {
       {tab === 'agents' && <AgentsPanel />}
       {tab === 'actions' && <ActionsPanel />}
       {tab === 'progress' && <ProgressPanel />}
-      {tab === 'settings' && <SettingsPanel />}
     </aside>
   );
 }

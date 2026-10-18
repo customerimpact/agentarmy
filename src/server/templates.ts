@@ -141,6 +141,11 @@ export class FirstPromptQueue {
   }
 }
 
+export interface SpawnHooks {
+  cwdFor: (role: string, key: string) => string;
+  onSpawn: (info: ConsoleInfo, key: string) => void;
+}
+
 export class TemplateService {
   constructor(
     private readonly manager: ConsoleManager,
@@ -151,7 +156,24 @@ export class TemplateService {
 
   // One project per team; the orchestrator gets its own project too, so closing and
   // reopening the whole template is just closing/opening its projects.
-  launch(templateId: string, req: LaunchTemplateRequest): LaunchTemplateResponse {
+  // hooks: per-console cwd override (git worktrees) and a callback once each console exists
+  launch(
+    templateId: string,
+    req: LaunchTemplateRequest,
+    hooks?: SpawnHooks,
+  ): LaunchTemplateResponse {
+    this.hooks = hooks;
+    try {
+      return this.launchInner(templateId, req);
+    } finally {
+      this.hooks = undefined;
+    }
+  }
+
+  private hooks: SpawnHooks | undefined;
+  private spawnSeq = 0;
+
+  private launchInner(templateId: string, req: LaunchTemplateRequest): LaunchTemplateResponse {
     const template = this.templates.find((t) => t.id === templateId);
     if (!template) throw new NotFoundError(`Unknown template ${templateId}`);
     const prefix = req.projectName?.trim();
@@ -165,12 +187,12 @@ export class TemplateService {
     let orchestrator: ConsoleInfo | null = null;
     if (layout.orchestrator) {
       // First, so a bad cwd fails before anything else is created
-      orchestrator = this.spawn(req.cwd, layout.orchestrator, 'Orchestrator');
+      orchestrator = this.spawn(req.cwd, layout.orchestrator, 'Orchestrator', req.accountId);
       consoles.push(orchestrator);
     }
     template.teams.forEach((team, i) => {
       const name = projectName(team.name);
-      const members = layout.teams[i].consoles.map((l) => this.spawn(req.cwd, l, team.role));
+      const members = layout.teams[i].consoles.map((l) => this.spawn(req.cwd, l, team.role, req.accountId));
       consoles.push(...members);
       projects.push(this.projects.create({ name, consoleIds: members.map((c) => c.id) }));
       roster.push(`${name} (${members.map((c) => c.name).join(', ')})`);
@@ -191,8 +213,10 @@ export class TemplateService {
     return { projects, consoles: consoles.map((c) => this.manager.get(c.id) ?? c) };
   }
 
-  private spawn(cwd: string, layout: ConsoleLayout, role: string): ConsoleInfo {
-    const info = this.manager.create({ cwd, layout });
+  private spawn(cwd: string, layout: ConsoleLayout, role: string, accountId?: string): ConsoleInfo {
+    const key = String(++this.spawnSeq);
+    const info = this.manager.create({ cwd: this.hooks?.cwdFor(role, key) ?? cwd, layout, accountId });
+    this.hooks?.onSpawn(info, key);
     info.role = role;
     this.manager.touch(info.id);
     return info;

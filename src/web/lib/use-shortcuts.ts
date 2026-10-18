@@ -31,7 +31,7 @@ export function useShortcuts(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const state = useBoard.getState();
-      const modalOpen = state.newAgentOpen || state.confirm !== null;
+      const modalOpen = state.newAgentOpen || state.confirm !== null || state.settingsOpen;
 
       // Alt combos work everywhere, including inside terminals. code (not key) keeps them
       // layout independent; AltGr reports ctrl+alt on Windows and is excluded.

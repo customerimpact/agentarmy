@@ -10,6 +10,8 @@ import type {
   WebhookInfo,
 } from '../shared/protocol.js';
 import { agentArmyHome } from './store.js';
+import { validateBudgetSetting } from './usage-budgets.js';
+import { NTFY_DEFAULT_SERVER, isNtfyServer, isNtfyTopic, normalizeNtfyServer } from './ntfy.js';
 
 // App settings, persisted next to state.json. Webhook URLs are secrets: they are stored here
 // but never sent back to the browser (see publicView) and never logged.
@@ -17,6 +19,8 @@ import { agentArmyHome } from './store.js';
 export interface StoredSettings extends AppSettings {
   slackWebhookUrl: string;
   discordWebhookUrl: string;
+  ntfyTopic: string; // secret-ish, like the webhook URLs
+  ntfyServer: string;
 }
 
 export const DEFAULT_SETTINGS: StoredSettings = {
@@ -28,8 +32,22 @@ export const DEFAULT_SETTINGS: StoredSettings = {
   claudePath: '',
   startupResume: 'ask',
   browserPath: '',
+  stuckAlerts: true,
+  stallMinutes: 5,
+  longTurnMinutes: 20,
+  autoPreview: true,
+  previewMode: 'open',
+  recapAutoSend: false,
+  recapTime: '18:00',
+  budgetDailyTokens: 0,
+  budgetWeeklyTokens: 0,
+  budget5hTokens: 0,
+  projectDailyBudgets: {},
+  pauseJobsAtBudget: false,
   slackWebhookUrl: '',
   discordWebhookUrl: '',
+  ntfyTopic: '',
+  ntfyServer: NTFY_DEFAULT_SERVER,
 };
 
 export class SettingsError extends Error {}
@@ -40,6 +58,7 @@ const STARTUP_MODES: StartupResume[] = ['ask', 'always', 'never'];
 const RESERVED_FLAGS = ['--session-id', '--resume', '-r', '--continue', '-c', '--settings', '--mcp-config', '--print', '-p'];
 const MODEL_RE = /^[A-Za-z0-9._:\-[\]]{1,100}$/;
 const MAX_TEXT = 1000;
+export const MINUTE_LIMITS = { stallMinutes: [1, 120], longTurnMinutes: [5, 480] } as const;
 
 // Shell-like split: whitespace separates, single or double quotes group, backslash escapes
 // a quote inside double quotes. No variables, globs or other shell features.
@@ -139,6 +158,32 @@ export function validatePatch(raw: unknown): Partial<StoredSettings> {
       case 'browserPath':
         out[key] = text(key, value);
         break;
+      case 'stuckAlerts':
+        out.stuckAlerts = bool(key, value);
+        break;
+      case 'autoPreview':
+      case 'recapAutoSend':
+        out[key] = bool(key, value);
+        break;
+      case 'previewMode':
+        if (value !== 'open' && value !== 'ask') throw new SettingsError('previewMode must be "open" or "ask"');
+        out.previewMode = value;
+        break;
+      case 'recapTime': {
+        const time = text(key, value);
+        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new SettingsError('recapTime must look like 18:00');
+        out.recapTime = time;
+        break;
+      }
+      case 'stallMinutes':
+      case 'longTurnMinutes': {
+        const [min, max] = MINUTE_LIMITS[key];
+        if (typeof value !== 'number' || !Number.isInteger(value) || value < min || value > max) {
+          throw new SettingsError(`${key} must be a whole number of minutes from ${min} to ${max}`);
+        }
+        out[key] = value;
+        break;
+      }
       case 'startupResume':
         if (!STARTUP_MODES.includes(value as StartupResume)) {
           throw new SettingsError(`startupResume must be one of ${STARTUP_MODES.join(', ')}`);
@@ -157,6 +202,25 @@ export function validatePatch(raw: unknown): Partial<StoredSettings> {
         out.discordWebhookUrl = url;
         break;
       }
+      case 'ntfyTopic': {
+        const topic = text(key, value);
+        if (topic && !isNtfyTopic(topic)) throw new SettingsError('ntfy topic may only use letters, digits, - and _ (max 64)');
+        out.ntfyTopic = topic;
+        break;
+      }
+      case 'ntfyServer': {
+        const url = normalizeNtfyServer(text(key, value));
+        if (url && !isNtfyServer(url)) throw new SettingsError('ntfy server must be an https:// URL (http:// only for localhost)');
+        out.ntfyServer = url || NTFY_DEFAULT_SERVER;
+        break;
+      }
+      case 'budgetDailyTokens':
+      case 'budgetWeeklyTokens':
+      case 'budget5hTokens':
+      case 'projectDailyBudgets':
+      case 'pauseJobsAtBudget':
+        Object.assign(out, validateBudgetSetting(key, value, (m) => new SettingsError(m)));
+        break;
       default:
         throw new SettingsError(`Unknown setting: ${key}`);
     }
@@ -248,11 +312,12 @@ export class SettingsStore extends EventEmitter<SettingsEvents> {
   }
 
   publicView(extra: { port: number }): PublicSettings {
-    const { slackWebhookUrl, discordWebhookUrl, ...settings } = this.current;
+    const { slackWebhookUrl, discordWebhookUrl, ntfyTopic, ntfyServer, ...settings } = this.current;
     return {
       settings,
       slack: webhookInfo(slackWebhookUrl),
       discord: webhookInfo(discordWebhookUrl),
+      ntfy: { ...webhookInfo(ntfyTopic), server: ntfyServer },
       version: packageVersion(),
       dataDir: agentArmyHome(),
       port: extra.port,

@@ -2,7 +2,10 @@ import type { ClientMessage, ServerMessage } from '../../shared/protocol';
 import { api } from './api';
 import { getToken } from './auth';
 import { useServerSettings } from './settings';
+import { useUsage } from './usage';
 import { useBoard } from './store';
+import { usePreviewOffers } from './previews';
+import { formatReset, useAccounts } from './accounts';
 
 export type TerminalStreamListener = (kind: 'replay' | 'output', data: string) => void;
 export type BrowserFrameListener = (
@@ -107,6 +110,8 @@ class BoardSocket {
         .getState()
         .then((state) => useBoard.getState().loadState(state))
         .catch(() => undefined);
+      void useUsage.getState().load();
+      void useAccounts.getState().load();
     };
 
     ws.onmessage = (event) => {
@@ -181,9 +186,26 @@ class BoardSocket {
       case 'settings':
         useServerSettings.getState().receive(message.settings);
         break;
+      case 'usage':
+        useUsage.getState().receive(message.usage);
+        break;
       case 'browser-frame':
         for (const listener of this.frameListeners.get(message.id) ?? []) listener(message);
         break;
+      case 'preview-offer':
+        usePreviewOffers.getState().add(message.offer);
+        break;
+      case 'preview-offer-removed':
+        usePreviewOffers.getState().remove(message.id);
+        break;
+      case 'accounts':
+        useAccounts.getState().receive(message.accounts);
+        break;
+      case 'account-switch': {
+        const e = message.event;
+        useBoard.getState().toast(`${e.consoleName} switched from ${e.fromName} to ${e.toName}${e.resetsAt ? ` (${e.fromName} limited until ${formatReset(e.resetsAt)})` : ''}`);
+        break;
+      }
     }
   }
 }

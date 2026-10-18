@@ -7,6 +7,9 @@ import { useServerSettings } from './lib/settings';
 import { socket } from './lib/socket';
 import { useBoard } from './lib/store';
 import { useShortcuts } from './lib/use-shortcuts';
+import { startPopoutPresence, startPopoutTracking, syncPrefsAcrossWindows } from './lib/popout';
+import { parseView } from './lib/views';
+import { PopoutShell } from './components/PopoutViews';
 import { Board } from './components/Board';
 import { CommandBar } from './components/CommandBar';
 import { ConfirmDialog } from './components/ConfirmDialog';
@@ -15,10 +18,19 @@ import { MissingToken } from './components/MissingToken';
 import { MissionMap } from './components/MissionMap';
 import { NewAgentDialog } from './components/NewAgentDialog';
 import { Sidebar } from './components/Sidebar';
+import { SettingsHost, SettingsPage } from './components/SettingsWindow';
 import { ResumeAllToast } from './components/ResumeAllToast';
+import { PreviewOfferToasts } from './components/PreviewOfferToast';
+import { ReviewHost } from './components/ReviewPanel';
 import { ReconnectBanner, Toasts } from './components/StatusBanners';
+import { JobsPausedBanner } from './components/UsageSection';
 import { TemplatesDialog } from './components/TemplatesDialog';
 import { Toolbar } from './components/Toolbar';
+
+// ?view=console|project|focus opens a pop-out window instead of the full board (see lib/views.ts)
+const VIEW = parseView(window.location.search);
+// ?view=settings: the Settings window as a full page (its own window or tab)
+const SETTINGS_PAGE = new URLSearchParams(window.location.search).get('view') === 'settings';
 
 type Phase = 'loading' | 'ready' | 'no-token' | 'bad-token' | 'error';
 
@@ -37,7 +49,9 @@ function Shell() {
         {loaded && <Board />}
         <Toolbar />
         <ReconnectBanner />
+        <JobsPausedBanner />
         {loaded && <ResumeAllToast />}
+        {loaded && <PreviewOfferToasts />}
         {loaded && empty && !newAgentOpen && <EmptyState />}
         {loaded && <CommandBar />}
         <Toasts />
@@ -45,6 +59,8 @@ function Shell() {
       {newAgentOpen && <NewAgentDialog />}
       {loaded && missionMapOpen && <MissionMap />}
       {templatesOpen && <TemplatesDialog />}
+      {loaded && <ReviewHost />}
+      <SettingsHost />
       <ConfirmDialog />
     </div>
   );
@@ -65,7 +81,16 @@ export function App() {
         useBoard.getState().loadState(state);
         socket.start();
         void useServerSettings.getState().load();
-        startNotifications();
+        syncPrefsAcrossWindows();
+        if (SETTINGS_PAGE) {
+          // Settings page: no chimes, no pop-out bookkeeping
+        } else if (VIEW.kind === 'board') {
+          // Only the main board pings; pop-outs would otherwise chime once per window
+          startNotifications();
+          startPopoutTracking();
+        } else {
+          startPopoutPresence(VIEW);
+        }
         setPhase('ready');
       } catch (e) {
         if (cancelled) return;
@@ -109,7 +134,17 @@ export function App() {
 
   return (
     <ReactFlowProvider>
-      <Shell />
+      {SETTINGS_PAGE ? (
+        <div className="relative h-full">
+          <SettingsPage />
+          <Toasts />
+          <ConfirmDialog />
+        </div>
+      ) : VIEW.kind === 'board' ? (
+        <Shell />
+      ) : (
+        <PopoutShell view={VIEW} />
+      )}
     </ReactFlowProvider>
   );
 }

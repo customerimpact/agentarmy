@@ -1,20 +1,21 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { create } from 'zustand';
 import {
   Bell,
   Bot,
-  ChevronDown,
   Copy,
   Globe,
   LayoutGrid,
-  Search,
+  Palette,
+  Plug,
   Send,
   SlidersHorizontal,
   SquareTerminal,
   Wrench,
-  X,
   type LucideIcon,
 } from 'lucide-react';
+import { Gauge } from 'lucide-react';
+import { PauseJobsControl, ProjectBudgetsBelow, budgetBelow } from './settings/UsageSettings';
 import type { PermissionModeSetting, SettingsPatch, StartupResume, WebhookKind } from '../../shared/protocol';
 import { api } from '../lib/api';
 import { useBoardUi } from '../lib/board-ui';
@@ -23,15 +24,40 @@ import { PREF_LIMITS, usePrefs, type DefaultSidebarTab } from '../lib/prefs';
 import { useServerSettings } from '../lib/settings';
 import { useBoard } from '../lib/store';
 import { DEFAULT_THEME, THEMES, setTheme, useTheme } from '../lib/theme';
-import { Highlight, Note, Segmented, Select, SmallButton, Stepper, TextSave, Toggle } from './settings/fields';
+import { NtfyBelow } from './settings/NtfySetting';
+import { AccountsBelow, AutoSwitchBelow, AutoSwitchControl, NewAgentAccountControl, PriorityBelow } from './settings/AccountsSettings';
+import { UsersRound } from 'lucide-react';
+import { Note, Segmented, Select, SmallButton, Stepper, TextSave, Toggle } from './settings/fields';
 
-// Settings tab: general first, then increasingly specific sections. Every row is data
+// Settings registry: general first, then increasingly specific sections. Every row is data
 // (label, description, keywords) so the search box can filter across all of them.
+// SettingsWindow.tsx renders it: one left-nav category per section (any new section gets its own
+// nav item automatically), rows grouped into cards by `group`.
 
-type SectionKey = 'general' | 'notifications' | 'board' | 'terminals' | 'claude' | 'browser' | 'advanced';
+export type SectionKey =
+  | 'general'
+  | 'accounts'
+  | 'appearance'
+  | 'notifications'
+  | 'board'
+  | 'terminals'
+  | 'claude'
+  | 'usage'
+  | 'browser'
+  | 'integrations'
+  | 'advanced';
 
-const SECTIONS: { key: SectionKey; label: string; icon: LucideIcon; note?: string }[] = [
+export interface SectionDef {
+  key: SectionKey;
+  label: string;
+  icon: LucideIcon;
+  note?: string;
+}
+
+export const SECTIONS: SectionDef[] = [
   { key: 'general', label: 'General', icon: SlidersHorizontal },
+  { key: 'accounts', label: 'Accounts', icon: UsersRound },
+  { key: 'appearance', label: 'Appearance', icon: Palette },
   { key: 'notifications', label: 'Notifications', icon: Bell },
   { key: 'board', label: 'Board', icon: LayoutGrid },
   { key: 'terminals', label: 'Terminals', icon: SquareTerminal },
@@ -41,11 +67,18 @@ const SECTIONS: { key: SectionKey; label: string; icon: LucideIcon; note?: strin
     icon: Bot,
     note: 'Applies to consoles you create or restart from now on. Running consoles keep their current settings.',
   },
-  { key: 'browser', label: 'Browser tiles', icon: Globe },
+  {
+    key: 'usage',
+    label: 'Usage & budgets',
+    icon: Gauge,
+    note: 'Budgets count weighted tokens (cache reads count a tenth) read from Claude Code’s local transcripts. You get an alert at 80% and 100%.',
+  },
+  { key: 'browser', label: 'Browser & Previews', icon: Globe },
+  { key: 'integrations', label: 'Integrations', icon: Plug },
   { key: 'advanced', label: 'Advanced', icon: Wrench },
 ];
 
-interface SettingDef {
+export interface SettingDef {
   id: string;
   section: SectionKey;
   label: string;
@@ -53,6 +86,8 @@ interface SettingDef {
   keywords?: string;
   Control?: () => ReactNode; // right-aligned control
   Below?: () => ReactNode; // full-width content under the text (inputs, warnings, cards)
+  group?: string; // card label inside its section (rows with the same group share a card)
+  badge?: 'new-agents' | 'restart'; // "Applies to new agents" / "Restart needed" chip
 }
 
 const toast = (message: string) => useBoard.getState().toast(message);
@@ -81,7 +116,7 @@ function Loading() {
 function ThemeCards() {
   const current = useTheme();
   return (
-    <div className="mt-2 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Theme">
+    <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4" role="radiogroup" aria-label="Theme">
       {THEMES.map((t) => {
         const active = t.id === current;
         return (
@@ -92,24 +127,34 @@ function ThemeCards() {
             aria-checked={active}
             data-testid={`theme-card-${t.id}`}
             onClick={() => setTheme(t.id)}
-            className={`rounded-lg border p-2 text-left transition-colors
-                        hover:border-line-strong
-                        ${active ? 'border-accent ring-1 ring-accent/50' : 'border-line'}`}
+            className={`group rounded-xl border p-2 text-left transition-colors
+                        hover:border-fg-subtle
+                        focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent
+                        ${active ? 'border-accent ring-1 ring-accent' : 'border-line-strong'}`}
           >
+            {/* Mini board: sidebar strip, a console card, status dots */}
             <span
-              className="flex h-9 overflow-hidden rounded-md border border-black/20"
+              className="flex h-[72px] overflow-hidden rounded-lg border border-black/20"
               style={{ background: t.swatches[0] }}
               aria-hidden
             >
-              <span className="m-1.5 w-7 rounded-sm" style={{ background: t.swatches[1] }} />
-              <span className="flex flex-1 items-end gap-1 p-1.5">
-                {t.swatches.slice(2).map((c) => (
-                  <span key={c} className="size-2.5 rounded-full" style={{ background: c }} />
-                ))}
+              <span className="w-5 shrink-0 border-r border-black/15" style={{ background: t.swatches[1] }} />
+              <span className="flex flex-1 flex-col gap-1.5 p-2">
+                <span className="h-7 rounded-md border border-black/15" style={{ background: t.swatches[1] }}>
+                  <span className="mx-1.5 mt-1.5 block h-1 w-8 rounded-full" style={{ background: t.swatches[2] }} />
+                </span>
+                <span className="mt-auto flex gap-1">
+                  {t.swatches.slice(2).map((c) => (
+                    <span key={c} className="size-2 rounded-full" style={{ background: c }} />
+                  ))}
+                </span>
               </span>
             </span>
-            <span className="mt-1.5 block text-[12px] font-semibold text-fg">{t.name}</span>
-            <span className="line-clamp-2 block text-[11px] leading-[14px] text-fg-subtle">{t.description}</span>
+            <span className="mt-2 flex items-center gap-1.5 px-0.5 text-[12.5px] font-semibold text-fg">
+              {t.name}
+              {active && <span className="ml-auto size-1.5 rounded-full bg-accent" />}
+            </span>
+            <span className="line-clamp-2 block px-0.5 text-[11.5px] leading-[15px] text-fg-subtle">{t.description}</span>
           </button>
         );
       })}
@@ -140,7 +185,6 @@ const TAB_OPTIONS: { value: DefaultSidebarTab; label: string }[] = [
   { value: 'agents', label: 'Agents' },
   { value: 'actions', label: 'Actions' },
   { value: 'progress', label: 'Progress' },
-  { value: 'settings', label: 'Settings' },
 ];
 
 function SidebarTabControl() {
@@ -148,7 +192,7 @@ function SidebarTabControl() {
   return (
     <Select
       label="Sidebar opens on"
-      value={value}
+      value={value === 'settings' ? 'agents' : value}
       options={TAB_OPTIONS}
       onChange={(defaultSidebarTab) => usePrefs.getState().setPrefs({ defaultSidebarTab })}
     />
@@ -270,6 +314,31 @@ function WebhookBelow({ kind }: { kind: WebhookKind }) {
       )}
     </div>
   );
+}
+
+// Stuck-agent alerts (server settings)
+function StuckToggle() {
+  const on = useServerSettings((s) => s.data?.settings.stuckAlerts);
+  if (on === undefined) return <Loading />;
+  return <Toggle label="Stuck-agent alerts" checked={on} onChange={(v) => void patchServer({ stuckAlerts: v })} />;
+}
+
+function minutesStepper(key: 'stallMinutes' | 'longTurnMinutes', label: string, min: number, max: number, step: number) {
+  return function MinutesStepper() {
+    const data = useServer();
+    if (!data) return <Loading />;
+    return (
+      <Stepper
+        label={label}
+        value={data.settings[key]}
+        min={min}
+        max={max}
+        step={step}
+        format={(v) => `${v} min`}
+        onChange={(v) => void patchServer({ [key]: v })}
+      />
+    );
+  };
 }
 
 // ---------- Board ----------
@@ -540,6 +609,60 @@ function pathBelow(key: 'claudePath' | 'browserPath', label: string, placeholder
   };
 }
 
+// ---------- Auto previews and daily recap ----------
+
+function AutoPreviewControl() {
+  const data = useServer();
+  if (!data) return <Loading />;
+  return <Toggle label="Auto-open previews" checked={data.settings.autoPreview} onChange={(autoPreview) => void patchServer({ autoPreview })} />;
+}
+
+function PreviewModeControl() {
+  const data = useServer();
+  if (!data) return <Loading />;
+  return (
+    <Segmented
+      label="When a dev server starts"
+      value={data.settings.previewMode}
+      disabled={!data.settings.autoPreview}
+      options={[
+        { value: 'open', label: 'Open directly' },
+        { value: 'ask', label: 'Ask first' },
+      ]}
+      onChange={(previewMode) => void patchServer({ previewMode })}
+    />
+  );
+}
+
+function RecapSendControl() {
+  const data = useServer();
+  if (!data) return <Loading />;
+  return <Toggle label="Send recap automatically" checked={data.settings.recapAutoSend} onChange={(recapAutoSend) => void patchServer({ recapAutoSend })} />;
+}
+
+function RecapSendBelow() {
+  const data = useServer();
+  if (!data || !data.settings.recapAutoSend) return null;
+  const hasHook = data.slack.set || data.discord.set;
+  return (
+    <div className="mt-2 flex flex-col gap-1.5">
+      <label className="flex items-center gap-2 text-[12px] text-fg-muted">
+        Send at
+        <input
+          type="time"
+          data-testid="recap-time"
+          aria-label="Recap time"
+          value={data.settings.recapTime}
+          onChange={(e) => e.target.value && void patchServer({ recapTime: e.target.value }, `Recap goes out at ${e.target.value}`)}
+          className="rounded-md border border-line-strong bg-canvas px-2 py-0.5 font-mono text-[12px] text-fg"
+        />
+        <span className="text-fg-subtle">every day, to {[data.slack.set && 'Slack', data.discord.set && 'Discord'].filter(Boolean).join(' and ') || '…'}</span>
+      </label>
+      {!hasHook && <Note tone="warn">Add a Slack or Discord webhook above first; nothing is sent without one.</Note>}
+    </div>
+  );
+}
+
 // ---------- Advanced ----------
 
 function CopyValue({ value, testId }: { value: string; testId?: string }) {
@@ -588,7 +711,7 @@ function resetEverything(): void {
   useBoard.getState().askConfirm({
     title: 'Reset all settings?',
     message:
-      'Theme, sound, board, terminal and Claude Code settings go back to their defaults, and the Slack and Discord webhooks are removed. Your consoles and projects are not touched.',
+      'Theme, sound, board, terminal and Claude Code settings go back to their defaults, and the Slack, Discord and phone (ntfy) notifications are removed. Your consoles and projects are not touched.',
     confirmLabel: 'Reset settings',
     danger: true,
     onConfirm: async () => {
@@ -636,15 +759,25 @@ function AboutControl() {
 // ---------- Registry ----------
 
 const SETTINGS: SettingDef[] = [
-  { id: 'theme', section: 'general', label: 'Theme', description: 'Colors for the board, panels and terminals.', keywords: 'appearance color colour dark light ember midnight aurora paper look', Below: ThemeCards },
+  { id: 'theme', section: 'appearance', label: 'Theme', description: 'Colors for the board, panels and terminals.', keywords: 'appearance color colour dark light ember midnight aurora paper look', Below: ThemeCards },
   { id: 'startup', section: 'general', label: 'On startup', description: 'What to do with saved conversations when AgentArmy starts.', keywords: 'resume restore relaunch reopen launch boot', Control: StartupControl },
   { id: 'sidebar-tab', section: 'general', label: 'Sidebar opens on', description: 'The tab shown when the app loads.', keywords: 'default tab panel start', Control: SidebarTabControl },
+
+  { id: 'accounts', section: 'accounts', group: 'Your accounts', label: 'Claude accounts', description: 'Each account is its own Claude Code login (config folder). Log in once in a terminal; agents can then run on it.', keywords: 'account login profile subscription email plan claude_config_dir multiple switch limit usage', Below: AccountsBelow },
+  { id: 'account-auto-switch', section: 'accounts', group: 'When an account hits its limit', label: 'Auto-switch accounts', description: 'Move an agent that hits its plan limit to the next available account and resume its conversation there.', keywords: 'limit rate usage switch fallback failover weekly session 5-hour', Control: AutoSwitchControl, Below: AutoSwitchBelow },
+  { id: 'account-priority', section: 'accounts', group: 'When an account hits its limit', label: 'Priority order', description: 'Auto and auto-switch use the first account that is logged in and not limited.', keywords: 'order rank fallback first', Below: PriorityBelow },
+  { id: 'account-new-agents', section: 'accounts', group: 'New agents', label: 'New agents use', description: 'The account picked for New agent and templates unless you choose one there.', keywords: 'default account auto spawn', Control: NewAgentAccountControl },
 
   { id: 'desktop', section: 'notifications', label: 'Desktop notifications', description: 'Pop-up when an agent needs you while this tab is in the background.', keywords: 'alert permission browser popup notify', Control: DesktopControl, Below: DesktopBelow },
   { id: 'sound', section: 'notifications', label: 'Sound', description: 'Short chime when an agent needs you.', keywords: 'audio chime beep mute alert', Control: SoundControl },
   { id: 'volume', section: 'notifications', label: 'Volume', description: 'Chime loudness. Release the slider to hear it.', keywords: 'sound audio loud quiet', Control: VolumeControl },
   { id: 'slack', section: 'notifications', label: 'Slack', description: 'Post to a Slack channel when an agent needs you (incoming webhook, max one per agent every 30 s).', keywords: 'webhook chat message phone remote', Below: () => <WebhookBelow kind="slack" /> },
+  { id: 'stuck-alerts', section: 'notifications', label: 'Stuck-agent alerts', description: 'Add an Actions item when a working agent stalls, repeats the same tool call 5 times, or runs one turn very long.', keywords: 'stalled looping loop hung frozen idle timeout watchdog nudge interrupt', Control: StuckToggle },
+  { id: 'stall-minutes', section: 'notifications', label: 'Stalled after', description: 'Working with no new output and no tool activity for this long.', keywords: 'stuck hung frozen timeout minutes', Control: minutesStepper('stallMinutes', 'Stalled after', 1, 120, 1) },
+  { id: 'long-turn-minutes', section: 'notifications', label: 'Long turn after', description: 'One turn running longer than this.', keywords: 'stuck slow duration timeout minutes', Control: minutesStepper('longTurnMinutes', 'Long turn after', 5, 480, 5) },
   { id: 'discord', section: 'notifications', label: 'Discord', description: 'Post to a Discord channel when an agent needs you (channel webhook, max one per agent every 30 s).', keywords: 'webhook chat message phone remote', Below: () => <WebhookBelow kind="discord" /> },
+  { id: 'recap-send', section: 'notifications', label: 'Daily recap', description: 'Post the end-of-day recap (Progress › Recap) to Slack / Discord at a set time.', keywords: 'summary report digest end of day schedule webhook', Control: RecapSendControl, Below: RecapSendBelow },
+  { id: 'ntfy', section: 'notifications', label: 'Phone (ntfy)', description: 'Push to your phone with the free ntfy app, no account needed (max one per agent every 30 s).', keywords: 'phone mobile push ntfy android ios iphone remote qr', Below: NtfyBelow },
 
   { id: 'snap', section: 'board', label: 'Snap while dragging', description: 'Align consoles to neighbours and the grid. Hold Alt to place freely.', keywords: 'grid magnet align guides', Control: SnapControl },
   { id: 'grid-size', section: 'board', label: 'Grid size', description: 'Spacing of the snap grid.', keywords: 'snap spacing', Control: GridControl },
@@ -666,7 +799,14 @@ const SETTINGS: SettingDef[] = [
   { id: 'api-key', section: 'claude', label: 'Use API key', description: 'Bill API credits instead of your Claude subscription login.', keywords: 'anthropic_api_key billing subscription credits token', Control: serverToggle('useApiKey', 'Use API key'), Below: ApiKeyBelow },
   { id: 'claude-path', section: 'claude', label: 'Claude executable', description: 'Path to claude, if it is not on PATH.', keywords: 'binary exe location install AGENTARMY_CLAUDE_PATH', Below: pathBelow('claudePath', 'Claude path', 'Auto-detect (claude on PATH)') },
 
+  { id: 'budget-daily', section: 'usage', label: 'Daily budget', description: 'All Claude Code sessions on this machine, since midnight.', keywords: 'usage tokens limit cost spend today plan', Below: budgetBelow('budgetDailyTokens', 'Daily') },
+  { id: 'budget-5h', section: 'usage', label: '5-hour budget', description: 'Rolling last 5 hours, like the plan’s session limit.', keywords: 'usage tokens limit pressure plan session window', Below: budgetBelow('budget5hTokens', '5-hour') },
+  { id: 'budget-weekly', section: 'usage', label: 'Weekly budget', description: 'Rolling last 7 days, like the plan’s weekly limit.', keywords: 'usage tokens limit pressure plan week', Below: budgetBelow('budgetWeeklyTokens', 'Weekly') },
+  { id: 'budget-projects', section: 'usage', label: 'Project daily budgets', description: 'Today’s tokens of the consoles in each project.', keywords: 'usage tokens limit team group', Below: ProjectBudgetsBelow },
+  { id: 'budget-pause', section: 'usage', label: 'Pause new jobs at 100%', description: 'Agents cannot send each other jobs while a budget is used up.', keywords: 'usage budget stop block send_job orchestrator limit', Control: PauseJobsControl },
   { id: 'browser-path', section: 'browser', label: 'Browser executable', description: 'Chrome, Edge or Chromium used for browser tiles.', keywords: 'chrome edge chromium path binary AGENTARMY_BROWSER_PATH web', Below: pathBelow('browserPath', 'Browser path', 'Auto-detect Chrome / Edge / Chromium') },
+  { id: 'auto-preview', section: 'browser', label: 'Auto-open dev previews', description: 'When an agent starts a dev server (e.g. http://localhost:5173), show it in a browser tile next to that agent.', keywords: 'preview localhost dev server vite next port url automatic', Control: AutoPreviewControl },
+  { id: 'preview-mode', section: 'browser', label: 'Preview prompt', description: 'Open the preview right away, or ask first with a small prompt.', keywords: 'ask confirm toast preview automatic', Control: PreviewModeControl },
 
   { id: 'data-dir', section: 'advanced', label: 'Data folder', description: 'Board, settings and token files live here.', keywords: 'storage state json home AGENTARMY_HOME location', Below: DataDirBelow },
   { id: 'port', section: 'advanced', label: 'Server port', description: 'Change it with agentarmy --port <n>.', keywords: 'network localhost url', Control: PortControl },
@@ -675,210 +815,15 @@ const SETTINGS: SettingDef[] = [
   { id: 'about', section: 'advanced', label: 'About', description: 'Free, open-source (MIT) board for Claude Code agents.', keywords: 'version license update', Control: AboutControl },
 ];
 
-function searchTokens(query: string): string[] {
+export { SETTINGS };
+
+export function searchTokens(query: string): string[] {
   return query.toLowerCase().split(/\s+/).filter(Boolean);
 }
 
-function matches(def: SettingDef, tokens: string[]): boolean {
-  const section = SECTIONS.find((s) => s.key === def.section)!.label;
+// sectionLabel: the nav category the row is shown under (searching its name finds the row)
+export function matches(def: SettingDef, tokens: string[], sectionLabel?: string): boolean {
+  const section = sectionLabel ?? SECTIONS.find((s) => s.key === def.section)?.label ?? def.section;
   const hay = `${def.label} ${def.description} ${def.keywords ?? ''} ${section}`.toLowerCase();
   return tokens.every((t) => hay.includes(t));
-}
-
-function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
-  if (target.closest('.xterm')) return true;
-  const tag = target.tagName;
-  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
-}
-
-function Row({ def, tokens }: { def: SettingDef; tokens: string[] }) {
-  const { Control, Below } = def;
-  return (
-    <div data-setting-id={def.id} className="border-t border-line/70 px-3 py-2.5 first:border-t-0">
-      <div className="flex items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="text-[12.5px] leading-5 font-medium text-fg">
-            <Highlight text={def.label} tokens={tokens} />
-          </div>
-          <div className="text-[11.5px] leading-4 text-fg-subtle">
-            <Highlight text={def.description} tokens={tokens} />
-          </div>
-        </div>
-        {Control && <Control />}
-      </div>
-      {Below && <Below />}
-    </div>
-  );
-}
-
-export function SettingsPanel() {
-  const [query, setQuery] = useState('');
-  const [collapsed, setCollapsed] = useState<Set<SectionKey>>(new Set());
-  const searchRef = useRef<HTMLInputElement>(null);
-  const error = useServerSettings((s) => s.error);
-  const tokens = useMemo(() => searchTokens(query), [query]);
-  const visible = useMemo(() => SETTINGS.filter((d) => matches(d, tokens)), [tokens]);
-  const searching = tokens.length > 0;
-
-  useEffect(() => {
-    void useServerSettings.getState().load();
-  }, []);
-
-  // '/' or Ctrl+F focuses the search while the panel is open (never stolen from a terminal)
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const slash = e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !isTypingTarget(e.target);
-      const find =
-        (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f' &&
-        !(e.target instanceof HTMLElement && e.target.closest('.xterm'));
-      if (!slash && !find) return;
-      if (document.querySelector('[role="dialog"]')) return;
-      e.preventDefault();
-      searchRef.current?.focus();
-      searchRef.current?.select();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  const jumpTo = (key: SectionKey) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      next.delete(key);
-      return next;
-    });
-    requestAnimationFrame(() =>
-      document.getElementById(`settings-section-${key}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }),
-    );
-  };
-
-  const toggle = (key: SectionKey) =>
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
-
-  return (
-    <div data-testid="settings-panel" className="flex min-h-0 flex-1 flex-col">
-      <div className="shrink-0 border-b border-line px-3 pt-3 pb-2.5">
-        <label className="flex h-8 items-center gap-2 rounded-lg border border-line-strong bg-canvas px-2.5
-                          focus-within:border-accent">
-          <Search size={14} className="shrink-0 text-fg-subtle" />
-          <input
-            ref={searchRef}
-            data-testid="settings-search"
-            type="search"
-            value={query}
-            placeholder="Search settings…"
-            aria-label="Search settings"
-            spellCheck={false}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Escape' && query) {
-                e.stopPropagation();
-                setQuery('');
-              }
-            }}
-            className="min-w-0 flex-1 bg-transparent text-[12.5px] text-fg outline-none placeholder:text-fg-subtle
-                       [&::-webkit-search-cancel-button]:hidden"
-          />
-          {query ? (
-            <button
-              type="button"
-              aria-label="Clear search"
-              onClick={() => {
-                setQuery('');
-                searchRef.current?.focus();
-              }}
-              className="grid size-5 place-items-center rounded text-fg-subtle hover:bg-hover hover:text-fg"
-            >
-              <X size={12} />
-            </button>
-          ) : (
-            <kbd className="rounded border border-line px-1 font-mono text-[10px] text-fg-subtle">/</kbd>
-          )}
-        </label>
-        {searching ? (
-          <div data-testid="settings-result-count" className="mt-2 text-[11.5px] text-fg-subtle">
-            {visible.length} {visible.length === 1 ? 'result' : 'results'}
-          </div>
-        ) : (
-          <nav aria-label="Settings sections" className="mt-2 flex flex-wrap gap-1">
-            {SECTIONS.map((s) => (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => jumpTo(s.key)}
-                className="rounded-full border border-line px-2 py-0.5 text-[11px] text-fg-muted
-                           hover:border-line-strong hover:text-fg"
-              >
-                {s.label}
-              </button>
-            ))}
-          </nav>
-        )}
-      </div>
-
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pt-2 pb-6">
-        {error && <Note tone="danger">Could not load server settings: {error}</Note>}
-        {searching && visible.length === 0 && (
-          <div className="px-3 py-10 text-center text-[12.5px] text-fg-subtle">
-            No settings match “{query.trim()}”.
-          </div>
-        )}
-        {SECTIONS.map((section) => {
-          const rows = visible.filter((d) => d.section === section.key);
-          if (rows.length === 0) return null;
-          const open = searching || !collapsed.has(section.key);
-          const Icon = section.icon;
-          return (
-            <section
-              key={section.key}
-              id={`settings-section-${section.key}`}
-              data-section={section.key}
-              className="mb-2 scroll-mt-2 rounded-xl border border-line bg-surface-2"
-            >
-              <button
-                type="button"
-                aria-expanded={open}
-                onClick={() => !searching && toggle(section.key)}
-                className="flex h-9 w-full items-center gap-2 px-3 text-left"
-              >
-                <Icon size={14} className="text-accent" />
-                <span className="text-[11px] font-semibold tracking-wider text-fg-muted uppercase">{section.label}</span>
-                {searching && <span className="text-[11px] text-fg-subtle tabular-nums">{rows.length}</span>}
-                {!searching && (
-                  <ChevronDown
-                    size={14}
-                    className={`ml-auto text-fg-subtle transition-transform ${open ? '' : '-rotate-90'}`}
-                  />
-                )}
-              </button>
-              {open && (
-                <div className="border-t border-line">
-                  {section.note && !searching && (
-                    <p className="mx-3 mt-2.5 rounded-md bg-accent/10 px-2 py-1.5 text-[11.5px] leading-4 text-fg-muted">
-                      {section.note}
-                    </p>
-                  )}
-                  {rows.map((def) => (
-                    <Row key={def.id} def={def} tokens={tokens} />
-                  ))}
-                </div>
-              )}
-            </section>
-          );
-        })}
-        {!searching && (
-          <p className="px-3 pt-1 text-[11px] text-fg-subtle">
-            Theme, sound, board and terminal settings are saved in this browser. Claude Code, startup, webhook and
-            browser settings are saved on the server for every tab.
-          </p>
-        )}
-      </div>
-    </div>
-  );
 }
