@@ -13,6 +13,9 @@ import type {
 } from '../shared/protocol.js';
 import { NotFoundError, type ConsoleManager } from './consoles.js';
 import { listDirectory } from './fs-list.js';
+import { registerBrowserRoutes } from './browsers/routes.js';
+import { registerOrchestrationRoutes } from './orchestration-routes.js';
+import { registerWorkspaceRoutes } from './workspace-routes.js';
 import type { HookPayload } from './hook-status.js';
 import {
   isAllowedHost,
@@ -28,7 +31,7 @@ export interface ServerOptions extends SecurityConfig {
   manager: ConsoleManager;
 }
 
-const PROTECTED_PREFIXES = ['/api/', '/ws', '/hook/'];
+const PROTECTED_PREFIXES = ['/api/', '/ws', '/hook/', '/bridge/'];
 
 // Built: dist/cli.js next to dist/web. From source (tsx): src/server -> ../../dist/web.
 function findWebRoot(): string | null {
@@ -41,9 +44,10 @@ function queryToken(request: FastifyRequest): unknown {
   return (request.query as Record<string, unknown> | undefined)?.token;
 }
 
-// /hook only takes the query token: Claude Code never sends our cookie, and nothing else should post there
+// /hook and /bridge only take the query token: Claude Code and our MCP bridge never send the cookie
 function isAuthorized(request: FastifyRequest, url: string, token: string): boolean {
-  if (url.startsWith('/hook/')) return isValidToken(queryToken(request), token);
+  if (url.startsWith('/hook/') || url.startsWith('/bridge/'))
+    return isValidToken(queryToken(request), token);
   return (
     isValidToken(request.headers['x-agentarmy-token'], token) ||
     isValidToken(queryToken(request), token) ||
@@ -58,6 +62,14 @@ function sendError(reply: FastifyReply, err: unknown): FastifyReply {
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
+}
+
+function parseJson(raw: unknown): unknown {
+  try {
+    return JSON.parse(String(raw));
+  } catch {
+    return null;
+  }
 }
 
 function parseClientMessage(raw: unknown): ClientMessage | null {
@@ -105,6 +117,7 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
     const hasCookie = readCookie(request.headers.cookie, TOKEN_COOKIE) === options.token;
     if (
       !url.startsWith('/hook/') &&
+      !url.startsWith('/bridge/') &&
       !hasCookie &&
       isValidToken(queryToken(request), options.token)
     ) {
@@ -113,6 +126,9 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
   });
 
   await app.register(fastifyWebsocket, { options: { maxPayload: 1024 * 1024 } });
+
+  const browsers = await registerBrowserRoutes(app, { manager });
+  app.addHook('onClose', async () => browsers.shutdown());
 
   const sockets = new Set<WebSocket>();
   const send = (socket: WebSocket, msg: ServerMessage): void => {
@@ -123,12 +139,22 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
   };
   manager.on('console', (console) => broadcast({ type: 'console', console }));
   manager.on('removed', (id) => broadcast({ type: 'removed', id }));
+  manager.on('job', (job) => broadcast({ type: 'job', job }));
+  manager.on('job-removed', (id) => broadcast({ type: 'job-removed', id }));
+  manager.on('action', (action) => broadcast({ type: 'action', action }));
+  manager.on('actions-removed', (ids) => broadcast({ type: 'actions-removed', ids }));
+  manager.on('project', (project) => broadcast({ type: 'project', project }));
+  manager.on('project-removed', (id) => broadcast({ type: 'project-removed', id }));
+  manager.on('browser', (browser) => broadcast({ type: 'browser', browser }));
+  manager.on('browser-removed', (id) => broadcast({ type: 'browser-removed', id }));
 
   app.get('/ws', { websocket: true }, (socket) => {
     sockets.add(socket);
     const listeners = new Map<string, (data: string) => void>();
+    const browserHandler = browsers.forSocket((msg) => send(socket, msg as ServerMessage));
 
     socket.on('message', (raw) => {
+      if (browserHandler.onMessage(parseJson(raw), (msg) => send(socket, msg as ServerMessage))) return;
       const msg = parseClientMessage(raw);
       if (!msg) return;
       switch (msg.type) {
@@ -158,12 +184,16 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
 
     socket.on('close', () => {
       sockets.delete(socket);
+      browserHandler.onClose();
       for (const [id, listener] of listeners) manager.detach(id, listener);
       listeners.clear();
     });
   });
 
   app.get('/api/state', async () => manager.getState());
+
+  await registerOrchestrationRoutes(app, { manager, port: options.port, token: options.token });
+  await registerWorkspaceRoutes(app, { manager });
 
   app.post('/api/consoles', async (request, reply) => {
     const body = request.body as CreateConsoleRequest | undefined;

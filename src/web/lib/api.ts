@@ -1,9 +1,20 @@
 import type {
+  ActionItem,
   BoardState,
+  BrowserTile,
+  CloneRequest,
+  CloneResponse,
   ConsoleInfo,
+  ConsoleLayout,
   CreateConsoleRequest,
+  CreateProjectRequest,
   FsListResponse,
+  LaunchTemplateRequest,
+  LaunchTemplateResponse,
+  Project,
+  Template,
   UpdateConsoleRequest,
+  UpdateProjectRequest,
 } from '../../shared/protocol';
 import { getToken } from './auth';
 
@@ -44,6 +55,14 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 const consolePath = (id: string) => `/api/consoles/${encodeURIComponent(id)}`;
+const projectPath = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
+const browserPath = (id: string) => `/api/browsers/${encodeURIComponent(id)}`;
+
+type BrowserRequest = {
+  url?: string;
+  layout?: Partial<ConsoleLayout>;
+  linkedConsoleId?: string | null;
+};
 
 export const api = {
   getState: () => request<BoardState>('GET', '/api/state'),
@@ -55,6 +74,26 @@ export const api = {
   resumeAll: () => request<{ resumed: number }>('POST', '/api/resume-all'),
   putViewport: (viewport: { x: number; y: number; zoom: number }) =>
     request<{ ok: true }>('PUT', '/api/viewport', viewport),
+  sendText: (id: string, text: string) =>
+    request<{ ok: true }>('POST', `${consolePath(id)}/send`, { text }),
+  resolveAction: (id: string, resolved: boolean) =>
+    request<ActionItem>('PATCH', `/api/actions/${encodeURIComponent(id)}`, { resolved }),
+  clearResolvedActions: () => request<{ removed: number }>('POST', '/api/actions/clear-resolved'),
+  deleteJob: (id: string) => request<{ ok: true }>('DELETE', `/api/jobs/${encodeURIComponent(id)}`),
+  createProject: (req: CreateProjectRequest) => request<Project>('POST', '/api/projects', req),
+  updateProject: (id: string, req: UpdateProjectRequest) =>
+    request<Project>('PATCH', projectPath(id), req),
+  deleteProject: (id: string) => request<{ ok: true }>('DELETE', projectPath(id)),
+  closeProject: (id: string) => request<Project>('POST', `${projectPath(id)}/close`),
+  openProject: (id: string) => request<Project>('POST', `${projectPath(id)}/open`),
+  listTemplates: () => request<Template[]>('GET', '/api/templates'),
+  launchTemplate: (id: string, req: LaunchTemplateRequest) =>
+    request<LaunchTemplateResponse>('POST', `/api/templates/${encodeURIComponent(id)}/launch`, req),
+  cloneRepo: (req: CloneRequest) => request<CloneResponse>('POST', '/api/git/clone', req),
+  createBrowser: (req: BrowserRequest) => request<BrowserTile>('POST', '/api/browsers', req),
+  updateBrowser: (id: string, req: BrowserRequest) =>
+    request<BrowserTile>('PATCH', browserPath(id), req),
+  deleteBrowser: (id: string) => request<{ ok: true }>('DELETE', browserPath(id)),
   listDir: (path?: string) =>
     request<FsListResponse>(
       'GET',

@@ -4,11 +4,15 @@ import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import * as pty from 'node-pty';
 import type {
+  ActionItem,
   BoardState,
+  BrowserTile,
   ConsoleInfo,
   ConsoleLayout,
   ConsoleStatus,
   CreateConsoleRequest,
+  Job,
+  Project,
   UpdateConsoleRequest,
 } from '../shared/protocol.js';
 import { STATE_VERSION } from '../shared/protocol.js';
@@ -69,11 +73,26 @@ export interface ConsoleManagerOptions {
 export interface ConsoleManagerEvents {
   console: [ConsoleInfo];
   removed: [string];
+  hook: [string, HookPayload]; // raw hook payloads, after status handling (jobs, todos, actions listen)
+  job: [Job];
+  'job-removed': [string];
+  action: [ActionItem];
+  'actions-removed': [string[]];
+  project: [Project];
+  'project-removed': [string];
+  browser: [BrowserTile];
+  'browser-removed': [string];
 }
 
 export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   private consoles = new Map<string, LiveConsole>();
   private viewport: BoardState['viewport'];
+  // Owned by the feature modules (jobs.ts, actions.ts, projects.ts, browsers/); persisted with the board.
+  // Mutate in place, then call emit(<event>, item) and persist().
+  readonly jobs: Job[] = [];
+  readonly actions: ActionItem[] = [];
+  readonly projects: Project[] = [];
+  readonly browsers: BrowserTile[] = [];
   private shuttingDown = false;
   private claudePath: string | null = null;
 
@@ -85,12 +104,56 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     return {
       version: STATE_VERSION,
       consoles: [...this.consoles.values()].map((c) => c.info),
+      jobs: this.jobs,
+      actions: this.actions,
+      projects: this.projects,
+      browsers: this.browsers,
       ...(this.viewport ? { viewport: this.viewport } : {}),
     };
   }
 
   get(id: string): ConsoleInfo | undefined {
     return this.consoles.get(id)?.info;
+  }
+
+  list(): ConsoleInfo[] {
+    return [...this.consoles.values()].map((c) => c.info);
+  }
+
+  persist(): void {
+    this.options.onChange();
+  }
+
+  // Broadcast + persist after a feature module changed a console's fields (todos, model, projectId...)
+  touch(id: string): void {
+    const live = this.consoles.get(id);
+    if (live) this.changed(live);
+  }
+
+  // Types text into the console like a paste, then presses Enter
+  sendText(id: string, text: string): boolean {
+    const live = this.consoles.get(id);
+    if (!live?.pty) return false;
+    const proc = live.pty;
+    // Bracketed paste keeps multi-line text in one prompt instead of submitting at each newline
+    proc.write(text.includes('\n') ? `\x1b[200~${text}\x1b[201~` : text);
+    setTimeout(() => {
+      if (live.pty === proc) proc.write('\r');
+    }, 60);
+    return true;
+  }
+
+  // Stops the process but keeps the console and its conversation (resume with restart())
+  suspend(id: string): ConsoleInfo {
+    const live = this.require(id);
+    this.killPty(live);
+    live.scrollback.clear();
+    live.promptPrevStatus = null;
+    live.info.status = 'suspended';
+    live.info.statusDetail = undefined;
+    live.info.statusChangedAt = Date.now();
+    this.changed(live);
+    return live.info;
   }
 
   setViewport(viewport: NonNullable<BoardState['viewport']>): void {
@@ -101,9 +164,19 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   // With resumeAll false, live consoles come back 'suspended' so the user decides when to spend tokens
   restore(state: BoardState, options: { resumeAll: boolean }): void {
     this.viewport = state.viewport;
+    this.jobs.push(...state.jobs);
+    this.actions.push(...state.actions);
+    this.projects.push(...state.projects);
+    this.browsers.push(...state.browsers);
+    const closedProjects = new Set(state.projects.filter((p) => !p.open).map((p) => p.id));
     for (const info of state.consoles) {
       const live = this.register({ ...info });
       if (info.status === 'exited') continue;
+      // Consoles of a closed project stay stopped until the project is opened again
+      if (info.projectId && closedProjects.has(info.projectId)) {
+        live.info.status = 'suspended';
+        continue;
+      }
       if (options.resumeAll) {
         this.launch(live, 'resume');
         continue;
@@ -213,6 +286,11 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   }
 
   handleHook(id: string, payload: HookPayload): void {
+    this.applyHookStatus(id, payload);
+    if (this.consoles.has(id)) this.emit('hook', id, payload);
+  }
+
+  private applyHookStatus(id: string, payload: HookPayload): void {
     const live = this.consoles.get(id);
     if (!live || live.info.status === 'exited' || live.info.status === 'suspended') return;
     if (this.options.dev) console.log(`[hook ${id.slice(0, 8)}]`, JSON.stringify(payload));
