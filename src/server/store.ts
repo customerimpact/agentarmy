@@ -10,7 +10,7 @@ export function agentArmyHome(): string {
 }
 
 export function emptyState(): BoardState {
-  return { version: STATE_VERSION, consoles: [] };
+  return { version: STATE_VERSION, consoles: [], jobs: [], actions: [], projects: [], browsers: [] };
 }
 
 export class StateStore {
@@ -27,11 +27,21 @@ export class StateStore {
       return emptyState();
     }
     try {
-      const parsed = JSON.parse(raw) as Partial<BoardState>;
-      if (parsed.version !== STATE_VERSION || !Array.isArray(parsed.consoles)) {
+      const parsed = JSON.parse(raw) as Partial<Omit<BoardState, 'version'>> & { version?: number };
+      // v1 had only consoles + viewport; v2 adds jobs, actions, projects and browser tiles
+      if ((parsed.version !== 1 && parsed.version !== STATE_VERSION) || !Array.isArray(parsed.consoles)) {
         throw new Error(`unsupported state version ${String(parsed.version)}`);
       }
-      return { version: STATE_VERSION, consoles: parsed.consoles, viewport: parsed.viewport };
+      const list = <T>(value: T[] | undefined): T[] => (Array.isArray(value) ? value : []);
+      return {
+        version: STATE_VERSION,
+        consoles: parsed.consoles,
+        jobs: list(parsed.jobs),
+        actions: list(parsed.actions),
+        projects: list(parsed.projects),
+        browsers: list(parsed.browsers),
+        viewport: parsed.viewport,
+      };
     } catch (err) {
       // Keep the unreadable file for the user instead of silently overwriting it
       const backup = `${this.filePath}.${Date.now()}.bad`;

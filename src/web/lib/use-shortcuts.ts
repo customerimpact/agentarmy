@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { fitAll, flyTo } from './board-actions';
+import { arrangeBoard, askKill, clearSelection, fitAll, flyTo, selectAll } from './board-actions';
+import { useBoardUi } from './board-ui';
 import { spatialOrder, useBoard } from './store';
 
 function isTypingTarget(target: EventTarget | null): boolean {
@@ -30,7 +31,7 @@ export function useShortcuts(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const state = useBoard.getState();
-      const modalOpen = state.newAgentOpen || state.confirm !== null;
+      const modalOpen = state.newAgentOpen || state.confirm !== null || state.settingsOpen;
 
       // Alt combos work everywhere, including inside terminals. code (not key) keeps them
       // layout independent; AltGr reports ctrl+alt on Windows and is excluded.
@@ -53,9 +54,36 @@ export function useShortcuts(): void {
         return;
       }
 
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        selectAll();
+        return;
+      }
+
+      if (e.key === 'Escape' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        useBoardUi.getState().setGroupPromptOpen(false);
+        if (state.selectedIds.length) clearSelection();
+        return;
+      }
+
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-      if (e.key === 'n' || e.key === 'N') {
+      // Delete with the board focused (terminals keep their own Delete key: see isTypingTarget)
+      if (e.key === 'Delete' && !e.shiftKey) {
+        e.preventDefault();
+        askKill();
+        return;
+      }
+
+      if (e.key === 'A' && e.shiftKey) {
+        e.preventDefault();
+        arrangeBoard('grid');
+      } else if ((e.key === 'g' || e.key === 'G') && !e.shiftKey) {
+        if (state.selectedIds.some((id) => state.consoles[id])) {
+          e.preventDefault();
+          useBoardUi.getState().setGroupPromptOpen(true);
+        }
+      } else if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
         state.setNewAgentOpen(true);
       } else if (e.key === 'f' || e.key === 'F') {

@@ -1,41 +1,16 @@
 import { useEffect, useRef } from 'react';
-import { Terminal, type ITheme } from '@xterm/xterm';
+import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { WebLinksAddon } from '@xterm/addon-web-links';
 import { WebglAddon } from '@xterm/addon-webgl';
 import { socket } from '../lib/socket';
 import { useBoard } from '../lib/store';
 import { registerTerminal, unregisterTerminal } from '../lib/terminals';
+import { getPrefs, usePrefs } from '../lib/prefs';
+import { getTheme, subscribeTheme, terminalTheme } from '../lib/theme';
 
 const TERMINAL_FONT =
   "'JetBrains Mono Variable', 'JetBrains Mono', 'Cascadia Mono', 'Cascadia Code', Consolas, 'SF Mono', Menlo, monospace";
-
-const THEME: ITheme = {
-  background: '#0d0f13',
-  foreground: '#d8dbe2',
-  cursor: '#8b93ff',
-  cursorAccent: '#0d0f13',
-  selectionBackground: 'rgba(139, 147, 255, 0.32)',
-  scrollbarSliderBackground: 'rgba(255, 255, 255, 0.10)',
-  scrollbarSliderHoverBackground: 'rgba(255, 255, 255, 0.18)',
-  scrollbarSliderActiveBackground: 'rgba(255, 255, 255, 0.24)',
-  black: '#1b1e25',
-  red: '#f0646f',
-  green: '#3fcf86',
-  yellow: '#f5b544',
-  blue: '#5d9bff',
-  magenta: '#b58cff',
-  cyan: '#4fd0dc',
-  white: '#c8ccd4',
-  brightBlack: '#5c6370',
-  brightRed: '#ff8088',
-  brightGreen: '#6ee0a6',
-  brightYellow: '#ffd27a',
-  brightBlue: '#8ab6ff',
-  brightMagenta: '#d0b3ff',
-  brightCyan: '#7fe3eb',
-  brightWhite: '#f2f4f8',
-};
 
 const IS_WINDOWS = /win/i.test(navigator.platform);
 
@@ -62,13 +37,14 @@ export function TerminalView({ id, hidden, webgl }: TerminalViewProps) {
 
   useEffect(() => {
     const host = hostRef.current!;
+    const prefs = getPrefs();
     const term = new Terminal({
       fontFamily: TERMINAL_FONT,
-      fontSize: 13,
-      lineHeight: 1.15,
-      cursorBlink: true,
-      scrollback: 5000,
-      theme: THEME,
+      fontSize: prefs.termFontSize,
+      lineHeight: prefs.termLineHeight,
+      cursorBlink: prefs.termCursorBlink,
+      scrollback: prefs.termScrollback,
+      theme: terminalTheme(getTheme()),
       allowProposedApi: true,
       windowsPty: IS_WINDOWS ? { backend: 'conpty' } : undefined,
     });
@@ -131,6 +107,24 @@ export function TerminalView({ id, hidden, webgl }: TerminalViewProps) {
     // Ctrl/cmd+wheel zooms the board (handled by the node); plain wheel scrolls the terminal
     term.attachCustomWheelEventHandler((e) => !(e.ctrlKey || e.metaKey));
 
+    // Follow the app color theme live
+    const unsubscribeTheme = subscribeTheme(() => {
+      term.options.theme = terminalTheme(getTheme());
+    });
+
+    // Settings > Terminals apply live; a new font size changes cols/rows, so refit
+    const unsubscribePrefs = usePrefs.subscribe((state, prev) => {
+      const p = state.prefs;
+      const q = prev.prefs;
+      if (p.termCursorBlink !== q.termCursorBlink) term.options.cursorBlink = p.termCursorBlink;
+      if (p.termScrollback !== q.termScrollback) term.options.scrollback = p.termScrollback;
+      if (p.termFontSize !== q.termFontSize || p.termLineHeight !== q.termLineHeight) {
+        term.options.fontSize = p.termFontSize;
+        term.options.lineHeight = p.termLineHeight;
+        fitNow();
+      }
+    });
+
     const onFocus = () => useBoard.getState().select(id);
     term.textarea?.addEventListener('focus', onFocus);
 
@@ -148,6 +142,8 @@ export function TerminalView({ id, hidden, webgl }: TerminalViewProps) {
       term.textarea?.removeEventListener('focus', onFocus);
       dataSub.dispose();
       unsubscribe();
+      unsubscribeTheme();
+      unsubscribePrefs();
       unregisterTerminal(id, term);
       termRef.current = null;
       term.dispose();

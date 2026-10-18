@@ -7,11 +7,20 @@
       content="width=device-width, initial-scale=1.0" />
     <meta
       name="theme-color"
-      content="#0a0b0e" />
+      content="#0c0a09" />
     <meta
       name="color-scheme"
-      content="dark light" />
+      content="dark" />
     <title>AgentArmy</title>
+    <script>
+      // Apply the saved color theme before first paint (see src/web/lib/theme.ts)
+      try {
+        var t = localStorage.getItem('agentarmy.theme');
+        if (t === 'ember' || t === 'midnight' || t === 'aurora' || t === 'paper') {
+          document.documentElement.dataset.theme = t;
+        }
+      } catch (e) {}
+    </script>
     <link
       id="aa-favicon"
       rel="icon"

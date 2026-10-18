@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LoaderCircle, Play } from 'lucide-react';
 import { api } from '../lib/api';
+import { useServerSettings } from '../lib/settings';
 import { useBoard } from '../lib/store';
 
 // Offered once per page load: relaunching restored sessions spends tokens, so it's the user's call
@@ -8,9 +9,11 @@ export function ResumeAllToast() {
   const suspendedCount = useBoard(
     (s) => Object.values(s.consoles).filter((c) => c.status === 'suspended').length,
   );
+  // Settings > General > On startup: 'never' means don't offer it
+  const never = useServerSettings((s) => s.data?.settings.startupResume === 'never');
   const [dismissed, setDismissed] = useState(false);
   const [busy, setBusy] = useState(false);
-  if (dismissed || suspendedCount === 0) return null;
+  if (dismissed || never || suspendedCount === 0) return null;
 
   const resumeAll = async () => {
     setBusy(true);

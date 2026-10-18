@@ -1,9 +1,26 @@
 import type {
+  ActionItem,
   BoardState,
+  BrowserTile,
+  CloneRequest,
+  CloneResponse,
   ConsoleInfo,
+  ConsoleLayout,
   CreateConsoleRequest,
+  CreateProjectRequest,
   FsListResponse,
+  LaunchTemplateRequest,
+  LaunchTemplateResponse,
+  NtfyTopic,
+  Project,
+  PublicSettings,
+  SettingsPatch,
+  Template,
   UpdateConsoleRequest,
+  UpdateProjectRequest,
+  WebhookKind,
+  PreviewOffer,
+  RecapResponse,
 } from '../../shared/protocol';
 import { getToken } from './auth';
 
@@ -44,6 +61,14 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 }
 
 const consolePath = (id: string) => `/api/consoles/${encodeURIComponent(id)}`;
+const projectPath = (id: string) => `/api/projects/${encodeURIComponent(id)}`;
+const browserPath = (id: string) => `/api/browsers/${encodeURIComponent(id)}`;
+
+type BrowserRequest = {
+  url?: string;
+  layout?: Partial<ConsoleLayout>;
+  linkedConsoleId?: string | null;
+};
 
 export const api = {
   getState: () => request<BoardState>('GET', '/api/state'),
@@ -55,6 +80,44 @@ export const api = {
   resumeAll: () => request<{ resumed: number }>('POST', '/api/resume-all'),
   putViewport: (viewport: { x: number; y: number; zoom: number }) =>
     request<{ ok: true }>('PUT', '/api/viewport', viewport),
+  sendText: (id: string, text: string) =>
+    request<{ ok: true }>('POST', `${consolePath(id)}/send`, { text }),
+  resolveAction: (id: string, resolved: boolean) =>
+    request<ActionItem>('PATCH', `/api/actions/${encodeURIComponent(id)}`, { resolved }),
+  clearResolvedActions: () => request<{ removed: number }>('POST', '/api/actions/clear-resolved'),
+  answerAction: (id: string, answer: { key?: string; text?: string }) =>
+    request<ActionItem>('POST', `/api/actions/${encodeURIComponent(id)}/answer`, answer),
+  deleteJob: (id: string) => request<{ ok: true }>('DELETE', `/api/jobs/${encodeURIComponent(id)}`),
+  createProject: (req: CreateProjectRequest) => request<Project>('POST', '/api/projects', req),
+  updateProject: (id: string, req: UpdateProjectRequest) =>
+    request<Project>('PATCH', projectPath(id), req),
+  deleteProject: (id: string) => request<{ ok: true }>('DELETE', projectPath(id)),
+  closeProject: (id: string) => request<Project>('POST', `${projectPath(id)}/close`),
+  openProject: (id: string) => request<Project>('POST', `${projectPath(id)}/open`),
+  listTemplates: () => request<Template[]>('GET', '/api/templates'),
+  launchTemplate: (id: string, req: LaunchTemplateRequest) =>
+    request<LaunchTemplateResponse>('POST', `/api/templates/${encodeURIComponent(id)}/launch`, req),
+  cloneRepo: (req: CloneRequest) => request<CloneResponse>('POST', '/api/git/clone', req),
+  createBrowser: (req: BrowserRequest) => request<BrowserTile>('POST', '/api/browsers', req),
+  updateBrowser: (id: string, req: BrowserRequest) =>
+    request<BrowserTile>('PATCH', browserPath(id), req),
+  deleteBrowser: (id: string) => request<{ ok: true }>('DELETE', browserPath(id)),
+  getSettings: () => request<PublicSettings>('GET', '/api/settings'),
+  patchSettings: (patch: SettingsPatch) => request<PublicSettings>('PATCH', '/api/settings', patch),
+  resetSettings: () => request<PublicSettings>('POST', '/api/settings/reset'),
+  listPreviewOffers: () => request<PreviewOffer[]>('GET', '/api/previews/offers'),
+  acceptPreviewOffer: (id: string) =>
+    request<{ ok: true }>('POST', `/api/previews/offers/${encodeURIComponent(id)}/accept`),
+  dismissPreviewOffer: (id: string) =>
+    request<{ ok: true }>('DELETE', `/api/previews/offers/${encodeURIComponent(id)}`),
+  getRecap: (date?: string) =>
+    request<RecapResponse>('GET', date ? `/api/recap?date=${encodeURIComponent(date)}` : '/api/recap'),
+  sendRecap: (date: string, kind?: WebhookKind) =>
+    request<{ sent: WebhookKind[] }>('POST', '/api/recap/send', kind ? { date, kind } : { date }),
+  testWebhook: (kind: WebhookKind) =>
+    request<{ ok: true }>('POST', '/api/settings/test-webhook', { kind }),
+  testNtfy: () => request<{ ok: true }>('POST', '/api/settings/test-ntfy'),
+  ntfyTopic: () => request<NtfyTopic>('POST', '/api/settings/ntfy-topic'),
   listDir: (path?: string) =>
     request<FsListResponse>(
       'GET',

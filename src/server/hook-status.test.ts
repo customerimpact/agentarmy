@@ -79,7 +79,7 @@ describe('buildHookSettings', () => {
       {
         matcher: '',
         hooks: [
-          { type: 'command', command: 'C:\\node.exe', args: ['C:\\fwd.cjs', url], timeout: 5 },
+          { type: 'command', command: 'C:\\node.exe', args: ['C:\\fwd.cjs', url], timeout: 20 },
         ],
       },
     ]);

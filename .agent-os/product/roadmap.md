@@ -1,6 +1,6 @@
 # Product Roadmap
 
-> Last Updated: 2026-10-17
+> Last Updated: 2026-10-18
 > Version: 1.0.0
 > Status: Planning
 
@@ -52,6 +52,17 @@ Claude Code is the only supported agent until Phase 5.
 ### Dependencies
 
 - Phase 0 decisions on zoom rendering and Windows spawning
+
+## Desktop Apps (parallel track)
+
+**Goal:** An app window with tray, taskbar badge and auto-update, next to `npx agentarmy` (DEC-003).
+**Success Criteria:** Windows users install with one click, close the window and keep agents running, and get updates without reinstalling.
+
+- [x] Windows desktop app - Electron wrapper, NSIS per-user installer, tray, taskbar badge, close-to-tray, Ctrl+Shift+A, auto-update from `desktop-v*` GitHub Releases `L`
+- [ ] Windows code signing - Buy a certificate, set CSC_LINK / CSC_KEY_PASSWORD in CI, removes the SmartScreen warning `S`
+- [ ] Windows arm64 build - Ship the win32-arm64 node-pty prebuild in a separate arm64 installer `S`
+- [ ] macOS app - Pending: needs an Apple Developer account (USD 99/year, signing + notarization) and a Mac to test `M`
+- [ ] Linux AppImage/deb - Same Electron app, untested `S`
 
 ## Phase 2: Workspaces and Insight (2 weeks)
 

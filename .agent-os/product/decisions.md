@@ -1,6 +1,6 @@
 # Product Decisions Log
 
-> Last Updated: 2026-10-17
+> Last Updated: 2026-10-18
 > Version: 1.0.0
 > Override Priority: Highest
 
@@ -80,3 +80,43 @@ One-command install, no signing, cross-platform for free, and the same node-pty 
 - Some shortcuts (Ctrl-W, Ctrl-T, Ctrl-N) belong to the browser; mitigated by PWA window mode
 - The local server is an attack surface; must enforce localhost binding, token and Origin checks
 - Requires Node on the user's machine (Claude Code users nearly always have it)
+
+## 2026-10-18: Electron Desktop Wrapper for Windows
+
+**ID:** DEC-003
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Product Owner, Tech Lead
+
+### Decision
+
+Ship a Windows desktop app (Electron, NSIS per-user installer) next to `npx agentarmy`. The Electron main process runs the same Fastify server in-process through `startAgentArmy()` (src/server/app.ts) and shows the same React UI in a BrowserWindow, adding a tray icon, taskbar badge, close-to-tray, a global show/hide shortcut and auto-update from GitHub Releases (`desktop-v*` tags). The npm package is unchanged; Electron and its tooling are devDependencies.
+
+### Context
+
+DEC-002 kept a desktop wrapper possible without a rewrite. Users asked for an app window that keeps agents running when the window closes, frees browser shortcuts (Ctrl-W, Ctrl-T, Alt+keys) and shows who needs them in the tray and taskbar.
+
+### Alternatives Considered
+
+1. **Tauri 2**
+   - Pros: Much smaller installer, system WebView
+   - Cons: Rust backend; our server is Node (Fastify) and the PTYs come from node-pty, so we would need a Node sidecar or a Rust rewrite of the PTY, hook and state layers
+2. **PWA install only**
+   - Pros: No installer at all
+   - Cons: No tray, no close-to-tray, no global shortcut, no taskbar badge on Windows; closing the window still leaves a terminal running the server
+
+### Rationale
+
+Electron runs Node in the main process, so the existing server, node-pty (N-API prebuilds load in Electron unchanged) and every hook/MCP script are reused as is. The same code path backs both the CLI and the app.
+
+### Consequences
+
+**Positive:**
+- One code base for CLI and app; the app can also attach to a running `npx agentarmy` server
+- Native toasts, tray, taskbar badge and auto-update on Windows
+
+**Negative:**
+- ~100 MB installer (Electron runtime)
+- Unsigned for now: SmartScreen warns until we buy a code-signing certificate (CSC_LINK / CSC_KEY_PASSWORD)
+- Inside the app, Node child scripts need care: AgentArmy.exe only acts as Node with ELECTRON_RUN_AS_NODE (set for the MCP bridge only); the SessionStart hook relay uses PowerShell on Windows
+- macOS needs an Apple Developer account (USD 99/year, notarization) and a Mac to test

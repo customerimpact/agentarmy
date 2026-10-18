@@ -1,12 +1,6 @@
-import net from 'node:net';
-import path from 'node:path';
-import open from 'open';
 import { DEFAULT_PORT } from '../shared/protocol.js';
-import { ConsoleManager } from './consoles.js';
-import { DEV_UI_PORT } from './security.js';
-import { acquireInstanceLock } from './instance-lock.js';
-import { buildServer } from './server.js';
-import { agentArmyHome, StateStore } from './store.js';
+import open from 'open';
+import { AlreadyRunningError, startAgentArmy } from './app.js';
 import { loadOrCreateToken } from './token-file.js';
 
 interface CliArgs {
@@ -48,73 +42,17 @@ function parseArgs(argv: string[]): CliArgs {
   return args;
 }
 
-function tryPort(port: number): Promise<number | null> {
-  return new Promise((resolve) => {
-    const probe = net.createServer();
-    probe.once('error', () => resolve(null));
-    probe.listen(port, '127.0.0.1', () => {
-      const address = probe.address();
-      const actual = typeof address === 'object' && address ? address.port : null;
-      probe.close(() => resolve(actual));
-    });
-  });
-}
-
-async function pickPort(preferred: number): Promise<number> {
-  const port = (await tryPort(preferred)) ?? (await tryPort(0));
-  if (!port) throw new Error('Could not find a free port');
-  return port;
-}
-
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
-  const port = await pickPort(args.port);
-  const lock = acquireInstanceLock(port);
-  if ('heldBy' in lock) {
-    throw new Error(
-      `AgentArmy is already running (pid ${lock.heldBy.pid}, port ${lock.heldBy.port}). ` +
-        `Stop it first, or delete ${path.join(agentArmyHome(), 'server.lock')} if it is stale.`,
-    );
-  }
-  if (port !== args.port) console.log(`Port ${args.port} is busy, using ${port} instead.`);
-  if (args.dev && port !== DEFAULT_PORT) {
-    console.warn(`Warning: the Vite dev proxy expects port ${DEFAULT_PORT}.`);
-  }
-  const token = process.env.AGENTARMY_TOKEN || loadOrCreateToken({ rotate: args.newToken });
-
-  const store = new StateStore();
-  const manager: ConsoleManager = new ConsoleManager({
-    port,
-    token,
-    dev: args.dev,
-    onChange: () => store.scheduleSave(() => manager.getState()),
-  });
-  const app = await buildServer({ port, token, dev: args.dev, manager });
-  await app.listen({ port, host: '127.0.0.1' });
-
-  manager.restore(store.load(), { resumeAll: args.resumeAll });
-
-  const uiPort = args.dev ? DEV_UI_PORT : port;
-  const host = args.dev ? 'localhost' : '127.0.0.1';
-  const url = `http://${host}:${uiPort}/?token=${token}`;
-  console.log(`AgentArmy is running: ${url}`);
-  if (args.open) {
-    open(url).catch((err: unknown) => console.warn(`Could not open the browser: ${String(err)}`));
-  }
+  const handle = await startAgentArmy(args);
+  console.log(`AgentArmy is running: ${handle.url}`);
 
   let stopping = false;
   const shutdown = (signal: string): void => {
     if (stopping) return;
     stopping = true;
     console.log(`\n${signal} received, saving state and stopping consoles...`);
-    try {
-      store.saveSync(manager.getState());
-    } catch (err) {
-      console.error(`Could not save state: ${String(err)}`);
-    }
-    manager.shutdown();
-    lock.release();
-    void app.close().finally(() => process.exit(0));
+    void handle.close().finally(() => process.exit(0));
     // Do not hang forever on a stuck socket
     setTimeout(() => process.exit(0), 2000).unref();
   };
@@ -123,7 +61,16 @@ async function main(): Promise<void> {
   process.on('SIGHUP', () => shutdown('SIGHUP'));
 }
 
-main().catch((err: unknown) => {
+main().catch(async (err: unknown) => {
+  // A second `npx agentarmy` should simply open the board that is already running
+  if (err instanceof AlreadyRunningError && err.port) {
+    const args = parseArgs(process.argv.slice(2));
+    const token = process.env.AGENTARMY_TOKEN || loadOrCreateToken({ rotate: false });
+    const url = `http://127.0.0.1:${err.port}/?token=${token}`;
+    console.log(`AgentArmy is already running (desktop app or another terminal): ${url}`);
+    if (args.open) await open(url).catch(() => undefined);
+    process.exit(0);
+  }
   console.error(err instanceof Error ? err.message : err);
   process.exit(1);
 });

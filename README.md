@@ -46,6 +46,36 @@ This starts the local server and opens the board in your default browser.
 
 Keep the terminal running `npx agentarmy` open. Stopping it (Ctrl-C) stops the server and the consoles; they come back the next time you start it.
 
+## Desktop app (Windows)
+
+Prefer a real app window over a browser tab? The Windows desktop app runs the same server and board in its own window, with no browser shortcut clashes.
+
+1. Download `AgentArmy-Setup-<version>.exe` from the [releases page](https://github.com/customerimpact/agentarmy/releases) (tags `desktop-v*`).
+2. Run it. It installs for your user only (no admin prompt) and adds Start menu and desktop shortcuts.
+3. The installer is **not code-signed yet**, so Windows SmartScreen may say "Windows protected your PC". Click **More info**, then **Run anyway**.
+
+What the desktop app adds:
+
+- **Tray icon.** Closing the window keeps your agents running in the tray. The tray shows how many agents need you, lists them (click one to fly to it), and has Pause notifications 1 h, Start with Windows, Check for updates and Quit.
+- **Taskbar badge and flash** when an agent needs you, and native Windows notifications.
+- **Ctrl+Alt+A** shows or hides the window from anywhere.
+- **Auto-update** from GitHub Releases: checked at start and every 6 hours, downloaded in the background, installed when you choose "Restart to update" or quit. This is the only network call the app makes itself.
+- **Quit** asks first when agents are running. They stop and can be resumed next time, like Ctrl-C on `npx agentarmy`.
+
+The app and `npx agentarmy` share the same board (`~/.agentarmy`). If `npx agentarmy` is already running, the app opens that board instead of starting a second server.
+
+Build it yourself (Windows, Node 22):
+
+```sh
+npm install
+npm run desktop:dev     # build and run the app from the repo
+npm run desktop:build   # unpacked app in release/win-unpacked
+npm run desktop:dist    # installer: release/AgentArmy-Setup-<version>.exe
+npm run test:desktop    # Playwright smoke test (set DESKTOP_EXE to test a packaged build)
+```
+
+Releases: push a tag `desktop-v<version>` (matching `package.json`) and `.github/workflows/desktop.yml` builds the installer and attaches it, with `latest.yml` for auto-update, to a draft GitHub Release. To sign builds, set `CSC_LINK` (the `.pfx` certificate, as a path, URL or base64) and `CSC_KEY_PASSWORD` for electron-builder. macOS and Linux builds are not available yet.
+
 ## How it works
 
 - **One PTY per console.** The server uses [node-pty](https://github.com/microsoft/node-pty) (ConPTY on Windows) to start `claude` in the chosen folder. The browser renders it with xterm.js over a WebSocket.
@@ -101,7 +131,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 ## FAQ
 
 **Why a browser tab and not a desktop app?**
-A browser UI plus a local server installs with one command, needs no installer or code signing, and works the same on every OS. The server/UI split keeps a desktop wrapper possible later. For fewer browser shortcut clashes, install the page as an app window (PWA) once that lands.
+Both exist. A browser UI plus a local server installs with one command, needs no installer or code signing, and works the same on every OS. On Windows you can also use the [desktop app](#desktop-app-windows), which wraps the same server and UI in its own window with a tray icon.
 
 **Why not tmux?**
 tmux is great if you live in it. AgentArmy adds what tmux does not have: status from Claude Code hooks, notifications when an agent waits on you, a spatial layout you can zoom out of, and one-click resume. It also works on Windows without WSL.
@@ -113,7 +143,7 @@ No. Hooks are passed per console through a temporary `--settings` file. Nothing 
 No. Each `claude` keeps its own permission prompts. AgentArmy only tells you when one is waiting.
 
 **Does it send my code anywhere?**
-AgentArmy itself makes no network calls beyond your machine. The `claude` processes talk to Anthropic exactly as they would in a normal terminal.
+AgentArmy itself makes no network calls beyond your machine (the desktop app only checks GitHub Releases for updates). The `claude` processes talk to Anthropic exactly as they would in a normal terminal.
 
 ## License
 
