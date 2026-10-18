@@ -506,16 +506,28 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   }
 
   private childEnv(): Record<string, string> {
-    const env: Record<string, string> = {};
-    for (const [key, value] of Object.entries(process.env)) {
-      if (value !== undefined && !PARENT_SESSION_ENV.includes(key.toUpperCase())) env[key] = value;
-    }
-    env.TERM = 'xterm-256color';
-    env.COLORTERM = 'truecolor';
-    // Task tools (TaskCreate/TaskUpdate) feed the Progress tab; Claude Code only offers them with this flag
-    env.CLAUDE_CODE_ENABLE_TASKS ??= '1';
-    return env;
+    return childEnv(process.env);
   }
+}
+
+// API keys make Claude Code bill API credits instead of the user's subscription login,
+// so consoles never see them unless AGENTARMY_USE_API_KEY=1 opts in.
+const API_KEY_ENV = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN'];
+
+export function childEnv(source: NodeJS.ProcessEnv): Record<string, string> {
+  const env: Record<string, string> = {};
+  const dropKeys = source.AGENTARMY_USE_API_KEY !== '1';
+  for (const [key, value] of Object.entries(source)) {
+    const upper = key.toUpperCase();
+    if (value === undefined || PARENT_SESSION_ENV.includes(upper)) continue;
+    if (dropKeys && API_KEY_ENV.includes(upper)) continue;
+    env[key] = value;
+  }
+  env.TERM = 'xterm-256color';
+  env.COLORTERM = 'truecolor';
+  // Task tools (TaskCreate/TaskUpdate) feed the Progress tab; Claude Code only offers them with this flag
+  env.CLAUDE_CODE_ENABLE_TASKS ??= '1';
+  return env;
 }
 
 export class NotFoundError extends Error {}
