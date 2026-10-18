@@ -34,7 +34,7 @@ export function Modal({ title, onClose, children, width = 'max-w-md', testId }: 
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 px-4 pt-[12vh] backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-[rgb(8_6_5/0.62)] px-4 pt-[10vh] backdrop-blur-[3px]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -46,7 +46,7 @@ export function Modal({ title, onClose, children, width = 'max-w-md', testId }: 
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
-        className={`w-full ${width} overflow-hidden rounded-xl border border-line-strong bg-elevated shadow-2xl shadow-black/50 outline-none`}
+        className={`aa-pop w-full ${width} overflow-hidden rounded-2xl border border-line-strong bg-elevated shadow-[0_30px_80px_-20px_rgb(0_0_0/0.7),0_0_60px_-20px_color-mix(in_srgb,var(--aa-glow)_35%,transparent)] outline-none`}
       >
         {children}
       </div>

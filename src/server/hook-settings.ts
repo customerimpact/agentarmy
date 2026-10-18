@@ -4,6 +4,8 @@ import path from 'node:path';
 import { HOOK_EVENTS } from './hook-status.js';
 
 const HOOK_TIMEOUT_SECONDS = 5;
+// Allows every tool of the 'agentarmy' MCP server (see mcp-bridge.ts)
+export const AGENTARMY_MCP_PERMISSION = 'mcp__agentarmy';
 
 // SessionStart only runs command hooks (not http), so a tiny Node script relays its payload.
 // Never fails, never prints: Claude Code would show stdout or errors in the session.
@@ -25,7 +27,7 @@ export function hookUrl(port: number, consoleId: string, token: string): string 
 export function buildHookSettings(
   url: string,
   forwarder: { node: string; script: string },
-): { hooks: Record<string, unknown[]> } {
+): { hooks: Record<string, unknown[]>; permissions: { allow: string[] } } {
   const hooks: Record<string, unknown[]> = {};
   for (const event of HOOK_EVENTS) {
     const hook =
@@ -40,7 +42,8 @@ export function buildHookSettings(
         : { type: 'http', url, timeout: HOOK_TIMEOUT_SECONDS };
     hooks[event] = [{ matcher: '', hooks: [hook] }];
   }
-  return { hooks };
+  // Our own MCP tools (list_agents, send_job, ...) should never stop an agent with a permission prompt
+  return { hooks, permissions: { allow: [AGENTARMY_MCP_PERMISSION] } };
 }
 
 export function settingsDir(): string {
@@ -75,4 +78,5 @@ export function writeSettingsFile(consoleId: string, port: number, token: string
 
 export function removeSettingsFile(consoleId: string): void {
   fs.rmSync(path.join(settingsDir(), `${consoleId}.settings.json`), { force: true });
+  fs.rmSync(path.join(settingsDir(), `${consoleId}.mcp.json`), { force: true });
 }

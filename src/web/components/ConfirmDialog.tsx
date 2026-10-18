@@ -42,7 +42,7 @@ export function ConfirmDialog() {
           className={`rounded-lg px-3 py-1.5 font-semibold disabled:opacity-60
                       hover:brightness-110
                       focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-elevated focus-visible:outline-none
-                      ${request.danger ? 'bg-error text-white focus-visible:ring-error' : 'bg-accent text-accent-fg focus-visible:ring-accent'}`}
+                      ${request.danger ? 'bg-error text-white focus-visible:ring-error' : 'aa-btn-primary focus-visible:ring-accent'}`}
         >
           {request.confirmLabel}
         </button>

@@ -11,10 +11,12 @@ import { CommandBar } from './components/CommandBar';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { EmptyState } from './components/EmptyState';
 import { MissingToken } from './components/MissingToken';
+import { MissionMap } from './components/MissionMap';
 import { NewAgentDialog } from './components/NewAgentDialog';
 import { Sidebar } from './components/Sidebar';
 import { ResumeAllToast } from './components/ResumeAllToast';
 import { ReconnectBanner, Toasts } from './components/StatusBanners';
+import { TemplatesDialog } from './components/TemplatesDialog';
 import { Toolbar } from './components/Toolbar';
 
 type Phase = 'loading' | 'ready' | 'no-token' | 'bad-token' | 'error';
@@ -23,6 +25,8 @@ function Shell() {
   const loaded = useBoard((s) => s.loaded);
   const empty = useBoard((s) => Object.keys(s.consoles).length === 0);
   const newAgentOpen = useBoard((s) => s.newAgentOpen);
+  const missionMapOpen = useBoard((s) => s.missionMapOpen);
+  const templatesOpen = useBoard((s) => s.templatesOpen);
   useShortcuts();
 
   return (
@@ -38,6 +42,8 @@ function Shell() {
         <Toasts />
       </main>
       {newAgentOpen && <NewAgentDialog />}
+      {loaded && missionMapOpen && <MissionMap />}
+      {templatesOpen && <TemplatesDialog />}
       <ConfirmDialog />
     </div>
   );

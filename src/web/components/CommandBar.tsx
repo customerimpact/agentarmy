@@ -1,5 +1,18 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { ArrowRight, Grid2x2, Maximize2, Play, Plus, SendHorizontal, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  Boxes,
+  Check,
+  Grid2x2,
+  LayoutTemplate,
+  Maximize2,
+  Network,
+  Play,
+  Plus,
+  SendHorizontal,
+  Users,
+  X,
+} from 'lucide-react';
 import type { ConsoleInfo, ConsoleStatus } from '../../shared/protocol';
 import { api } from '../lib/api';
 import { fitAll, sendLine } from '../lib/board-actions';
@@ -57,18 +70,25 @@ function Chip({
   onClick,
   children,
   testId,
+  title,
+  active,
 }: {
   onClick: () => void;
   children: ReactNode;
   testId?: string;
+  title?: string;
+  active?: boolean;
 }) {
   return (
     <button
       type="button"
       data-testid={testId}
+      title={title}
       onClick={onClick}
-      className="inline-flex h-7 items-center gap-1.5 rounded-full border border-line bg-surface/90 px-3 text-[12px] font-medium text-fg-muted shadow-lg shadow-black/20 backdrop-blur
-                 hover:border-line-strong hover:text-fg"
+      className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-3 text-[12px] font-medium shadow-lg shadow-black/30 backdrop-blur transition-colors
+                  hover:border-accent/60 hover:bg-accent/10 hover:text-fg
+                  [&_svg]:text-accent/80
+                  ${active ? 'border-accent/50 bg-accent/10 text-fg' : 'border-line-strong/80 bg-elevated/85 text-fg-muted'}`}
     >
       {children}
     </button>
@@ -78,6 +98,8 @@ function Chip({
 export function CommandBar() {
   const consoles = useBoard((s) => s.consoles);
   const selectedId = useBoard((s) => s.selectedId);
+  const selectedIds = useBoard((s) => s.selectedIds);
+  const [groupName, setGroupName] = useState<string | null>(null);
   const [value, setValue] = useState('');
   const [caret, setCaret] = useState(0);
   const [explicitTarget, setExplicitTarget] = useState<string | null>(null);
@@ -227,7 +249,29 @@ export function CommandBar() {
   };
 
   const rows = Math.min(6, value.split('\n').length);
-  const { setNewAgentOpen } = useBoard.getState();
+  const { setNewAgentOpen, setTemplatesOpen, setMissionMapOpen } = useBoard.getState();
+  const groupIds = selectedIds.filter((id) => consoles[id]);
+
+  const startGroup = () => {
+    if (groupIds.length < 2) {
+      showFeedback('Ctrl+click 2 or more consoles to group them', false);
+      return;
+    }
+    setGroupName('');
+  };
+
+  const createGroup = async () => {
+    const name = groupName?.trim();
+    if (!name) return;
+    try {
+      const project = await api.createProject({ name, consoleIds: groupIds });
+      useBoard.getState().upsertProject(project);
+      showFeedback(`Grouped ${groupIds.length} agents as ${project.name}`, true);
+      setGroupName(null);
+    } catch (error) {
+      showFeedback(`Group failed: ${(error as Error).message}`, false);
+    }
+  };
 
   return (
     <div
@@ -239,9 +283,66 @@ export function CommandBar() {
           <Plus size={13} />
           New agent
         </Chip>
+        <Chip testId="command-bar-templates" onClick={() => setTemplatesOpen(true)}>
+          <LayoutTemplate size={13} />
+          Templates
+        </Chip>
         <Chip testId="command-bar-spawn4" onClick={() => setNewAgentOpen(true, 4)}>
           <Grid2x2 size={13} />
           Spawn 4
+        </Chip>
+        {groupName === null ? (
+          <Chip
+            testId="command-bar-group"
+            title="Group the selected consoles into a project (Ctrl+click to select)"
+            active={groupIds.length >= 2}
+            onClick={startGroup}
+          >
+            <Boxes size={13} />
+            Group{groupIds.length >= 2 ? ` (${groupIds.length})` : ''}
+          </Chip>
+        ) : (
+          <form
+            className="inline-flex h-7 items-center gap-1 rounded-full border border-accent/60 bg-elevated/95 pr-1 pl-3 shadow-lg shadow-black/30"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void createGroup();
+            }}
+          >
+            <Boxes size={13} className="text-accent" />
+            <input
+              autoFocus
+              data-testid="command-bar-group-name"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setGroupName(null);
+              }}
+              placeholder={`Name for ${groupIds.length} agents`}
+              className="w-40 bg-transparent text-[12px] text-fg outline-none placeholder:text-fg-subtle"
+            />
+            <button
+              type="submit"
+              aria-label="Create group"
+              disabled={!groupName.trim()}
+              className="grid size-5 place-items-center rounded-full bg-accent text-accent-fg disabled:opacity-40"
+            >
+              <Check size={12} />
+            </button>
+            <button
+              type="button"
+              aria-label="Cancel group"
+              onClick={() => setGroupName(null)}
+              className="grid size-5 place-items-center rounded-full text-fg-subtle
+                         hover:text-fg"
+            >
+              <X size={12} />
+            </button>
+          </form>
+        )}
+        <Chip testId="command-bar-mission-map" onClick={() => setMissionMapOpen(true)}>
+          <Network size={13} />
+          Mission map
         </Chip>
         <Chip onClick={fitAll}>
           <Maximize2 size={12} />
@@ -306,8 +407,8 @@ export function CommandBar() {
         )}
 
         <div
-          className="flex items-end gap-2 rounded-2xl border border-line-strong bg-elevated/95 p-2 shadow-2xl shadow-black/40 backdrop-blur
-                     focus-within:border-accent/60"
+          className="flex items-end gap-2 rounded-2xl border border-line-strong bg-elevated/90 p-2 shadow-[0_20px_60px_-15px_rgb(0_0_0/0.7)] backdrop-blur-md transition-shadow
+                     focus-within:border-accent/60 focus-within:shadow-[0_20px_60px_-15px_rgb(0_0_0/0.7),0_0_40px_-8px_color-mix(in_srgb,var(--aa-glow)_45%,transparent)]"
         >
           <button
             type="button"
@@ -341,7 +442,7 @@ export function CommandBar() {
             rows={rows}
             value={value}
             spellCheck={false}
-            placeholder="Message an agent… (@ to pick)"
+            placeholder="Message the selected agent · @ to direct · @all for everyone"
             onChange={(e) => {
               updateValue(e.target.value, e.target.selectionStart);
               setHistoryIndex(null);
@@ -357,8 +458,7 @@ export function CommandBar() {
             title="Send (Enter)"
             disabled={!value.trim()}
             onClick={send}
-            className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-accent-fg disabled:opacity-40
-                       hover:brightness-110"
+            className="aa-btn-primary grid size-8 shrink-0 place-items-center rounded-lg disabled:opacity-40"
           >
             <SendHorizontal size={15} />
           </button>

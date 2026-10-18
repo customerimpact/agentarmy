@@ -18,6 +18,7 @@ import type {
 import { STATE_VERSION } from '../shared/protocol.js';
 import { buildSpawnCommand, resolveClaudeExecutable } from './claude-path.js';
 import { removeSettingsFile, writeSettingsFile } from './hook-settings.js';
+import { writeMcpConfigFile } from './mcp-bridge.js';
 import { statusFromHook, type HookPayload } from './hook-status.js';
 import { pickConsoleName } from './console-names.js';
 import { findFreeSlot, DEFAULT_SIZE } from './placement.js';
@@ -190,8 +191,11 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
 
   resumeAll(): number {
     let resumed = 0;
+    // Consoles of a closed project wait for POST /api/projects/:id/open instead
+    const closedProjects = new Set(this.projects.filter((p) => !p.open).map((p) => p.id));
     for (const live of this.consoles.values()) {
       if (live.info.status !== 'suspended') continue;
+      if (live.info.projectId && closedProjects.has(live.info.projectId)) continue;
       this.launch(live, 'resume');
       resumed++;
     }
@@ -422,12 +426,16 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       this.claudePath ??= resolveClaudeExecutable();
       if (!fs.existsSync(info.cwd)) throw new Error(`Folder no longer exists: ${info.cwd}`);
       const settingsFile = writeSettingsFile(info.id, this.options.port, this.options.token);
+      const mcpFile = writeMcpConfigFile(info.id, this.options.port, this.options.token);
       const sessionFlag = mode === 'new' ? '--session-id' : '--resume';
       const command = buildSpawnCommand(this.claudePath, [
         sessionFlag,
         info.sessionId,
         '--settings',
         settingsFile,
+        // Adds the agentarmy MCP tools; no --strict-mcp-config, so the user's own servers still load
+        '--mcp-config',
+        mcpFile,
       ]);
       proc = pty.spawn(command.file, command.args, {
         name: 'xterm-256color',
@@ -504,6 +512,8 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     }
     env.TERM = 'xterm-256color';
     env.COLORTERM = 'truecolor';
+    // Task tools (TaskCreate/TaskUpdate) feed the Progress tab; Claude Code only offers them with this flag
+    env.CLAUDE_CODE_ENABLE_TASKS ??= '1';
     return env;
   }
 }

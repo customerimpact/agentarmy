@@ -24,6 +24,10 @@ describe('ConsoleManager.restore', () => {
       {
         version: STATE_VERSION,
         consoles: [info('a', 'resting'), info('b', 'exited'), info('c', 'suspended')],
+        jobs: [],
+        actions: [],
+        projects: [],
+        browsers: [],
       },
       { resumeAll: false },
     );
@@ -39,7 +43,14 @@ describe('ConsoleManager.restore', () => {
   it('lets suspended consoles be attached (empty replay) and ignores input and hooks', () => {
     const manager = new ConsoleManager({ port: 1, token: 't', onChange: () => {} });
     manager.restore(
-      { version: STATE_VERSION, consoles: [info('a', 'idle')] },
+      {
+        version: STATE_VERSION,
+        consoles: [info('a', 'idle')],
+        jobs: [],
+        actions: [],
+        projects: [],
+        browsers: [],
+      },
       { resumeAll: false },
     );
     expect(manager.attach('a', () => {})).toBe('');

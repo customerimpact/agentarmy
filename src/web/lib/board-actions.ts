@@ -1,6 +1,17 @@
 import type { ReactFlowInstance } from '@xyflow/react';
-import type { ConsoleInfo, ConsoleLayout } from '../../shared/protocol';
+import type { ConsoleInfo, ConsoleLayout, Project } from '../../shared/protocol';
 import { api } from './api';
+import {
+  SIZE_PRESETS,
+  arrange,
+  sameSize,
+  tidyByProject,
+  type ArrangeItem,
+  type ArrangeMode,
+  type Layouts,
+  type ProjectGroup,
+} from './arrange';
+import { useBoardUi } from './board-ui';
 import { useBoard, type Viewport } from './store';
 import { socket } from './socket';
 import { focusTerminal, getTerminal } from './terminals';
@@ -224,5 +235,187 @@ export async function closeConsole(id: string): Promise<void> {
     useBoard.getState().removeConsole(id);
   } catch (error) {
     useBoard.getState().toast(`Close failed: ${(error as Error).message}`);
+  }
+}
+
+// ---------- browser tile layouts (same debounce as consoles) ----------
+
+const pendingBrowserLayouts = new Map<string, Partial<ConsoleLayout>>();
+const browserTimers = new Map<string, number>();
+
+export function persistBrowserLayout(id: string, layout: Partial<ConsoleLayout>): void {
+  const rounded = Object.fromEntries(
+    Object.entries(layout).map(([key, value]) => [key, Math.round(value as number)]),
+  ) as Partial<ConsoleLayout>;
+  const board = useBoard.getState();
+  const prev = board.browsers[id];
+  if (!prev) return;
+  board.upsertBrowser({ ...prev, layout: { ...prev.layout, ...rounded } });
+  pendingBrowserLayouts.set(id, { ...pendingBrowserLayouts.get(id), ...rounded });
+  window.clearTimeout(browserTimers.get(id));
+  browserTimers.set(
+    id,
+    window.setTimeout(() => {
+      const pending = pendingBrowserLayouts.get(id);
+      pendingBrowserLayouts.delete(id);
+      browserTimers.delete(id);
+      if (!pending || !useBoard.getState().browsers[id]) return;
+      api.updateBrowser(id, { layout: pending }).catch(() => {
+        useBoard.getState().toast('Could not save the layout. Is the server still running?');
+      });
+    }, 300),
+  );
+}
+
+// Persist a layout for any board item (console or browser tile)
+export function persistItemLayout(id: string, layout: Partial<ConsoleLayout>): void {
+  const { consoles, browsers } = useBoard.getState();
+  if (consoles[id]) persistLayout(id, layout);
+  else if (browsers[id]) persistBrowserLayout(id, layout);
+}
+
+// ---------- visibility and selection ----------
+
+// Consoles of a closed project are hidden from the board (their processes are stopped)
+export function isHiddenConsole(c: ConsoleInfo, projects: Record<string, Project>): boolean {
+  const project = c.projectId ? projects[c.projectId] : undefined;
+  return !!project && !project.open;
+}
+
+// Every console and browser tile currently on the board, as rects
+export function boardItems(): ArrangeItem[] {
+  const { consoles, browsers, projects } = useBoard.getState();
+  const items: ArrangeItem[] = [];
+  for (const c of Object.values(consoles)) {
+    if (!isHiddenConsole(c, projects)) items.push({ id: c.id, rect: { ...c.layout } });
+  }
+  for (const b of Object.values(browsers)) items.push({ id: b.id, rect: { ...b.layout } });
+  return items;
+}
+
+export function selectAll(): void {
+  useBoard.getState().setSelectedIds(boardItems().map((i) => i.id));
+}
+
+export function clearSelection(): void {
+  useBoard.getState().setSelectedIds([]);
+}
+
+// The selection, or everything when fewer than two items are selected
+function targetItems(): ArrangeItem[] {
+  const all = boardItems();
+  const selected = new Set(useBoard.getState().selectedIds);
+  const picked = all.filter((i) => selected.has(i.id));
+  return picked.length >= 2 ? picked : all;
+}
+
+// ---------- arranging ----------
+
+let animationTimer: number | undefined;
+
+// Move/resize many items at once with a short glide (never used while dragging)
+export function applyLayouts(layouts: Layouts, animate = true): void {
+  if (!layouts.size) return;
+  const ui = useBoardUi.getState();
+  if (animate && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    ui.setAnimating(true);
+    window.clearTimeout(animationTimer);
+    animationTimer = window.setTimeout(() => useBoardUi.getState().setAnimating(false), 320);
+  }
+  for (const [id, rect] of layouts) persistItemLayout(id, rect);
+}
+
+function overlapsAny(layouts: Layouts): boolean {
+  const rects = [...layouts.values()];
+  for (let i = 0; i < rects.length; i++) {
+    for (let j = i + 1; j < rects.length; j++) {
+      const a = rects[i];
+      const b = rects[j];
+      if (a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y)
+        return true;
+    }
+  }
+  return false;
+}
+
+export function arrangeBoard(mode: ArrangeMode): void {
+  const items = targetItems();
+  if (!items.length) return;
+  const { prefs } = useBoardUi.getState();
+  const options = { columns: prefs.columns, gap: prefs.gap };
+  if (mode !== 'project') {
+    applyLayouts(arrange(items, mode, options));
+    return;
+  }
+  const { consoles, projects } = useBoard.getState();
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const groups: ProjectGroup[] = [];
+  const used = new Set<string>();
+  const openProjects = Object.values(projects)
+    .filter((p) => p.open)
+    .sort((a, b) => a.createdAt - b.createdAt);
+  for (const p of openProjects) {
+    const members = p.consoleIds.map((id) => byId.get(id)).filter((i): i is ArrangeItem => !!i);
+    members.forEach((m) => used.add(m.id));
+    if (members.length) groups.push({ key: p.id, items: members });
+  }
+  // Loose consoles and browser tiles share one unframed block, ordered by folder
+  const loose = items
+    .filter((i) => !used.has(i.id))
+    .sort((a, b) => (consoles[a.id]?.cwd ?? '~').localeCompare(consoles[b.id]?.cwd ?? '~'));
+  if (loose.length) groups.push({ key: null, items: loose });
+  applyLayouts(tidyByProject(groups, options));
+}
+
+export function makeSameSize(preset?: keyof typeof SIZE_PRESETS): void {
+  const items = targetItems();
+  const sized = sameSize(items, preset ? SIZE_PRESETS[preset] : undefined);
+  if (!sized.size) return;
+  // Growing can make neighbours overlap; re-grid them in reading order when that happens
+  if (overlapsAny(sized)) {
+    const { prefs } = useBoardUi.getState();
+    const resized = items.map((i) => ({ id: i.id, rect: sized.get(i.id) ?? i.rect }));
+    applyLayouts(arrange(resized, 'grid', { columns: prefs.columns, gap: prefs.gap }));
+  } else {
+    applyLayouts(sized);
+  }
+}
+
+// ---------- projects ----------
+
+export function nextProjectName(): string {
+  const projects = Object.values(useBoard.getState().projects);
+  const names = new Set(projects.map((p) => p.name));
+  let n = projects.length + 1;
+  while (names.has(`Project ${n}`)) n++;
+  return `Project ${n}`;
+}
+
+export async function groupSelection(name: string): Promise<boolean> {
+  const { selectedIds, consoles, upsertProject, toast } = useBoard.getState();
+  const consoleIds = selectedIds.filter((id) => consoles[id]);
+  if (!consoleIds.length) {
+    toast('Select one or more consoles to group them.');
+    return false;
+  }
+  try {
+    const project = await api.createProject({ name: name.trim() || nextProjectName(), consoleIds });
+    upsertProject(project);
+    // Reflect membership right away; the server echoes confirm it
+    const board = useBoard.getState();
+    for (const p of Object.values(board.projects)) {
+      if (p.id === project.id) continue;
+      const left = p.consoleIds.filter((id) => !consoleIds.includes(id));
+      if (left.length !== p.consoleIds.length) board.upsertProject({ ...p, consoleIds: left });
+    }
+    for (const id of consoleIds) {
+      const c = useBoard.getState().consoles[id];
+      if (c && c.projectId !== project.id)
+        useBoard.getState().upsertConsole({ ...c, projectId: project.id });
+    }
+    return true;
+  } catch (error) {
+    toast(`Could not create the project: ${(error as Error).message}`);
+    return false;
   }
 }

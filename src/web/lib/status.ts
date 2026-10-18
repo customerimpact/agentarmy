@@ -30,7 +30,7 @@ export const STATUS_META: Record<ConsoleStatus, StatusMeta> = {
     icon: Hand,
     dot: 'bg-needs',
     text: 'text-needs',
-    pill: 'bg-needs/15 text-needs ring-1 ring-needs/40',
+    pill: 'bg-needs/15 text-needs ring-1 ring-needs/50',
     cssVar: 'var(--aa-needs)',
     rank: 0,
   },
@@ -39,7 +39,7 @@ export const STATUS_META: Record<ConsoleStatus, StatusMeta> = {
     icon: Zap,
     dot: 'bg-working',
     text: 'text-working',
-    pill: 'bg-working/15 text-working',
+    pill: 'bg-working/15 text-working ring-1 ring-working/40',
     cssVar: 'var(--aa-working)',
     rank: 1,
   },
@@ -48,7 +48,7 @@ export const STATUS_META: Record<ConsoleStatus, StatusMeta> = {
     icon: TriangleAlert,
     dot: 'bg-error',
     text: 'text-error',
-    pill: 'bg-error/15 text-error',
+    pill: 'bg-error/15 text-error ring-1 ring-error/40',
     cssVar: 'var(--aa-error)',
     rank: 2,
   },
@@ -57,7 +57,7 @@ export const STATUS_META: Record<ConsoleStatus, StatusMeta> = {
     icon: CircleCheck,
     dot: 'bg-resting',
     text: 'text-resting',
-    pill: 'bg-resting/15 text-resting',
+    pill: 'bg-resting/12 text-resting ring-1 ring-resting/30',
     cssVar: 'var(--aa-resting)',
     rank: 3,
   },
@@ -66,7 +66,7 @@ export const STATUS_META: Record<ConsoleStatus, StatusMeta> = {
     icon: Circle,
     dot: 'bg-idle',
     text: 'text-idle',
-    pill: 'bg-idle/15 text-idle',
+    pill: 'bg-idle/12 text-fg-muted ring-1 ring-idle/30',
     cssVar: 'var(--aa-idle)',
     rank: 4,
   },
@@ -117,4 +117,23 @@ export function basename(path: string): string {
 // Consoles with no live process: the primary action is to (re)launch them with --resume
 export function isDormant(status: ConsoleStatus): boolean {
   return status === 'exited' || status === 'suspended';
+}
+
+// 'claude-opus-5-5' -> 'Opus 5.5', 'claude-sonnet-4-5-20250929' -> 'Sonnet 4.5', 'claude-3-5-haiku' -> 'Haiku 3.5'
+export function modelShortName(model?: string | null): string | null {
+  if (!model) return null;
+  const id = model.toLowerCase().replace(/\[.*?\]/g, '').trim();
+  const family = /(opus|sonnet|haiku|fable)/.exec(id)?.[1];
+  if (!family) return model;
+  const digits = id
+    .replace(/^claude-?/, '')
+    .split('-')
+    .filter((part) => /^\d{1,2}$/.test(part)); // drops date stamps like 20250929
+  const name = family[0].toUpperCase() + family.slice(1);
+  return digits.length ? `${name} ${digits.slice(0, 2).join('.')}` : name;
+}
+
+// CSS color for a project color name (see --aa-project-* in styles.css)
+export function projectColorVar(color: string | undefined | null): string {
+  return `var(--aa-project-${color ?? 'orange'})`;
 }

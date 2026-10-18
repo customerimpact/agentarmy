@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { STATE_VERSION, type BoardState } from '../shared/protocol.js';
-import { StateStore } from './store.js';
+import { emptyState, StateStore } from './store.js';
 
 let dir: string;
 
@@ -30,12 +30,16 @@ const sample: BoardState = {
       createdAt: 1,
     },
   ],
+  jobs: [],
+  actions: [],
+  projects: [],
+  browsers: [],
 };
 
 describe('StateStore', () => {
   it('returns an empty board when no file exists', () => {
     const store = new StateStore(path.join(dir, 'nested', 'state.json'));
-    expect(store.load()).toEqual({ version: STATE_VERSION, consoles: [] });
+    expect(store.load()).toEqual(emptyState());
   });
 
   it('round-trips state and leaves no temp files behind', () => {
@@ -56,13 +60,21 @@ describe('StateStore', () => {
   it('debounces saves and flush writes the latest state', () => {
     const file = path.join(dir, 'state.json');
     const store = new StateStore(file);
-    let state: BoardState = { version: STATE_VERSION, consoles: [] };
+    let state: BoardState = emptyState();
     store.scheduleSave(() => state);
     state = sample;
     store.scheduleSave(() => state);
     expect(fs.existsSync(file)).toBe(false);
     store.flush();
     expect(store.load()).toEqual(sample);
+  });
+
+  it('loads a v1 file (consoles + viewport only) with empty v2 lists', () => {
+    const file = path.join(dir, 'state.json');
+    const v1 = { version: 1, viewport: sample.viewport, consoles: sample.consoles };
+    fs.writeFileSync(file, JSON.stringify(v1));
+    expect(new StateStore(file).load()).toEqual(sample);
+    expect(fs.readdirSync(dir).some((f) => f.endsWith('.bad'))).toBe(false);
   });
 
   it('backs up a corrupt or future-version file instead of crashing', () => {

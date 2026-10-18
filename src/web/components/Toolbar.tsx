@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { CircleQuestionMark, Maximize2, Plus } from 'lucide-react';
 import { fitAll } from '../lib/board-actions';
 import { useBoard } from '../lib/store';
+import { ArrangeMenu } from './ArrangeMenu';
 
 const SHORTCUTS: { keys: string[]; label: string; note?: string }[] = [
   { keys: ['N'], label: 'New agent' },
@@ -16,6 +17,13 @@ const SHORTCUTS: { keys: string[]; label: string; note?: string }[] = [
   { keys: ['Alt', '['], label: 'Focus previous console', note: 'also inside terminals' },
   { keys: ['Alt', 'J'], label: 'Jump to next "needs you"', note: 'also inside terminals' },
   { keys: ['Ctrl', 'Wheel'], label: 'Zoom the board over a terminal' },
+  { keys: ['Ctrl', 'Click'], label: 'Add or remove a console from the selection' },
+  { keys: ['Shift', 'Drag'], label: 'Box-select on the empty board' },
+  { keys: ['Ctrl', 'A'], label: 'Select everything on the board' },
+  { keys: ['Esc'], label: 'Clear the selection' },
+  { keys: ['G'], label: 'Group the selection as a project' },
+  { keys: ['Shift', 'A'], label: 'Arrange in a grid', note: 'the selection, or everything' },
+  { keys: ['Alt', 'Drag'], label: 'Move without snapping' },
   { keys: ['?'], label: 'Show this help' },
 ];
 
@@ -58,7 +66,7 @@ function HelpPopover() {
       <div className="px-1 pb-2 text-[11px] font-semibold tracking-wide text-fg-subtle uppercase">
         Keyboard shortcuts
       </div>
-      <ul className="flex flex-col gap-1.5">
+      <ul className="aa-scroll flex max-h-[65vh] flex-col gap-1.5 overflow-y-auto">
         {SHORTCUTS.map((s) => (
           <li key={s.label} className="flex items-center gap-2 px-1">
             <span className="flex-1 text-fg">
@@ -99,6 +107,7 @@ export function Toolbar() {
         <Plus size={15} />
         New agent
       </button>
+      <ArrangeMenu />
       <button
         type="button"
         title="Fit all (F)"

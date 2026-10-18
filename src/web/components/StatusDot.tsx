@@ -11,7 +11,11 @@ export function StatusDot({ status, size = 8 }: { status: ConsoleStatus; size?: 
     <span
       className={`relative inline-block shrink-0 rounded-full ${STATUS_META[status].dot}
                   ${pulsing ? 'aa-ping' : ''}`}
-      style={{ width: size, height: size }}
+      style={{
+        width: size,
+        height: size,
+        boxShadow: pulsing ? `0 0 ${size}px ${STATUS_META[status].cssVar}` : undefined,
+      }}
     />
   );
 }

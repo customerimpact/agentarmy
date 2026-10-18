@@ -114,7 +114,8 @@ export interface BrowserTile {
   title: string;
   layout: ConsoleLayout;
   linkedConsoleId?: string | null; // the console whose agent drives this browser
-  cursor?: { x: number; y: number; t: number } | null; // last agent pointer position (page px)
+  cursor?: { x: number; y: number; t: number; click?: boolean } | null; // last agent pointer position (page px); click = pressed at t
+  error?: string | null; // set when the browser process could not start or crashed
 }
 
 // ---------- Agent-to-agent jobs (the lines between consoles on the board) ----------
