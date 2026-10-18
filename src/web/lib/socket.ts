@@ -1,6 +1,7 @@
 import type { ClientMessage, ServerMessage } from '../../shared/protocol';
 import { api } from './api';
 import { getToken } from './auth';
+import { useServerSettings } from './settings';
 import { useBoard } from './store';
 
 export type TerminalStreamListener = (kind: 'replay' | 'output', data: string) => void;
@@ -176,6 +177,9 @@ class BoardSocket {
         break;
       case 'browser-removed':
         useBoard.getState().removeBrowser(message.id);
+        break;
+      case 'settings':
+        useServerSettings.getState().receive(message.settings);
         break;
       case 'browser-frame':
         for (const listener of this.frameListeners.get(message.id) ?? []) listener(message);

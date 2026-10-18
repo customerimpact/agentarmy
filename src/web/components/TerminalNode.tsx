@@ -284,7 +284,7 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
               <div className="absolute inset-0 grid place-items-center bg-term/90 p-6 text-center">
                 <div>
                   <p className="aa-label text-term-fg">Suspended</p>
-                  <p className="mt-2 max-w-xs text-[12px] text-[#b5aaa0]">
+                  <p className="mt-2 max-w-xs text-[12px] text-term-fg/70">
                     Restored from your last session. Resume relaunches it with claude --resume.
                   </p>
                   <button

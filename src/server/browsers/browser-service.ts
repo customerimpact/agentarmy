@@ -10,6 +10,7 @@ import type {
 } from '../../shared/protocol.js';
 import type { ConsoleManager } from '../consoles.js';
 import { agentArmyHome } from '../store.js';
+import { activeSettings } from '../settings.js';
 import { CdpConnection, chromeArgs, launchChrome, type CdpEvent } from './cdp.js';
 import { findBrowser } from './chrome-finder.js';
 import { READ_SCRIPT, SAME_TAB_SCRIPT, locateScript } from './page-scripts.js';
@@ -547,11 +548,14 @@ export class BrowserServiceImpl {
     if (pending) return pending;
     const tile = this.get(id);
     if (!tile) return Promise.reject(new Error('Unknown browser tile'));
-    if (this.executable === undefined) this.executable = findBrowser();
-    const executable = this.executable;
+    // Settings > Browser tiles > executable path wins over auto-detection
+    const override = activeSettings().browserPath;
+    if (!override && this.executable === undefined) this.executable = findBrowser();
+    const executable = override && fs.existsSync(override) ? override : override ? null : this.executable;
     if (!executable) {
-      const message =
-        'No Chrome, Edge or Chromium found. Install one or set AGENTARMY_BROWSER_PATH to its executable.';
+      const message = override
+        ? `Browser not found at ${override} (Settings > Browser tiles).`
+        : 'No Chrome, Edge or Chromium found. Install one or set its path in Settings > Browser tiles.';
       tile.error = message;
       this.changed(tile, false);
       return Promise.reject(new Error(message));

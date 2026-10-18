@@ -5,6 +5,7 @@ import { EventEmitter } from 'node:events';
 import * as pty from 'node-pty';
 import type {
   ActionItem,
+  AppSettings,
   BoardState,
   BrowserTile,
   ConsoleInfo,
@@ -17,6 +18,7 @@ import type {
 } from '../shared/protocol.js';
 import { STATE_VERSION } from '../shared/protocol.js';
 import { buildSpawnCommand, resolveClaudeExecutable } from './claude-path.js';
+import { claudeLaunchArgs } from './settings.js';
 import { removeSettingsFile, writeSettingsFile } from './hook-settings.js';
 import { writeMcpConfigFile } from './mcp-bridge.js';
 import { statusFromHook, type HookPayload } from './hook-status.js';
@@ -30,6 +32,22 @@ const DEFAULT_ROWS = 32;
 const OUTPUT_BATCH_MS = 8;
 const PROMPT_DEBOUNCE_MS = 400;
 const PROMPT_CHECK_STATUSES = new Set<ConsoleStatus>(['starting', 'idle', 'resting']);
+// Submitting typed text: Claude Code treats input that arrives right after a paste as part of the
+// paste, so Enter is only pressed once the PTY output has gone quiet (the paste was rendered).
+export interface SendTiming {
+  quietMs: number; // no output for this long = the paste was handled
+  minWaitMs: number;
+  maxWaitMs: number; // upper bound for long pastes (scaled by length below it)
+  pollMs: number;
+  verifyMs: number; // no UserPromptSubmit by then (and not working) = press Enter once more
+}
+export const DEFAULT_SEND_TIMING: SendTiming = {
+  quietMs: 150,
+  minWaitMs: 250,
+  maxWaitMs: 1500,
+  pollMs: 25,
+  verifyMs: 2500,
+};
 // claude.exe takes ~3-4s to start on Windows before it reports a missing conversation
 const RESUME_FAILURE_WINDOW_MS = 10_000;
 
@@ -50,6 +68,10 @@ const PARENT_SESSION_ENV = [
 
 type OutputListener = (data: string) => void;
 
+// eslint-disable-next-line no-control-regex
+const ANSI_PATTERN = /\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b[@-Z\\-_]/g;
+const MODEL_SWITCH_PATTERN = /Set\s*model\s*to/i;
+
 interface LiveConsole {
   info: ConsoleInfo;
   pty: pty.IPty | null;
@@ -62,6 +84,10 @@ interface LiveConsole {
   detector: PromptDetector;
   promptTimer: NodeJS.Timeout | null;
   promptPrevStatus: ConsoleStatus | null; // set while needs_you comes from the screen, not a hook
+  lastOutputAt: number;
+  sendQueue: Promise<void>; // sendText calls to one console run one after another
+  submitCheck: NodeJS.Timeout | null; // pending "did Enter submit?" check
+  outputTail: string; // last bit of plain-text output, to spot "Set model to ..."
 }
 
 export interface ConsoleManagerOptions {
@@ -69,12 +95,15 @@ export interface ConsoleManagerOptions {
   token: string;
   dev?: boolean;
   onChange: () => void; // persist trigger
+  settings?: () => AppSettings; // read at every launch, so changes apply to new/restarted consoles
+  sendTiming?: Partial<SendTiming>;
 }
 
 export interface ConsoleManagerEvents {
   console: [ConsoleInfo];
   removed: [string];
   hook: [string, HookPayload]; // raw hook payloads, after status handling (jobs, todos, actions listen)
+  'model-switch': [string]; // the screen showed "Set model to ..." (a /model command ran)
   job: [Job];
   'job-removed': [string];
   action: [ActionItem];
@@ -95,7 +124,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   readonly projects: Project[] = [];
   readonly browsers: BrowserTile[] = [];
   private shuttingDown = false;
-  private claudePath: string | null = null;
+  private claudePath: { override: string; path: string } | null = null;
 
   constructor(private readonly options: ConsoleManagerOptions) {
     super();
@@ -131,17 +160,57 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     if (live) this.changed(live);
   }
 
-  // Types text into the console like a paste, then presses Enter
+  // Types text into the console like a paste, then presses Enter once Claude Code has taken the
+  // paste in. Returns false when the console has no running process.
   sendText(id: string, text: string): boolean {
     const live = this.consoles.get(id);
     if (!live?.pty) return false;
     const proc = live.pty;
+    live.sendQueue = live.sendQueue
+      .then(() => this.typeAndSubmit(live, proc, text))
+      .catch(() => undefined);
+    return true;
+  }
+
+  private async typeAndSubmit(live: LiveConsole, proc: pty.IPty, text: string): Promise<void> {
+    if (live.pty !== proc) return;
+    const t = this.sendTiming;
     // Bracketed paste keeps multi-line text in one prompt instead of submitting at each newline
     proc.write(text.includes('\n') ? `\x1b[200~${text}\x1b[201~` : text);
-    setTimeout(() => {
-      if (live.pty === proc) proc.write('\r');
-    }, 60);
-    return true;
+    const start = Date.now();
+    live.lastOutputAt = start;
+    // Long pastes take Claude Code longer to collapse into "[Pasted text #1 +N lines]"
+    const maxWait = Math.min(t.maxWaitMs, Math.max(t.minWaitMs * 4, t.minWaitMs + text.length / 2));
+    await new Promise<void>((resolve) => {
+      const poll = (): void => {
+        const now = Date.now();
+        const elapsed = now - start;
+        const quiet = now - live.lastOutputAt >= t.quietMs;
+        if (live.pty !== proc || elapsed >= maxWait || (elapsed >= t.minWaitMs && quiet)) resolve();
+        else setTimeout(poll, t.pollMs);
+      };
+      setTimeout(poll, t.pollMs);
+    });
+    if (live.pty !== proc) return;
+    proc.write('\r');
+    // Slash commands (e.g. /model) do not fire UserPromptSubmit; a second Enter could pick a menu item
+    if (text.trimStart().startsWith('/')) return;
+    if (live.submitCheck) clearTimeout(live.submitCheck);
+    live.submitCheck = setTimeout(() => {
+      live.submitCheck = null;
+      if (live.pty !== proc || live.info.status === 'working') return;
+      proc.write('\r'); // the first Enter was swallowed; try exactly once more
+    }, t.verifyMs);
+    live.submitCheck.unref?.();
+  }
+
+  private get sendTiming(): SendTiming {
+    return { ...DEFAULT_SEND_TIMING, ...this.options.sendTiming };
+  }
+
+  private clearSubmitCheck(live: LiveConsole): void {
+    if (live.submitCheck) clearTimeout(live.submitCheck);
+    live.submitCheck = null;
   }
 
   // Stops the process but keeps the console and its conversation (resume with restart())
@@ -245,6 +314,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     this.killPty(live);
     if (live.flushTimer) clearTimeout(live.flushTimer);
     if (live.promptTimer) clearTimeout(live.promptTimer);
+    this.clearSubmitCheck(live);
     live.listeners.clear();
     this.consoles.delete(id);
     removeSettingsFile(id);
@@ -290,6 +360,9 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   }
 
   handleHook(id: string, payload: HookPayload): void {
+    const live = this.consoles.get(id);
+    // The prompt went through, so no second Enter is needed
+    if (live && payload.hook_event_name === 'UserPromptSubmit') this.clearSubmitCheck(live);
     this.applyHookStatus(id, payload);
     if (this.consoles.has(id)) this.emit('hook', id, payload);
   }
@@ -365,6 +438,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     for (const live of this.consoles.values()) {
       if (live.flushTimer) clearTimeout(live.flushTimer);
       if (live.promptTimer) clearTimeout(live.promptTimer);
+      this.clearSubmitCheck(live);
       this.killPty(live);
     }
   }
@@ -396,6 +470,10 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       detector: new PromptDetector(),
       promptTimer: null,
       promptPrevStatus: null,
+      lastOutputAt: 0,
+      sendQueue: Promise.resolve(),
+      submitCheck: null,
+      outputTail: '',
     };
     this.consoles.set(info.id, live);
     return live;
@@ -423,12 +501,17 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
 
     let proc: pty.IPty;
     try {
-      this.claudePath ??= resolveClaudeExecutable();
+      const settings = this.options.settings?.();
+      const override = settings?.claudePath ?? '';
+      if (this.claudePath?.override !== override) {
+        const env = override ? { ...process.env, AGENTARMY_CLAUDE_PATH: override } : process.env;
+        this.claudePath = { override, path: resolveClaudeExecutable({ env }) };
+      }
       if (!fs.existsSync(info.cwd)) throw new Error(`Folder no longer exists: ${info.cwd}`);
       const settingsFile = writeSettingsFile(info.id, this.options.port, this.options.token);
       const mcpFile = writeMcpConfigFile(info.id, this.options.port, this.options.token);
       const sessionFlag = mode === 'new' ? '--session-id' : '--resume';
-      const command = buildSpawnCommand(this.claudePath, [
+      const command = buildSpawnCommand(this.claudePath.path, [
         sessionFlag,
         info.sessionId,
         '--settings',
@@ -436,13 +519,15 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
         // Adds the agentarmy MCP tools; no --strict-mcp-config, so the user's own servers still load
         '--mcp-config',
         mcpFile,
+        // Settings tab: --model, --permission-mode and the user's extra flags
+        ...(settings ? claudeLaunchArgs(settings) : []),
       ]);
       proc = pty.spawn(command.file, command.args, {
         name: 'xterm-256color',
         cols: live.cols,
         rows: live.rows,
         cwd: info.cwd,
-        env: this.childEnv(),
+        env: this.childEnv(settings),
       });
     } catch (err) {
       info.status = 'exited';
@@ -457,6 +542,8 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
 
     proc.onData((data) => {
       if (live.pty !== proc) return;
+      live.lastOutputAt = Date.now();
+      this.watchModelSwitch(live, data);
       live.scrollback.append(data);
       live.detector.feed(data);
       this.schedulePromptCheck(live);
@@ -483,6 +570,17 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     });
   }
 
+  // "/model haiku" leaves no hook behind; its confirmation on screen is the cue to re-read the model
+  private watchModelSwitch(live: LiveConsole, data: string): void {
+    // Claude Code draws spaces as cursor moves (ESC[1C), so the plain text reads "Setmodelto"
+    const text = live.outputTail + data.replace(ANSI_PATTERN, '');
+    // Keep a short tail so a phrase split across two chunks is still found
+    live.outputTail = text.slice(-32);
+    if (!MODEL_SWITCH_PATTERN.test(text)) return;
+    live.outputTail = '';
+    this.emit('model-switch', live.info.id);
+  }
+
   private flushOutput(live: LiveConsole): void {
     if (live.flushTimer) {
       clearTimeout(live.flushTimer);
@@ -505,8 +603,8 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     }
   }
 
-  private childEnv(): Record<string, string> {
-    return childEnv(process.env);
+  private childEnv(settings?: AppSettings): Record<string, string> {
+    return childEnv(process.env, settings);
   }
 }
 
@@ -514,9 +612,12 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
 // so consoles never see them unless AGENTARMY_USE_API_KEY=1 opts in.
 const API_KEY_ENV = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN'];
 
-export function childEnv(source: NodeJS.ProcessEnv): Record<string, string> {
+export function childEnv(
+  source: NodeJS.ProcessEnv,
+  settings?: Pick<AppSettings, 'useApiKey' | 'enableTasks'>,
+): Record<string, string> {
   const env: Record<string, string> = {};
-  const dropKeys = source.AGENTARMY_USE_API_KEY !== '1';
+  const dropKeys = source.AGENTARMY_USE_API_KEY !== '1' && !settings?.useApiKey;
   for (const [key, value] of Object.entries(source)) {
     const upper = key.toUpperCase();
     if (value === undefined || PARENT_SESSION_ENV.includes(upper)) continue;
@@ -526,7 +627,8 @@ export function childEnv(source: NodeJS.ProcessEnv): Record<string, string> {
   env.TERM = 'xterm-256color';
   env.COLORTERM = 'truecolor';
   // Task tools (TaskCreate/TaskUpdate) feed the Progress tab; Claude Code only offers them with this flag
-  env.CLAUDE_CODE_ENABLE_TASKS ??= '1';
+  if (settings?.enableTasks === false) delete env.CLAUDE_CODE_ENABLE_TASKS;
+  else env.CLAUDE_CODE_ENABLE_TASKS ??= '1';
   return env;
 }
 

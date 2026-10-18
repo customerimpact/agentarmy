@@ -3,6 +3,7 @@ import { ViewportPortal, useStore } from '@xyflow/react';
 import type { Job } from '../../shared/protocol';
 import { flowPath, labelPoint, type FlowPath, type Point } from '../lib/flow-path';
 import type { Rect } from '../lib/snap';
+import { prefersReducedMotion } from '../lib/prefs';
 
 // Organic lines between consoles that send each other jobs. Drawn in our own layer (inside the
 // viewport, between project frames and terminals) instead of as React Flow edges: React Flow only
@@ -21,11 +22,18 @@ export interface FlowLine {
 // Viewport z-order: frames (-2) < lines (-1) < terminals (0+)
 export const FLOW_LAYER_Z = -1;
 
+// Colors come from theme tokens (--aa-flow-*, see styles.css) so lines follow the active theme
+const DONE_FROM = 'color-mix(in srgb, var(--aa-flow-from) 55%, var(--aa-resting))';
 const PALETTE: Record<FlowStatus, { from: string; to: string; glow: string; opacity: number }> = {
-  active: { from: '#ff5a36', to: '#ffae57', glow: '#ff7a45', opacity: 1 },
-  done: { from: '#d98a4e', to: '#93c26e', glow: '#c59a5a', opacity: 0.75 },
-  failed: { from: '#f04c5a', to: '#f04c5a', glow: '#f04c5a', opacity: 0.85 },
-  standby: { from: '#ff7a45', to: '#ffae57', glow: '#ff7a45', opacity: 0.35 },
+  active: { from: 'var(--aa-flow-from)', to: 'var(--aa-flow-to)', glow: 'var(--aa-flow-glow)', opacity: 1 },
+  done: {
+    from: DONE_FROM,
+    to: 'var(--aa-resting)',
+    glow: 'color-mix(in srgb, var(--aa-flow-glow) 50%, var(--aa-resting))',
+    opacity: 0.75,
+  },
+  failed: { from: 'var(--aa-error)', to: 'var(--aa-error)', glow: 'var(--aa-error)', opacity: 0.85 },
+  standby: { from: 'var(--aa-flow-glow)', to: 'var(--aa-flow-to)', glow: 'var(--aa-flow-glow)', opacity: 0.35 },
 };
 
 const JOB_STATUS_LABEL: Record<Job['status'], string> = {
@@ -35,7 +43,8 @@ const JOB_STATUS_LABEL: Record<Job['status'], string> = {
   failed: 'Failed',
 };
 
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+// OS setting or Settings > Board > Reduce motion
+const reducedMotion = prefersReducedMotion;
 
 const truncate = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
 
@@ -80,7 +89,7 @@ function ReturnParticle({ path, filter, k }: { path: string; filter: string; k: 
     fade.current?.beginElement();
   }, []);
   return (
-    <circle r={3.8 * k} fill="#e2f7c4" opacity={0} filter={filter}>
+    <circle r={3.8 * k} style={{ fill: 'var(--aa-flow-return)' }} opacity={0} filter={filter}>
       <animateMotion
         ref={motion}
         dur="1.8s"
@@ -134,10 +143,10 @@ function Particles({
         );
         return (
           <g key={i}>
-            <circle r={4.2 * k} fill="#ffb067" opacity={0.75} filter={filter}>
+            <circle r={4.2 * k} style={{ fill: 'var(--aa-flow-spark)' }} opacity={0.75} filter={filter}>
               {motion}
             </circle>
-            <circle r={1.9 * k} fill="#fff4e2">
+            <circle r={1.9 * k} style={{ fill: 'var(--aa-flow-core)' }}>
               {motion}
             </circle>
           </g>
@@ -192,8 +201,8 @@ const FlowPathView = memo(function FlowPathView({ line, k }: { line: LaidOutLine
     >
       <defs>
         <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1={s.x} y1={s.y} x2={t.x} y2={t.y}>
-          <stop offset="0" stopColor={colors.from} />
-          <stop offset="1" stopColor={colors.to} />
+          <stop offset="0" style={{ stopColor: colors.from }} />
+          <stop offset="1" style={{ stopColor: colors.to }} />
         </linearGradient>
         <filter
           id={filterId}
@@ -229,8 +238,8 @@ const FlowPathView = memo(function FlowPathView({ line, k }: { line: LaidOutLine
       {/* Small anchor dots where the line meets each node */}
       {status !== 'standby' && (
         <>
-          <circle cx={s.x} cy={s.y} r={3.2 * k} fill={colors.from} opacity={colors.opacity} />
-          <circle cx={t.x} cy={t.y} r={3.2 * k} fill={colors.to} opacity={colors.opacity} />
+          <circle cx={s.x} cy={s.y} r={3.2 * k} style={{ fill: colors.from }} opacity={colors.opacity} />
+          <circle cx={t.x} cy={t.y} r={3.2 * k} style={{ fill: colors.to }} opacity={colors.opacity} />
         </>
       )}
       {status === 'active' && animate && (

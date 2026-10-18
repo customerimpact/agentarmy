@@ -20,7 +20,8 @@ import { lockLayout, unlockLayout, useBoard } from '../lib/store';
 export type BrowserFlowNode = Node<Record<string, never>, 'browser'>;
 
 const CURSOR_VISIBLE_MS = 6000;
-const AGENT_COLOR = '#ff8a3d';
+const AGENT_COLOR = 'var(--aa-accent)';
+const agentTint = (percent: number) => `color-mix(in srgb, ${AGENT_COLOR} ${percent}%, transparent)`;
 
 function ChromeButton({
   label,
@@ -99,19 +100,19 @@ function AgentCursor({ tile, box, page, name }: { tile: BrowserTile; box: Size; 
       <span
         ref={rippleRef}
         className="absolute top-0 left-0 size-10 rounded-full opacity-0"
-        style={{ border: `2px solid ${AGENT_COLOR}`, background: `${AGENT_COLOR}33` }}
+        style={{ border: `2px solid ${AGENT_COLOR}`, background: agentTint(20) }}
       />
       <svg width="22" height="22" viewBox="0 0 24 24" className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]">
         <path
           d="M3 2 L3 19 L8 14.5 L11.5 22 L14.5 20.6 L11 13.3 L18 13.3 Z"
-          fill={AGENT_COLOR}
+          style={{ fill: AGENT_COLOR }}
           stroke="#ffffff"
           strokeWidth="1.5"
           strokeLinejoin="round"
         />
       </svg>
       <span
-        className="absolute top-5 left-4 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-black shadow"
+        className="absolute top-5 left-4 rounded-md px-1.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-accent-fg shadow"
         style={{ background: AGENT_COLOR }}
       >
         {name}
@@ -283,7 +284,7 @@ function BrowserNodeImpl({ id }: NodeProps<BrowserFlowNode>) {
   };
 
   const ringClass = focused
-    ? 'ring-2 ring-[#ff8a3d]/70'
+    ? 'ring-2 ring-accent'
     : selected
       ? 'ring-2 ring-accent/70'
       : 'ring-1 ring-line';
@@ -351,7 +352,7 @@ function BrowserNodeImpl({ id }: NodeProps<BrowserFlowNode>) {
               onClick={() => tile.linkedConsoleId && void flyTo(tile.linkedConsoleId)}
               className="nodrag inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-[11px] font-semibold
                          hover:brightness-125"
-              style={{ background: `${AGENT_COLOR}22`, color: AGENT_COLOR }}
+              style={{ background: agentTint(13), color: AGENT_COLOR }}
             >
               <Link2 size={12} />
               {linkedName ?? 'agent'}

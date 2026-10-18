@@ -12,9 +12,12 @@ import type {
   LaunchTemplateRequest,
   LaunchTemplateResponse,
   Project,
+  PublicSettings,
+  SettingsPatch,
   Template,
   UpdateConsoleRequest,
   UpdateProjectRequest,
+  WebhookKind,
 } from '../../shared/protocol';
 import { getToken } from './auth';
 
@@ -94,6 +97,11 @@ export const api = {
   updateBrowser: (id: string, req: BrowserRequest) =>
     request<BrowserTile>('PATCH', browserPath(id), req),
   deleteBrowser: (id: string) => request<{ ok: true }>('DELETE', browserPath(id)),
+  getSettings: () => request<PublicSettings>('GET', '/api/settings'),
+  patchSettings: (patch: SettingsPatch) => request<PublicSettings>('PATCH', '/api/settings', patch),
+  resetSettings: () => request<PublicSettings>('POST', '/api/settings/reset'),
+  testWebhook: (kind: WebhookKind) =>
+    request<{ ok: true }>('POST', '/api/settings/test-webhook', { kind }),
   listDir: (path?: string) =>
     request<FsListResponse>(
       'GET',

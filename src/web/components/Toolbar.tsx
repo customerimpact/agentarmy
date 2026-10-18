@@ -3,6 +3,7 @@ import { CircleQuestionMark, Maximize2, Plus } from 'lucide-react';
 import { fitAll } from '../lib/board-actions';
 import { useBoard } from '../lib/store';
 import { ArrangeMenu } from './ArrangeMenu';
+import { KillButton } from './KillButton';
 
 const SHORTCUTS: { keys: string[]; label: string; note?: string }[] = [
   { keys: ['N'], label: 'New agent' },
@@ -22,6 +23,7 @@ const SHORTCUTS: { keys: string[]; label: string; note?: string }[] = [
   { keys: ['Ctrl', 'A'], label: 'Select everything on the board' },
   { keys: ['Esc'], label: 'Clear the selection' },
   { keys: ['G'], label: 'Group the selection as a project' },
+  { keys: ['Del'], label: 'Kill the selection', note: 'asks first; conversations stay resumable' },
   { keys: ['Shift', 'A'], label: 'Arrange in a grid', note: 'the selection, or everything' },
   { keys: ['Alt', 'Drag'], label: 'Move without snapping' },
   { keys: ['?'], label: 'Show this help' },
@@ -91,6 +93,8 @@ function HelpPopover() {
 
 export function Toolbar() {
   const helpOpen = useBoard((s) => s.helpOpen);
+  // With 2+ selected, the selection bar shows the Kill button instead
+  const multiSelect = useBoard((s) => s.selectedIds.length >= 2);
   const { setNewAgentOpen, setHelpOpen } = useBoard.getState();
   const buttonClass = `grid size-8 place-items-center rounded-lg border border-line bg-surface text-fg-muted shadow-lg shadow-black/20
                        hover:bg-hover hover:text-fg`;
@@ -108,6 +112,7 @@ export function Toolbar() {
         New agent
       </button>
       <ArrangeMenu />
+      {!multiSelect && <KillButton />}
       <button
         type="button"
         title="Fit all (F)"

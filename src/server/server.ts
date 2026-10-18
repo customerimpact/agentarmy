@@ -16,6 +16,9 @@ import { listDirectory } from './fs-list.js';
 import { registerBrowserRoutes } from './browsers/routes.js';
 import { registerOrchestrationRoutes } from './orchestration-routes.js';
 import { registerWorkspaceRoutes } from './workspace-routes.js';
+import { registerSettingsRoutes } from './settings-routes.js';
+import { SettingsStore } from './settings.js';
+import { WebhookNotifier } from './webhooks.js';
 import type { HookPayload } from './hook-status.js';
 import {
   isAllowedHost,
@@ -29,6 +32,7 @@ import {
 
 export interface ServerOptions extends SecurityConfig {
   manager: ConsoleManager;
+  settings?: SettingsStore; // defaults to an in-memory store (tests)
 }
 
 const PROTECTED_PREFIXES = ['/api/', '/ws', '/hook/', '/bridge/'];
@@ -148,6 +152,12 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
   manager.on('browser', (browser) => broadcast({ type: 'browser', browser }));
   manager.on('browser-removed', (id) => broadcast({ type: 'browser-removed', id }));
 
+  const settings = options.settings ?? new SettingsStore(null);
+  const notifier = new WebhookNotifier(manager, settings, options.port);
+  settings.on('change', () =>
+    broadcast({ type: 'settings', settings: settings.publicView({ port: options.port }) }),
+  );
+
   app.get('/ws', { websocket: true }, (socket) => {
     sockets.add(socket);
     const listeners = new Map<string, (data: string) => void>();
@@ -194,6 +204,7 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
 
   await registerOrchestrationRoutes(app, { manager, port: options.port, token: options.token });
   await registerWorkspaceRoutes(app, { manager });
+  await registerSettingsRoutes(app, { settings, notifier, port: options.port });
 
   app.post('/api/consoles', async (request, reply) => {
     const body = request.body as CreateConsoleRequest | undefined;

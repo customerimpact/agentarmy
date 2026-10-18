@@ -13,9 +13,9 @@ import {
 } from './arrange';
 import { useBoardUi } from './board-ui';
 import { useBoard, type Viewport } from './store';
-import { socket } from './socket';
-import { focusTerminal, getTerminal } from './terminals';
+import { focusTerminal } from './terminals';
 import { rememberRecentFolder } from './recent-folders';
+import { getPrefs } from './prefs';
 
 export const DEFAULT_SIZE = { width: 760, height: 460 };
 export const MIN_SIZE = { width: 360, height: 220 };
@@ -34,19 +34,35 @@ function boardRect(): DOMRect | null {
   return document.querySelector('.react-flow')?.getBoundingClientRect() ?? null;
 }
 
-// Animate to a console at a readable zoom, select it and put the cursor in its terminal
+// Animate to a console (or browser tile) at zoom 1, select it and put the cursor in its terminal.
+// Uses setCenter rather than fitView: fitView is queued until the next node update, and the
+// selection change we make here re-renders the board first, which used to swap in the board's
+// default fitView options (all nodes) and zoom OUT instead of in.
+export const FLY_ZOOM = 1;
+export const FLY_DURATION_MS = 300;
+
+function itemRect(id: string): ConsoleLayout | null {
+  const node = flow?.getInternalNode(id);
+  if (node) {
+    const width = node.measured?.width ?? node.width;
+    const height = node.measured?.height ?? node.height;
+    if (width && height) return { ...node.internals.positionAbsolute, width, height };
+  }
+  const { consoles, browsers } = useBoard.getState();
+  return consoles[id]?.layout ?? browsers[id]?.layout ?? null;
+}
+
 export async function flyTo(id: string, options: { focus?: boolean } = {}): Promise<void> {
   const { focus = true } = options;
   useBoard.getState().select(id);
-  if (!flow) return;
-  await flow.fitView({
-    nodes: [{ id }],
-    duration: 450,
-    padding: 0.08,
-    minZoom: COMPACT_ZOOM,
-    // Landing at exactly 1 keeps the focused terminal pixel-perfect (and lets it use WebGL)
-    maxZoom: 1,
+  const rect = itemRect(id);
+  if (!flow || !rect) return;
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  await flow.setCenter(rect.x + rect.width / 2, rect.y + rect.height / 2, {
+    zoom: FLY_ZOOM, // exactly 1 keeps the terminal pixel-perfect (and lets it use WebGL)
+    duration: reduced ? 0 : FLY_DURATION_MS,
   });
+  persistViewport(flow.getViewport());
   if (focus) window.requestAnimationFrame(() => focusTerminal(id));
 }
 
@@ -157,7 +173,9 @@ function findFreeSpot(
 
 export async function createAgent(cwd: string, name?: string): Promise<void> {
   const existing = Object.values(useBoard.getState().consoles).map((c) => c.layout);
-  const spot = findFreeSpot(existing);
+  // Settings > Board > New console size (M keeps the classic default)
+  const preset = getPrefs().defaultSize;
+  const spot = findFreeSpot(existing, preset === 'M' ? DEFAULT_SIZE : SIZE_PRESETS[preset]);
   const layout = {
     x: Math.round(spot.x),
     y: Math.round(spot.y),
@@ -209,15 +227,13 @@ export async function createAgentGrid(cwd: string, columns = 2, rows = 2): Promi
   }, 80);
 }
 
-// Sends a line to a console as if typed. Text and Enter go out as separate writes: TUIs like
-// Claude Code treat one chunk ending in "\r" as a paste and insert a newline instead of submitting.
+// Sends a line to a console as if typed. Goes through the server, which pastes the text, waits
+// for Claude Code to take the paste in, presses Enter and re-presses it once if nothing submitted.
 export function sendLine(id: string, text: string): void {
-  const term = getTerminal(id);
-  const multiLine = text.includes('\n');
-  // Bracketed paste keeps multi-line text in one prompt instead of submitting at each newline
-  const payload = multiLine && term?.modes.bracketedPasteMode ? `\x1b[200~${text}\x1b[201~` : text;
-  socket.send({ type: 'input', id, data: payload });
-  window.setTimeout(() => socket.send({ type: 'input', id, data: '\r' }), 40);
+  api.sendText(id, text).catch((error: Error) => {
+    const name = useBoard.getState().consoles[id]?.name ?? 'the console';
+    useBoard.getState().toast(`Could not send to ${name}: ${error.message}`);
+  });
 }
 
 export async function restartConsole(id: string): Promise<void> {
@@ -418,4 +434,54 @@ export async function groupSelection(name: string): Promise<boolean> {
     toast(`Could not create the project: ${(error as Error).message}`);
     return false;
   }
+}
+
+// ---------- kill (stop and remove consoles / browser tiles) ----------
+
+// The multi-selection, or else the focused console/tile
+export function killTargets(): { consoles: string[]; browsers: string[] } {
+  const { selectedIds, selectedId, consoles, browsers } = useBoard.getState();
+  const ids = selectedIds.length ? selectedIds : selectedId ? [selectedId] : [];
+  return {
+    consoles: ids.filter((id) => consoles[id]),
+    browsers: ids.filter((id) => browsers[id]),
+  };
+}
+
+const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+export function askKill(): void {
+  const targets = killTargets();
+  const total = targets.consoles.length + targets.browsers.length;
+  if (!total) return;
+  const parts: string[] = [];
+  if (targets.consoles.length) {
+    parts.push(
+      `Stops the Claude process and removes ${plural(targets.consoles.length, 'terminal')} from the board. Conversations can still be resumed later with claude --resume.`,
+    );
+  }
+  if (targets.browsers.length) {
+    parts.push(`Closes ${plural(targets.browsers.length, 'browser tile')}.`);
+  }
+  useBoard.getState().askConfirm({
+    title: total === 1 ? 'Kill this item?' : `Kill ${total} items?`,
+    message: parts.join(' '),
+    confirmLabel: total === 1 ? 'Kill' : `Kill ${total}`,
+    danger: true,
+    onConfirm: async () => {
+      await Promise.all([
+        ...targets.consoles.map((id) => closeConsole(id)),
+        ...targets.browsers.map((id) =>
+          api
+            .deleteBrowser(id)
+            .then(() => useBoard.getState().removeBrowser(id))
+            .catch((error: Error) => useBoard.getState().toast(`Close failed: ${error.message}`)),
+        ),
+      ]);
+      const board = useBoard.getState();
+      board.setSelectedIds([]);
+      if (board.selectedId && (targets.consoles.includes(board.selectedId) || targets.browsers.includes(board.selectedId)))
+        board.select(null);
+    },
+  });
 }

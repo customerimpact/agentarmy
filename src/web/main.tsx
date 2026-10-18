@@ -8,10 +8,14 @@ import './styles.css';
 import { App } from './App';
 import { initToken } from './lib/auth';
 import { installZoomMouseFix } from './lib/zoom-mouse-fix';
+import { initTheme } from './lib/theme';
+import { installThemeShortcut } from './lib/theme-shortcut';
 
 // Must run before anything renders so the token never stays in the address bar
 initToken();
 installZoomMouseFix();
+initTheme();
+installThemeShortcut();
 
 // xterm measures its cell size once at open; if the webfont isn't ready yet it measures the
 // fallback font and every glyph lands slightly off-grid. Wait briefly for the fonts first.

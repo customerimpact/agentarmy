@@ -144,7 +144,8 @@ describe('FirstPromptQueue', () => {
     const a = manager.create({ cwd: home });
     queue.add(a.id, 'hello');
     manager.handleHook(a.id, { hook_event_name: 'SessionStart', session_id: a.sessionId });
-    expect(ptys[0].written).toContain('hello');
+    // sendText types on the next tick (sends to one console are queued)
+    await vi.waitFor(() => expect(ptys[0].written).toContain('hello'));
     manager.handleHook(a.id, { hook_event_name: 'UserPromptSubmit' });
     manager.handleHook(a.id, { hook_event_name: 'SessionStart', session_id: a.sessionId });
     expect(ptys[0].written.filter((w) => w === 'hello').length).toBe(1);

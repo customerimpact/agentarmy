@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import type { ActionItem, ConsoleInfo } from '../../shared/protocol';
 import { flyTo } from './board-actions';
 import { attentionCount, projectOf } from './fleet';
+import { getPrefs } from './prefs';
 import { useBoard } from './store';
 
 const BASE_TITLE = 'AgentArmy';
@@ -31,6 +32,11 @@ export function isSoundEnabled(): boolean {
   } catch {
     return true;
   }
+}
+
+// Plays the chime now, for the Settings volume slider preview
+export function testSound(): void {
+  beep(true);
 }
 
 export function setSoundEnabled(on: boolean): void {
@@ -75,6 +81,9 @@ function beep(force = false): void {
     audio ??= new AudioContext();
     if (audio.state === 'suspended') void audio.resume();
     const t = audio.currentTime;
+    // Settings > Notifications > Volume (exponential ramps cannot reach 0, so skip when muted)
+    const peak = 0.12 * getPrefs().soundVolume;
+    if (peak <= 0.0002) return;
     // Two soft rising tones
     for (const [offset, freq] of [
       [0, 660],
@@ -85,7 +94,7 @@ function beep(force = false): void {
       osc.type = 'sine';
       osc.frequency.value = freq;
       gain.gain.setValueAtTime(0.0001, t + offset);
-      gain.gain.exponentialRampToValueAtTime(0.12, t + offset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(peak, t + offset + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + offset + 0.18);
       osc.connect(gain).connect(audio.destination);
       osc.start(t + offset);

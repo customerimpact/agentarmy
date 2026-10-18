@@ -2,9 +2,12 @@
 
 /*
   Raw palette lives in CSS variables so themes only swap values, not classes.
-  Brand: warm near-black canvas, Claude-like orange accent, soft orange "cloud" glow behind
-  active things. Dark is the brand theme and the default; light is opt-in with
-  <html data-theme="light"> (a settings toggle can set it).
+  Themes (src/web/lib/theme.ts sets <html data-theme="...">):
+    ember (default, :root) - warm near-black canvas, Claude-like orange accent and glow
+    midnight               - deep navy ink, electric cyan accent, cool blue/violet haze
+    aurora                 - polar night, mint accent, drifting green/violet aurora curtains
+    paper                  - light warm off-white canvas, indigo ink, dark terminals
+  Every theme overrides the same tokens; terminal palettes live in theme.ts.
 */
 :root {
   --aa-canvas: #0c0a09;
@@ -32,6 +35,17 @@
   /* The ambient glow color used by the canvas aurora and active consoles */
   --aa-glow: #e8774a;
   --aa-glow-2: #c4542f;
+  /* Bright highlight inside the spinning "working" ring */
+  --aa-ring-hi: #ffd0a8;
+  /* Job lines between consoles (FlowEdge.tsx) */
+  --aa-flow-from: #ff5a36;
+  --aa-flow-to: #ffae57;
+  --aa-flow-glow: #ff7a45;
+  --aa-flow-spark: #ffb067;
+  --aa-flow-core: #fff4e2;
+  --aa-flow-return: #e2f7c4;
+  --aa-scrollbar: #2e2724;
+  --aa-shadow: rgb(0 0 0 / 0.35);
 
   /* Project frame / sidebar colors, one per PROJECT_COLORS entry (src/shared/protocol.ts) */
   --aa-project-orange: #e8774a;
@@ -45,28 +59,137 @@
   color-scheme: dark;
 }
 
-:root[data-theme='light'] {
-  --aa-canvas: #f6f1ec;
-  --aa-dots: #d9cfc6;
-  --aa-surface: #fffdfb;
-  --aa-surface-2: #f8f3ee;
+:root[data-theme='midnight'] {
+  --aa-canvas: #060a14;
+  --aa-dots: #1b2740;
+  --aa-surface: #0b1120;
+  --aa-surface-2: #0f1628;
+  --aa-elevated: #121b2e;
+  --aa-hover: #1a253c;
+  --aa-line: #1d2943;
+  --aa-line-strong: #2d3d5e;
+  --aa-fg: #e6eefa;
+  --aa-fg-muted: #9badc8;
+  --aa-fg-subtle: #64759a;
+  --aa-accent: #3cc4ff;
+  --aa-accent-strong: #6fd5ff;
+  --aa-accent-fg: #021424;
+  --aa-term: #080d19;
+  --aa-term-fg: #dce6f5;
+  --aa-working: #3cc4ff;
+  --aa-needs: #ffc94d;
+  --aa-resting: #3ddc97;
+  --aa-idle: #7d8aa6;
+  --aa-error: #ff5c7a;
+  --aa-exited: #36425c;
+  --aa-glow: #2f8cff;
+  --aa-glow-2: #7c5cff;
+  --aa-ring-hi: #d4f3ff;
+  --aa-flow-from: #2f7bff;
+  --aa-flow-to: #3ce0ff;
+  --aa-flow-glow: #3cc4ff;
+  --aa-flow-spark: #7fd8ff;
+  --aa-flow-core: #f0fbff;
+  --aa-flow-return: #c9f7e2;
+  --aa-scrollbar: #24314b;
+  --aa-shadow: rgb(0 4 16 / 0.5);
+  --aa-project-orange: #ff9361;
+  --aa-project-amber: #f7c64f;
+  --aa-project-rose: #f472a6;
+  --aa-project-violet: #a993ff;
+  --aa-project-blue: #5ea8ff;
+  --aa-project-teal: #2fd6c0;
+  --aa-project-green: #6ee7a0;
+  color-scheme: dark;
+}
+
+:root[data-theme='aurora'] {
+  --aa-canvas: #05090b;
+  --aa-dots: #1a2a29;
+  --aa-surface: #0a1112;
+  --aa-surface-2: #0e1717;
+  --aa-elevated: #111b1c;
+  --aa-hover: #182526;
+  --aa-line: #1b2a2a;
+  --aa-line-strong: #2a3e3d;
+  --aa-fg: #e6f4ef;
+  --aa-fg-muted: #9db7ae;
+  --aa-fg-subtle: #678078;
+  --aa-accent: #4fe3b5;
+  --aa-accent-strong: #79f0ca;
+  --aa-accent-fg: #02160f;
+  --aa-term: #070c0d;
+  --aa-term-fg: #dcefe8;
+  /* Working is violet so it never reads as "resting" green */
+  --aa-working: #b294ff;
+  --aa-needs: #ffd166;
+  --aa-resting: #4fe3b5;
+  --aa-idle: #7f958e;
+  --aa-error: #ff6b8b;
+  --aa-exited: #334542;
+  --aa-glow: #2fe0a8;
+  --aa-glow-2: #8b5cf6;
+  --aa-ring-hi: #eadfff;
+  --aa-flow-from: #2fe0a8;
+  --aa-flow-to: #a98bff;
+  --aa-flow-glow: #6fdcc8;
+  --aa-flow-spark: #9ff5d8;
+  --aa-flow-core: #f2fffa;
+  --aa-flow-return: #e6dcff;
+  --aa-scrollbar: #22332f;
+  --aa-shadow: rgb(0 6 6 / 0.5);
+  --aa-project-orange: #ff9a66;
+  --aa-project-amber: #f5c75a;
+  --aa-project-rose: #ff7aa2;
+  --aa-project-violet: #b294ff;
+  --aa-project-blue: #64b0ff;
+  --aa-project-teal: #3fd9c8;
+  --aa-project-green: #8ee66f;
+  color-scheme: dark;
+}
+
+:root[data-theme='paper'] {
+  --aa-canvas: #f4f0e8;
+  --aa-dots: #d6cdbf;
+  --aa-surface: #fffdf9;
+  --aa-surface-2: #f8f4ed;
   --aa-elevated: #ffffff;
-  --aa-hover: #f0e8e1;
-  --aa-line: #e8ded5;
-  --aa-line-strong: #d6c9be;
-  --aa-fg: #1d1714;
-  --aa-fg-muted: #5f544c;
-  --aa-fg-subtle: #94887e;
-  --aa-accent: #d4622f;
-  --aa-accent-strong: #c45526;
+  --aa-hover: #efe9df;
+  --aa-line: #e3dbcf;
+  --aa-line-strong: #cfc4b4;
+  --aa-fg: #1c1a17;
+  --aa-fg-muted: #57514a;
+  --aa-fg-subtle: #857c72;
+  --aa-accent: #4f46e5;
+  --aa-accent-strong: #6159f0;
   --aa-accent-fg: #ffffff;
-  --aa-working: #e0662c;
-  --aa-needs: #d99412;
-  --aa-resting: #2f9e63;
-  --aa-idle: #94887e;
-  --aa-exited: #b3a89f;
-  --aa-glow: #f0905f;
-  --aa-glow-2: #f3b38f;
+  /* Terminals stay dark ink slabs (see PAPER in theme.ts) */
+  --aa-term: #1b1a22;
+  --aa-term-fg: #ebe8e2;
+  --aa-working: #4f46e5;
+  --aa-needs: #d97706;
+  --aa-resting: #15803d;
+  --aa-idle: #8f877d;
+  --aa-error: #dc2626;
+  --aa-exited: #bdb4a8;
+  --aa-glow: #6d63ff;
+  --aa-glow-2: #e8a06b;
+  --aa-ring-hi: #c7c3ff;
+  --aa-flow-from: #4f46e5;
+  --aa-flow-to: #c026d3;
+  --aa-flow-glow: #6d63ff;
+  --aa-flow-spark: #8b84ff;
+  --aa-flow-core: #ffffff;
+  --aa-flow-return: #34d399;
+  --aa-scrollbar: #3a3845;
+  --aa-shadow: rgb(60 45 30 / 0.16);
+  --aa-project-orange: #ea6a2f;
+  --aa-project-amber: #d18a06;
+  --aa-project-rose: #e0457a;
+  --aa-project-violet: #7c5ce6;
+  --aa-project-blue: #2f74e0;
+  --aa-project-teal: #0f9e8e;
+  --aa-project-green: #2f9e4f;
   color-scheme: light;
 }
 
@@ -234,9 +357,91 @@ body {
   }
 }
 
-:root[data-theme='light'] .react-flow::after {
-  opacity: 0.18;
+/* ----- Midnight: cool blue/violet haze, a faint cyan dot field, a horizon glow at the bottom ----- */
+:root[data-theme='midnight'] .react-flow::before {
+  background:
+    radial-gradient(60% 40% at 50% 112%, color-mix(in srgb, var(--aa-glow) 22%, transparent), transparent 70%),
+    radial-gradient(34% 30% at 10% 10%, color-mix(in srgb, var(--aa-glow) 20%, transparent), transparent 70%),
+    radial-gradient(30% 30% at 90% 22%, color-mix(in srgb, var(--aa-glow-2) 20%, transparent), transparent 70%),
+    radial-gradient(24% 22% at 72% 86%, color-mix(in srgb, var(--aa-accent) 8%, transparent), transparent 70%);
+}
+
+:root[data-theme='midnight'] .react-flow::after {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--aa-accent) 50%, transparent) 0.8px, transparent 1.4px);
+  background-size: 6px 6px;
+  opacity: 0.3;
+}
+
+/*
+  ----- Aurora: long soft curtains of green, teal and violet light sweeping across the top -----
+  ::before holds the curtains (wide, flat ellipses), ::after a second, counter-drifting band.
+*/
+:root[data-theme='aurora'] .react-flow::before {
+  background:
+    radial-gradient(70% 16% at 30% 22%, color-mix(in srgb, var(--aa-glow) 30%, transparent), transparent 72%),
+    radial-gradient(55% 13% at 62% 30%, color-mix(in srgb, #3fd9c8 20%, transparent), transparent 72%),
+    radial-gradient(48% 20% at 82% 16%, color-mix(in srgb, var(--aa-glow-2) 28%, transparent), transparent 72%),
+    radial-gradient(40% 28% at 12% 90%, color-mix(in srgb, var(--aa-glow-2) 10%, transparent), transparent 70%);
+  transform-origin: 50% 20%;
+  animation: aa-aurora-sway 38s ease-in-out infinite alternate;
+}
+
+:root[data-theme='aurora'] .react-flow::after {
+  background-image:
+    radial-gradient(60% 10% at 46% 38%, color-mix(in srgb, var(--aa-glow) 16%, transparent), transparent 75%),
+    radial-gradient(36% 12% at 76% 42%, color-mix(in srgb, var(--aa-glow-2) 14%, transparent), transparent 75%);
+  background-size: auto;
+  -webkit-mask-image: none;
+  mask-image: none;
+  opacity: 1;
+  animation: aa-aurora-drift 52s ease-in-out infinite alternate;
+}
+
+@keyframes aa-aurora-sway {
+  0% {
+    transform: translate3d(-3%, 0, 0) skewX(-6deg) scaleY(1);
+  }
+  50% {
+    transform: translate3d(2%, 2%, 0) skewX(4deg) scaleY(1.12);
+  }
+  100% {
+    transform: translate3d(4%, -1%, 0) skewX(-2deg) scaleY(0.94);
+  }
+}
+
+@keyframes aa-aurora-drift {
+  0% {
+    transform: translate3d(4%, 0, 0) skewX(5deg);
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(-5%, 3%, 0) skewX(-4deg);
+    opacity: 0.7;
+  }
+}
+
+/* ----- Paper: soft indigo and peach washes, a fine ink dot "grain" that barely shows ----- */
+:root[data-theme='paper'] .react-flow::before {
+  background:
+    radial-gradient(40% 36% at 8% 6%, color-mix(in srgb, var(--aa-glow) 11%, transparent), transparent 70%),
+    radial-gradient(34% 32% at 94% 92%, color-mix(in srgb, var(--aa-glow-2) 16%, transparent), transparent 70%),
+    radial-gradient(26% 24% at 80% 12%, color-mix(in srgb, var(--aa-glow) 6%, transparent), transparent 70%);
+}
+
+:root[data-theme='paper'] .react-flow::after {
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--aa-glow) 45%, transparent) 0.8px, transparent 1.4px);
+  opacity: 0.2;
   animation: none;
+}
+
+/* Light theme: softer button glow */
+:root[data-theme='paper'] .aa-btn-primary {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.22),
+    0 6px 18px -8px color-mix(in srgb, var(--aa-glow) 70%, transparent);
 }
 
 .react-flow__controls,
@@ -244,7 +449,7 @@ body {
   border: 1px solid var(--aa-line);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.35);
+  box-shadow: 0 10px 30px var(--aa-shadow);
 }
 
 .react-flow__attribution a {
@@ -297,7 +502,7 @@ body {
     transparent 0deg,
     color-mix(in srgb, var(--aa-working) 20%, transparent) 60deg,
     var(--aa-working) 110deg,
-    #ffd0a8 130deg,
+    var(--aa-ring-hi) 130deg,
     var(--aa-working) 150deg,
     color-mix(in srgb, var(--aa-working) 20%, transparent) 200deg,
     transparent 260deg,
@@ -470,7 +675,7 @@ body {
 }
 
 .aa-term-host .xterm-viewport::-webkit-scrollbar-thumb {
-  background: #2e2724;
+  background: var(--aa-scrollbar);
   border-radius: 4px;
 }
 
@@ -496,4 +701,21 @@ body {
   .aa-flow {
     animation: none;
   }
+}
+
+/* Settings > Board > Reduce motion: same effect as the OS setting, for this browser only */
+:root[data-reduce-motion='true'] *,
+:root[data-reduce-motion='true'] *::before,
+:root[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Settings search: matched text */
+mark.aa-hit {
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--aa-accent) 30%, transparent);
+  color: inherit;
 }

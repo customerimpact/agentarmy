@@ -7,6 +7,7 @@ import { DEV_UI_PORT } from './security.js';
 import { acquireInstanceLock } from './instance-lock.js';
 import { buildServer } from './server.js';
 import { agentArmyHome, StateStore } from './store.js';
+import { setActiveSettings, SettingsStore } from './settings.js';
 import { loadOrCreateToken } from './token-file.js';
 
 interface CliArgs {
@@ -83,16 +84,21 @@ async function main(): Promise<void> {
   const token = process.env.AGENTARMY_TOKEN || loadOrCreateToken({ rotate: args.newToken });
 
   const store = new StateStore();
+  const settings = new SettingsStore();
+  setActiveSettings(settings);
   const manager: ConsoleManager = new ConsoleManager({
     port,
     token,
     dev: args.dev,
+    settings: () => settings.get(),
     onChange: () => store.scheduleSave(() => manager.getState()),
   });
-  const app = await buildServer({ port, token, dev: args.dev, manager });
+  const app = await buildServer({ port, token, dev: args.dev, manager, settings });
   await app.listen({ port, host: '127.0.0.1' });
 
-  manager.restore(store.load(), { resumeAll: args.resumeAll });
+  // --resume-all wins; otherwise the "On startup" setting decides ('ask' leaves it to the UI prompt)
+  const resumeAll = args.resumeAll || settings.get().startupResume === 'always';
+  manager.restore(store.load(), { resumeAll });
 
   const uiPort = args.dev ? DEV_UI_PORT : port;
   const host = args.dev ? 'localhost' : '127.0.0.1';

@@ -5,6 +5,7 @@ import {
   Network,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
   Users,
   type LucideIcon,
 } from 'lucide-react';
@@ -13,11 +14,13 @@ import { useBoard, type SidebarTab } from '../lib/store';
 import { ActionsPanel } from './ActionsPanel';
 import { AgentsPanel } from './AgentsPanel';
 import { ProgressPanel } from './ProgressPanel';
+import { SettingsPanel } from './SettingsPanel';
 
 const TABS: { key: SidebarTab; label: string; icon: LucideIcon; hotkey: string }[] = [
   { key: 'agents', label: 'Agents', icon: Users, hotkey: '1' },
   { key: 'actions', label: 'Actions', icon: Inbox, hotkey: '2' },
   { key: 'progress', label: 'Progress', icon: ListChecks, hotkey: '3' },
+  { key: 'settings', label: 'Settings', icon: Settings, hotkey: '4' },
 ];
 
 // Same rule as use-shortcuts: never steal keys from terminals or text fields
@@ -135,7 +138,8 @@ export function Sidebar() {
   return (
     <aside
       data-testid="sidebar"
-      className="flex w-80 shrink-0 flex-col border-r border-line bg-surface"
+      // Settings rows need a label, a description and a control side by side, so that tab is wider
+      className={`flex shrink-0 flex-col border-r border-line bg-surface ${tab === 'settings' ? 'w-[420px]' : 'w-80'}`}
     >
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line pr-2 pl-4">
         <img src="/icon.svg" alt="" className="size-5" />
@@ -167,6 +171,8 @@ export function Sidebar() {
         {TABS.map((t) => {
           const Icon = t.icon;
           const active = tab === t.key;
+          // Settings is a gear-only tab at the end so the three work tabs keep their room
+          const iconOnly = t.key === 'settings' && !active;
           return (
             <button
               key={t.key}
@@ -174,13 +180,15 @@ export function Sidebar() {
               role="tab"
               data-testid={`sidebar-tab-${t.key}`}
               aria-selected={active}
+              aria-label={t.label}
               title={`${t.label} (${t.hotkey})`}
               onClick={() => setSidebarTab(t.key)}
-              className={`relative flex flex-1 items-center justify-center gap-1.5 rounded-t-md px-2 pt-1.5 pb-2 text-[12.5px] font-medium transition-colors
+              className={`relative flex items-center justify-center gap-1.5 rounded-t-md px-2 pt-1.5 pb-2 text-[12.5px] font-medium transition-colors
+                          ${iconOnly ? 'flex-none' : 'flex-1'}
                           ${active ? 'text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
             >
               <Icon size={14} />
-              {t.label}
+              {!iconOnly && t.label}
               {t.key === 'actions' && <Badge count={counts.actions} tone="needs" />}
               {t.key === 'agents' && counts.agents > 0 && (
                 <span className="text-[11px] text-fg-subtle tabular-nums">{counts.agents}</span>
@@ -196,6 +204,7 @@ export function Sidebar() {
       {tab === 'agents' && <AgentsPanel />}
       {tab === 'actions' && <ActionsPanel />}
       {tab === 'progress' && <ProgressPanel />}
+      {tab === 'settings' && <SettingsPanel />}
     </aside>
   );
 }

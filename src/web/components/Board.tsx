@@ -27,6 +27,7 @@ import {
   setFlowInstance,
 } from '../lib/board-actions';
 import { projectColor, useBoardUi } from '../lib/board-ui';
+import { getPrefs, usePrefs } from '../lib/prefs';
 import { snapMove, snapResize, unionRect, type Rect } from '../lib/snap';
 import { STATUS_META } from '../lib/status';
 import { consoleList, isLayoutLocked, lockLayout, unlockLayout, useBoard, useClock } from '../lib/store';
@@ -44,6 +45,9 @@ const nodeTypes: NodeTypes = { terminal: TerminalNode, browser: BrowserNode, fra
 const FRAME_PREFIX = 'frame:';
 // Flow lines are drawn by FlowLines, not as React Flow edges (those need <Handle>s)
 const NO_EDGES: never[] = [];
+// Must be a stable object: React Flow copies this prop into its store whenever its identity
+// changes, which replaced the options of a pending flow.fitView({ nodes }) call (zoom-out bug)
+const FIT_VIEW_OPTIONS = { maxZoom: 1, padding: 0.1 };
 const ARRANGE_TRANSITION =
   'transform 260ms cubic-bezier(0.22, 1, 0.36, 1), width 260ms cubic-bezier(0.22, 1, 0.36, 1), height 260ms cubic-bezier(0.22, 1, 0.36, 1)';
 // Lines stay on the board this long after their last job update
@@ -256,6 +260,7 @@ export function Board() {
   const selectedIds = useBoard((s) => s.selectedIds);
   const selectedId = useBoard((s) => s.selectedId);
   const animating = useBoardUi((s) => s.animating);
+  const showMinimap = usePrefs((s) => s.prefs.showMinimap);
   // Minute resolution is enough for expiring old lines
   const minute = useClock((s) => Math.floor(s.now / 60_000));
   const [nodes, setNodes] = useState<BoardNode[]>([]);
@@ -382,6 +387,7 @@ export function Board() {
           const result = prefs.snap
             ? snapResize(raw, session.others, {
                 zoom: zoom(),
+                grid: getPrefs().gridSize,
                 minWidth: MIN_SIZE.width,
                 minHeight: MIN_SIZE.height,
                 fromLeft,
@@ -405,7 +411,7 @@ export function Board() {
         let delta = { x: dragChange.position.x - startPos.x, y: dragChange.position.y - startPos.y };
         if (prefs.snap && !session.free) {
           const moved = { ...session.box, x: session.box.x + delta.x, y: session.box.y + delta.y };
-          const snapped = snapMove(moved, session.others, { zoom: zoom() });
+          const snapped = snapMove(moved, session.others, { zoom: zoom(), grid: getPrefs().gridSize });
           delta = { x: snapped.x - session.box.x, y: snapped.y - session.box.y };
           setGuides(snapped.guides);
         } else {
@@ -550,7 +556,7 @@ export function Board() {
       onMoveEnd={onMoveEnd}
       defaultViewport={initialViewport.current ?? { x: 0, y: 0, zoom: 1 }}
       fitView={!initialViewport.current}
-      fitViewOptions={{ maxZoom: 1, padding: 0.1 }}
+      fitViewOptions={FIT_VIEW_OPTIONS}
       minZoom={MIN_ZOOM}
       maxZoom={MAX_ZOOM}
       colorMode="system"
@@ -575,23 +581,25 @@ export function Board() {
       <Panel position="top-center">
         <SelectionBar />
       </Panel>
-      <MiniMap<BoardNode>
-        pannable
-        zoomable
-        nodeBorderRadius={6}
-        nodeColor={(node) => {
-          if (node.type === 'frame') return 'transparent';
-          if (node.type === 'browser') return 'var(--aa-line-strong)';
-          const status = consoles[node.id]?.status;
-          return status ? STATUS_META[status].cssVar : 'var(--aa-idle)';
-        }}
-        nodeStrokeColor={(node) =>
-          node.type === 'frame'
-            ? projectColor(projects[(node.data as { projectId: string }).projectId]?.color)
-            : 'transparent'
-        }
-        nodeStrokeWidth={6}
-      />
+      {showMinimap && (
+        <MiniMap<BoardNode>
+          pannable
+          zoomable
+          nodeBorderRadius={6}
+          nodeColor={(node) => {
+            if (node.type === 'frame') return 'transparent';
+            if (node.type === 'browser') return 'var(--aa-line-strong)';
+            const status = consoles[node.id]?.status;
+            return status ? STATUS_META[status].cssVar : 'var(--aa-idle)';
+          }}
+          nodeStrokeColor={(node) =>
+            node.type === 'frame'
+              ? projectColor(projects[(node.data as { projectId: string }).projectId]?.color)
+              : 'transparent'
+          }
+          nodeStrokeWidth={6}
+        />
+      )}
       <Controls position="top-left" showInteractive={false} />
     </ReactFlow>
   );

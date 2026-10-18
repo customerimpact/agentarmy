@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { arrangeBoard, clearSelection, fitAll, flyTo, selectAll } from './board-actions';
+import { arrangeBoard, askKill, clearSelection, fitAll, flyTo, selectAll } from './board-actions';
 import { useBoardUi } from './board-ui';
 import { spatialOrder, useBoard } from './store';
 
@@ -67,6 +67,13 @@ export function useShortcuts(): void {
       }
 
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // Delete with the board focused (terminals keep their own Delete key: see isTypingTarget)
+      if (e.key === 'Delete' && !e.shiftKey) {
+        e.preventDefault();
+        askKill();
+        return;
+      }
 
       if (e.key === 'A' && e.shiftKey) {
         e.preventDefault();

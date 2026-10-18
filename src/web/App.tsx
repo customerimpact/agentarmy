@@ -3,6 +3,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { ApiError, api } from './lib/api';
 import { clearToken, getToken } from './lib/auth';
 import { startNotifications } from './lib/notify';
+import { useServerSettings } from './lib/settings';
 import { socket } from './lib/socket';
 import { useBoard } from './lib/store';
 import { useShortcuts } from './lib/use-shortcuts';
@@ -63,6 +64,7 @@ export function App() {
         if (cancelled) return;
         useBoard.getState().loadState(state);
         socket.start();
+        void useServerSettings.getState().load();
         startNotifications();
         setPhase('ready');
       } catch (e) {

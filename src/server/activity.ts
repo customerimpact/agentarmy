@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import type { TodoItem, TodoStatus } from '../shared/protocol.js';
 import type { ConsoleManager } from './consoles.js';
@@ -17,6 +18,11 @@ import type { HookPayload } from './hook-status.js';
 // - TaskList: PostToolUse tool_response { tasks: [{ id, subject, status, owner?, blockedBy }] }.
 // - TodoWrite (older/other setups): tool_input { todos: [{ content, status, activeForm }] } replaces
 //   the whole list. Task* tools only show up with CLAUDE_CODE_ENABLE_TASKS=1 in that version.
+// - "/model haiku" fires no hook. It writes two user entries to the transcript right away:
+//   content "<command-name>/model</command-name>...<command-args>haiku</command-args>" and then
+//   content "<local-command-stdout>Set model to `Haiku 5.5` and saved as ...</local-command-stdout>".
+//   The screen prints the same "Set model to ..." line, which ConsoleManager reports as a
+//   'model-switch' event; we then re-read the transcript tail.
 
 const TODO_STATUSES = new Set<TodoStatus>(['pending', 'in_progress', 'completed']);
 const TRANSCRIPT_TAIL_BYTES = 64 * 1024;
@@ -165,17 +171,43 @@ export function describeToolUse(toolName: string, input: Obj, cwd?: string): str
   return clip(toolName, MAX_ACTIVITY);
 }
 
+const MODEL_FAMILY = /\b(opus|sonnet|haiku|fable)\s+(\d+(?:\.\d+)*)/i;
+
+// "Haiku 5.5" -> "claude-haiku-5-5", "Opus 5.5 (1M context)" -> "claude-opus-5-5[1m]"
+export function modelIdFromDisplayName(name: string): string {
+  const match = MODEL_FAMILY.exec(name);
+  if (!match) return name.trim();
+  const context = /\b1M\b/i.test(name) ? '[1m]' : '';
+  return `claude-${match[1].toLowerCase()}-${match[2].replace(/\./g, '-')}${context}`;
+}
+
 function modelFromLine(line: string): string | undefined {
-  if (!line.includes('"assistant"')) return undefined;
+  const assistant = line.includes('"assistant"');
+  const switched = line.includes('Set model to');
+  if (!assistant && !switched) return undefined;
   try {
     const entry = JSON.parse(line) as Obj;
-    if (entry.type !== 'assistant') return undefined;
-    const model = str(obj(entry.message)?.model);
-    // '<synthetic>' marks messages Claude Code wrote itself (errors, interruptions)
-    return model && !model.startsWith('<') ? model : undefined;
+    if (entry.type === 'assistant') {
+      const model = str(obj(entry.message)?.model);
+      // '<synthetic>' marks messages Claude Code wrote itself (errors, interruptions)
+      return model && !model.startsWith('<') ? model : undefined;
+    }
+    if (entry.type === 'user' && switched) {
+      const content = obj(entry.message)?.content;
+      if (typeof content !== 'string') return undefined;
+      const set = /<local-command-stdout>\s*Set model to\s+`?([^`<\n]+?)`?(?:\s+and\b|\s*<|\s*$)/.exec(content);
+      return set ? modelIdFromDisplayName(set[1]) : undefined;
+    }
+    return undefined;
   } catch {
     return undefined; // the first line of the tail is usually cut in half
   }
+}
+
+// Where Claude Code keeps a session's transcript when no hook told us yet
+export function defaultTranscriptPath(cwd: string, sessionId: string, env = process.env): string {
+  const base = env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude');
+  return path.join(base, 'projects', cwd.replace(/[^a-zA-Z0-9]/g, '-'), `${sessionId}.jsonl`);
 }
 
 // Reads only the end of the transcript JSONL, newest line first
@@ -204,15 +236,45 @@ function sameTodos(a: TodoItem[] | undefined, b: TodoItem[]): boolean {
   return JSON.stringify(a ?? []) === JSON.stringify(b);
 }
 
+// After "Set model to" shows on screen: the transcript entry is written at about the same time
+const MODEL_SWITCH_READ_DELAYS_MS = [300, 1500];
+
 export class ActivityTracker {
-  constructor(private readonly manager: ConsoleManager) {
+  private transcripts = new Map<string, string>();
+
+  constructor(
+    private readonly manager: ConsoleManager,
+    private readonly switchDelaysMs = MODEL_SWITCH_READ_DELAYS_MS,
+  ) {
     manager.on('hook', (id, payload) => this.onHook(id, payload));
+    manager.on('model-switch', (id) => this.onModelSwitch(id));
+    manager.on('removed', (id) => this.transcripts.delete(id));
+  }
+
+  // Re-reads the model from the transcript tail and updates the label when it changed
+  async refreshModel(id: string): Promise<void> {
+    const info = this.manager.get(id);
+    if (!info) return;
+    const file = this.transcripts.get(id) ?? defaultTranscriptPath(info.cwd, info.sessionId);
+    const found = await readModelFromTranscript(file);
+    const current = this.manager.get(id);
+    if (found && current && current.model !== found) {
+      current.model = found;
+      this.manager.touch(id);
+    }
+  }
+
+  private onModelSwitch(id: string): void {
+    for (const delay of this.switchDelaysMs) {
+      setTimeout(() => void this.refreshModel(id), delay).unref?.();
+    }
   }
 
   onHook(id: string, payload: HookPayload): void {
     const info = this.manager.get(id);
     if (!info) return;
     let changed = false;
+    if (str(payload.transcript_path)) this.transcripts.set(id, payload.transcript_path as string);
 
     const todos = applyTodoHook(info.todos, payload);
     if (todos && !sameTodos(info.todos, todos)) {
@@ -240,14 +302,7 @@ export class ActivityTracker {
 
     if (changed) this.manager.touch(id);
 
-    if (event === 'Stop' && str(payload.transcript_path)) {
-      void readModelFromTranscript(payload.transcript_path as string).then((found) => {
-        const current = this.manager.get(id);
-        if (found && current && current.model !== found) {
-          current.model = found;
-          this.manager.touch(id);
-        }
-      });
-    }
+    // Stop: the reply's model. UserPromptSubmit: catches a /model run since the last turn.
+    if (event === 'Stop' || event === 'UserPromptSubmit') void this.refreshModel(id);
   }
 }

@@ -260,6 +260,9 @@ async function main() {
   line('\x1b[1m* Fake Claude Code\x1b[0m');
   line(`session ${sessionId}`);
   line(`cwd ${cwd}`);
+  // Flags from Settings (--model, --permission-mode, extra flags); --mcp-config is always there
+  const extra = args.rest.filter((a, i, all) => a !== '--mcp-config' && all[i - 1] !== '--mcp-config');
+  if (extra.length) line(`args ${extra.join(' ')}`);
   if (args.resume) line(`resumed ${args.resume}`);
   line();
 

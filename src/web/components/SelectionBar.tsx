@@ -4,6 +4,7 @@ import { clearSelection, groupSelection, makeSameSize, nextProjectName } from '.
 import { useBoardUi } from '../lib/board-ui';
 import { useBoard } from '../lib/store';
 import { ArrangeMenu } from './ArrangeMenu';
+import { KillButton } from './KillButton';
 
 function GroupPrompt() {
   const [name, setName] = useState(nextProjectName);
@@ -107,6 +108,7 @@ export function SelectionBar() {
             <Scaling size={13} />
             Same size
           </button>
+          <KillButton compact />
           <button
             type="button"
             data-testid="selection-clear"

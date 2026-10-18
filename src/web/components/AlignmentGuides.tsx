@@ -1,9 +1,9 @@
 import { ViewportPortal } from '@xyflow/react';
 import { useBoardUi } from '../lib/board-ui';
 
-const GUIDE_COLOR = '#ff7a45';
+const GUIDE_COLOR = 'var(--aa-accent)';
 
-// Thin orange lines that show what a dragged or resized node is snapping to
+// Thin accent-colored lines that show what a dragged or resized node is snapping to
 export function AlignmentGuides() {
   const guides = useBoardUi((s) => s.guides);
   if (!guides.length) return null;
@@ -19,7 +19,7 @@ export function AlignmentGuides() {
           const gap = g.kind === 'gap';
           const vertical = g.x1 === g.x2;
           return (
-            <g key={i} stroke={GUIDE_COLOR} opacity={0.9}>
+            <g key={i} style={{ stroke: GUIDE_COLOR }} opacity={0.9}>
               <line
                 x1={g.x1}
                 y1={g.y1}

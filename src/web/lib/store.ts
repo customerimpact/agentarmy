@@ -8,6 +8,7 @@ import type {
   Job,
   Project,
 } from '../../shared/protocol';
+import { getPrefs } from './prefs';
 
 export type Viewport = { x: number; y: number; zoom: number };
 export type SocketState = 'connecting' | 'open' | 'closed';
@@ -25,7 +26,7 @@ export interface Toast {
   message: string;
 }
 
-export type SidebarTab = 'agents' | 'actions' | 'progress';
+export type SidebarTab = 'agents' | 'actions' | 'progress' | 'settings';
 
 interface BoardStore {
   loaded: boolean;
@@ -108,7 +109,7 @@ export const useBoard = create<BoardStore>((set, get) => ({
   projects: {},
   browsers: {},
   selectedIds: [],
-  sidebarTab: 'agents',
+  sidebarTab: getPrefs().defaultSidebarTab,
   missionMapOpen: false,
   templatesOpen: false,
   viewport: null,

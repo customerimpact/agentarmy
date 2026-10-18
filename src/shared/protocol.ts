@@ -253,6 +253,48 @@ export interface FsListResponse {
   roots: string[]; // drive letters on Windows (e.g. 'C:\\'), ['/'] elsewhere
 }
 
+// ---------- Settings (persisted in <AGENTARMY_HOME>/settings.json) ----------
+// GET    /api/settings                         -> PublicSettings
+// PATCH  /api/settings  SettingsPatch          -> PublicSettings (validated; broadcast as 'settings')
+// POST   /api/settings/reset                   -> PublicSettings (everything back to defaults)
+// POST   /api/settings/test-webhook { kind }   -> { ok: true }  (posts a test message)
+// Claude Code settings only apply to consoles launched or restarted after the change.
+
+export type PermissionModeSetting = '' | 'default' | 'acceptEdits' | 'plan' | 'bypassPermissions';
+export type StartupResume = 'ask' | 'always' | 'never';
+export type WebhookKind = 'slack' | 'discord';
+
+export interface AppSettings {
+  model: string; // '' = Claude Code's own default; else passed as --model (alias or full id)
+  permissionMode: PermissionModeSetting; // '' = Claude Code's own default; else --permission-mode
+  extraArgs: string; // extra claude flags, split like a shell (quotes respected), no shell involved
+  enableTasks: boolean; // CLAUDE_CODE_ENABLE_TASKS=1 (feeds the Progress tab)
+  useApiKey: boolean; // pass ANTHROPIC_API_KEY through (bills API credits instead of the subscription)
+  claudePath: string; // '' = find claude on PATH (or AGENTARMY_CLAUDE_PATH)
+  startupResume: StartupResume; // what happens to saved conversations when the server starts
+  browserPath: string; // '' = auto-detect Chrome / Edge / Chromium for browser tiles
+}
+
+export interface WebhookInfo {
+  set: boolean;
+  hint: string; // last 4 characters, so the user can recognise it; the full URL never leaves the server
+}
+
+export interface PublicSettings {
+  settings: AppSettings;
+  slack: WebhookInfo;
+  discord: WebhookInfo;
+  version: string; // AgentArmy package version
+  dataDir: string; // AGENTARMY_HOME
+  port: number;
+}
+
+// '' for a webhook URL clears it
+export type SettingsPatch = Partial<AppSettings> & {
+  slackWebhookUrl?: string;
+  discordWebhookUrl?: string;
+};
+
 // ---------- WebSocket /ws?token=  (one multiplexed socket per browser tab) ----------
 
 export type ClientMessage =
@@ -286,4 +328,5 @@ export type ServerMessage =
   | { type: 'project-removed'; id: string }
   | { type: 'browser'; browser: BrowserTile } // added or updated (url, title, cursor, layout)
   | { type: 'browser-removed'; id: string }
-  | { type: 'browser-frame'; id: string; data: string; width: number; height: number }; // base64 JPEG
+  | { type: 'browser-frame'; id: string; data: string; width: number; height: number } // base64 JPEG
+  | { type: 'settings'; settings: PublicSettings }; // after PATCH/reset, so every tab updates
