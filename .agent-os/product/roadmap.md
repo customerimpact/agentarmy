@@ -1,6 +1,6 @@
 # Product Roadmap
 
-> Last Updated: 2026-10-18
+> Last Updated: 2026-10-19
 > Version: 1.0.0
 > Status: Planning
 
@@ -41,13 +41,13 @@ Claude Code is the only supported agent until Phase 5.
 
 ### Should-Have Features
 
-- [ ] CI on macOS and Linux - Same test matrix as Windows `S`
+- [x] CI on macOS and Linux - Same test matrix as Windows `S`
 - [ ] PWA window mode - Install as an app window, frees most browser shortcuts `XS`
 - [x] Keyboard shortcuts - New console, cycle focus, zoom to fit, jump to next "needs you" `XS`
 - [x] Command bar - Bottom prompt input that sends text to the selected console (@mention to pick) `S`
 - [x] Auto names - Friendly agent names (Ada, Bex, Cy…) when none is given `XS`
 - [x] "Resume all?" prompt - On startup, ask before relaunching saved conversations `XS`
-- [ ] Settings - Default shell, font size, theme (light/dark), launch flags for `claude` `S`
+- [x] Settings - Default shell, font size, theme (light/dark), launch flags for `claude` `S`
 
 ### Dependencies
 
@@ -73,12 +73,12 @@ Claude Code is the only supported agent until Phase 5.
 
 - [ ] Workspaces - Multiple boards as tabs, each with its own consoles `M`
 - [ ] Notes, text and checklists - Board nodes beside consoles `S`
-- [ ] Usage analytics - Tokens per console/day from `~/.claude/projects/*.jsonl` `M`
+- [x] Usage analytics - Tokens per console/day from `~/.claude/projects/*.jsonl` `M`
 - [ ] Update notice - Tell the user when a newer npm version exists `XS`
 
 ### Should-Have Features
 
-- [ ] Git worktree per console - Optional isolated branch when creating a console `M`
+- [x] Git worktree per console - Optional isolated branch when creating a console `M`
 - [ ] Kanban node - Simple columns of cards on the board `S`
 
 ### Dependencies
@@ -92,8 +92,8 @@ Claude Code is the only supported agent until Phase 5.
 
 ### Must-Have Features
 
-- [ ] Teams and roles - Group frames that auto-grid their consoles, role prompt each, one prompt to the whole group `M`
-- [ ] Mission map - Graph view (team → consoles) with Working/Needs you/Idle/Done filters `M`
+- [ ] Teams and roles - Group frames that auto-grid their consoles, role prompt each, one prompt to the whole group (frames, roles and template prompts done; one prompt to a whole group still missing) `M`
+- [x] Mission map - Graph view (team → consoles) with Working/Needs you/Idle/Done filters `M`
 - [ ] Pause all / Resume all - Send Esc to all working consoles; resume with a prompt `S`
 - [ ] Composer - Launch up to 12 consoles with roles and initial prompts in one step `M`
 - [ ] Handoffs - Summarize a session with `claude -p` from its transcript and send the brief to another console `M`
@@ -114,8 +114,8 @@ Claude Code is the only supported agent until Phase 5.
 
 ### Must-Have Features
 
-- [ ] Web tiles - Localhost preview nodes with DevTools `M`
-- [ ] Git panel - Branch, diff, commit, push, pull per repo `L`
+- [x] Web tiles - Localhost preview nodes (live browser tiles + auto dev previews; DevTools not yet) `M`
+- [ ] Git panel - Branch, diff, commit, push, pull per repo (review: diff, commit, merge done; push/pull missing) `L`
 - [ ] Code viewer - File tree, syntax highlighting, pin files to the board `M`
 
 ### Should-Have Features
@@ -138,7 +138,7 @@ Claude Code is the only supported agent until Phase 5.
 - [ ] Agent adapter interface - Launch, resume, status and usage per CLI `M`
 - [ ] Codex, Gemini CLI, OpenCode adapters - Using their hooks or output heuristics `L`
 - [ ] Custom executable consoles - Any command, status from PTY activity only `S`
-- [ ] Multiple accounts - Profiles via `CLAUDE_CONFIG_DIR` `S`
+- [x] Multiple accounts - Profiles via `CLAUDE_CONFIG_DIR` `S`
 
 ### Should-Have Features
 
