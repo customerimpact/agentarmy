@@ -13,7 +13,7 @@ import {
   type ProgressBucket,
 } from '../lib/fleet';
 import { useBoard, useClock } from '../lib/store';
-import { ProgressBar } from './AgentBadges';
+import { AgentMark, ProgressBar } from './AgentBadges';
 import { StatusDot } from './StatusDot';
 import { RecapButton } from './RecapModal';
 import { UsageSection } from './UsageSection';
@@ -74,6 +74,7 @@ function ConsoleProgress({ console: c }: { console: ConsoleInfo }) {
           title="Go to console"
         >
           <span className="flex items-baseline gap-2">
+            <AgentMark agent={c.agent} className="self-center" />
             <span className="truncate text-[12.5px] font-medium text-fg hover:underline">
               {c.name}
             </span>

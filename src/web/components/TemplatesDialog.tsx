@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { TeamAgentsPicker } from './AgentPicker';
-import type { AgentKind } from '../../shared/agents';
+import { LaunchOnButton, TemplateCardAgents, TemplateRunStep, useLaunchBlocked } from './TemplateRunStep';
+import { buildTemplateLaunch, defaultChoice, loadChoice, saveChoice, type RunChoice } from '../lib/agent-choice';
+import { useLoadProviders } from './ProviderPicker';
+import type { ProviderKind } from '../lib/provider-readiness';
 import { useReactFlow } from '@xyflow/react';
 import { ArrowLeft, LayoutTemplate, LoaderCircle, Rocket, Users } from 'lucide-react';
 import { PROJECT_COLORS, type Template } from '../../shared/protocol';
@@ -155,16 +157,27 @@ export function TemplatesDialog() {
   const [projectName, setProjectName] = useState('');
   const [isolated, setIsolated] = useState(false);
   const [accountId, setAccountId] = useState('auto');
-  const [teamAgents, setTeamAgents] = useState<AgentKind[]>([]);
+  const [run, setRun] = useState<RunChoice>(defaultChoice);
+  // Remembered "Run on" per template, re-read when the gallery reopens
+  const [remembered, setRemembered] = useState<Record<string, RunChoice>>({});
+  useLoadProviders();
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startFolder] = useState(() => getRecentFolders()[0]);
+  const blocked = useLaunchBlocked(chosen, run);
 
   useEffect(() => {
     let cancelled = false;
     api
       .listTemplates()
-      .then((list) => !cancelled && setTemplates(list))
+      .then((list) => {
+        if (cancelled) return;
+        setTemplates(list);
+        setRemembered(Object.fromEntries(list.flatMap((t) => {
+          const c = loadChoice(t.id);
+          return c ? [[t.id, c]] : [];
+        })));
+      })
       .catch((e: Error) => {
         if (cancelled) return;
         // Older server without /api/templates: show the built-in set so the gallery still works
@@ -176,9 +189,11 @@ export function TemplatesDialog() {
     };
   }, []);
 
-  const choose = (t: Template) => {
+  const choiceFor = (t: Template): RunChoice => remembered[t.id] ?? loadChoice(t.id) ?? defaultChoice();
+  const choose = (t: Template, runOn?: ProviderKind) => {
     setChosen(t);
-    setTeamAgents([]);
+    const base = choiceFor(t);
+    setRun(runOn ? { ...base, runOn } : base);
     setProjectName(t.name);
     setError(null);
   };
@@ -206,18 +221,22 @@ export function TemplatesDialog() {
   };
 
   const launch = async () => {
-    if (!chosen || !cwd || launching) return;
+    if (!chosen || !cwd || launching || blocked) return;
     setLaunching(true);
     setError(null);
     try {
-      const result = await api.launchTemplate(chosen.id, {
-        cwd,
-        projectName: projectName.trim() || undefined,
-        origin: pickOrigin(chosen),
-        ...(isolated ? { worktrees: true } : {}),
-        ...(accountId !== 'auto' ? { accountId } : {}),
-        ...(teamAgents.some((a) => a !== 'claude') ? { teamAgents } : {}),
-      });
+      const result = await api.launchTemplate(
+        chosen.id,
+        buildTemplateLaunch(chosen, run, {
+          cwd,
+          projectName: projectName.trim() || undefined,
+          origin: pickOrigin(chosen),
+          ...(isolated ? { worktrees: true } : {}),
+          ...(accountId !== 'auto' ? { accountId } : {}),
+        }),
+      );
+      saveChoice(chosen.id, run);
+      setRemembered((m) => ({ ...m, [chosen.id]: run }));
       const store = useBoard.getState();
       for (const project of result.projects) store.upsertProject(project);
       for (const c of result.consoles) store.upsertConsole(c);
@@ -308,6 +327,7 @@ export function TemplatesDialog() {
                 >
                   <div className="aa-card-glow relative h-32 border-b border-line bg-canvas/60 px-3 pt-2">
                     <TemplateSchematic template={t} />
+                    <LaunchOnButton current={choiceFor(t).runOn} onPick={(kind) => choose(t, kind)} />
                   </div>
                   <div className="flex flex-1 flex-col gap-1 p-3">
                     <div className="flex items-center gap-2">
@@ -325,6 +345,7 @@ export function TemplatesDialog() {
                       </span>
                     </div>
                     <p className="text-[12px] leading-relaxed text-fg-muted">{t.description}</p>
+                    <TemplateCardAgents template={t} choice={choiceFor(t)} />
                     <div className="mt-auto flex flex-wrap gap-1 pt-2">
                       {t.orchestrator && (
                         <span className="aa-label rounded-md border border-accent/40 px-1.5 py-[1px] text-accent">
@@ -354,8 +375,8 @@ export function TemplatesDialog() {
 
       {chosen && (
         <>
-          <FolderPicker startPath={startFolder} onTargetChange={setCwd} heightClass="h-64" />
-          <TeamAgentsPicker teams={chosen.teams} value={teamAgents} onChange={setTeamAgents} />
+          <TemplateRunStep template={chosen} choice={run} onChange={setRun} />
+          <FolderPicker startPath={startFolder} onTargetChange={setCwd} heightClass="h-56" />
           {error && (
             <pre className="aa-scroll max-h-32 overflow-auto border-t border-error/30 bg-error/10 px-5 py-2 font-mono text-[11.5px] whitespace-pre-wrap text-error">
               {error}
@@ -383,7 +404,12 @@ export function TemplatesDialog() {
                 onChange={setIsolated}
                 label="Give each agent its own branch"
               />
-              <AccountPicker value={accountId} onChange={setAccountId} />
+              {!run.accounts.claude && <AccountPicker value={accountId} onChange={setAccountId} />}
+              {blocked && (
+                <div data-testid="template-blocked" className="mt-1 text-[11.5px] text-needs">
+                  {blocked}: pick another provider or install it first.
+                </div>
+              )}
             </div>
             <button
               type="button"
@@ -396,7 +422,7 @@ export function TemplatesDialog() {
             <button
               type="button"
               data-testid="template-launch"
-              disabled={!cwd || launching}
+              disabled={!cwd || launching || !!blocked}
               onClick={() => void launch()}
               className="aa-btn-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50"
             >

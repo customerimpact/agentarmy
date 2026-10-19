@@ -86,7 +86,8 @@ test('hold Space in the empty command bar dictates on-device and "and send it" s
 test('Alt+V toggles dictation from anywhere; Esc cancels and keeps the draft', async () => {
   const input = page.getByTestId('command-bar-input');
   await input.fill('@Ada keep this');
-  await page.locator('.react-flow__pane').click({ position: { x: 400, y: 300 } });
+  // Leave the input without clicking a fixed spot: console headers (e.g. the provider chip) may sit there
+  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.keyboard.press('Alt+v');
   await expect(page.getByTestId('dictation-status')).toHaveAttribute('data-phase', 'listening');
   await expect(input).toBeFocused();

@@ -2,9 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { fileURLToPath } from 'node:url';
+import { PROVIDER_KEY_IDS } from '../shared/protocol.js';
+import { isAgentKind } from '../shared/agents.js';
 import type {
   AppSettings,
   PermissionModeSetting,
+  ProviderKeyId,
   PublicSettings,
   StartupResume,
   WebhookInfo,
@@ -22,6 +25,7 @@ export interface StoredSettings extends AppSettings {
   discordWebhookUrl: string;
   ntfyTopic: string; // secret-ish, like the webhook URLs
   ntfyServer: string;
+  providerKeys: Partial<Record<ProviderKeyId, string>>; // API keys the user entered (e.g. xAI for Grok)
 }
 
 export const DEFAULT_SETTINGS: StoredSettings = {
@@ -48,10 +52,13 @@ export const DEFAULT_SETTINGS: StoredSettings = {
   defaultAgent: 'claude',
   agentPaths: {},
   handoffMode: 'quick',
+  limitFallback: 'ask',
+  limitFallbackAgent: 'codex',
   slackWebhookUrl: '',
   discordWebhookUrl: '',
   ntfyTopic: '',
   ntfyServer: NTFY_DEFAULT_SERVER,
+  providerKeys: {},
 };
 
 export class SettingsError extends Error {}
@@ -173,6 +180,17 @@ export function validatePatch(raw: unknown): Partial<StoredSettings> {
         if (value !== 'quick' && value !== 'smart') throw new SettingsError('handoffMode must be "quick" or "smart"');
         out.handoffMode = value;
         break;
+      case 'limitFallback':
+        if (value !== 'ask' && value !== 'switch' && value !== 'wait') throw new SettingsError('limitFallback must be "ask", "switch" or "wait"');
+        out.limitFallback = value;
+        break;
+      case 'limitFallbackAgent':
+        if (!isAgentKind(value) || value === 'custom') throw new SettingsError('limitFallbackAgent must be an agent CLI (codex, gemini, opencode, grok or claude)');
+        out.limitFallbackAgent = value;
+        break;
+      case 'providerKeys':
+        out.providerKeys = validateProviderKeys(value);
+        break;
       case 'previewMode':
         if (value !== 'open' && value !== 'ask') throw new SettingsError('previewMode must be "open" or "ask"');
         out.previewMode = value;
@@ -255,6 +273,28 @@ export function claudeLaunchArgs(settings: AppSettings): string[] {
   return args;
 }
 
+// API keys are opaque tokens: no spaces or quotes (they end up in an env var), sane length
+const PROVIDER_KEY_RE = /^[A-Za-z0-9._~+/=-]{8,300}$/;
+
+function validateProviderKeys(value: unknown): Partial<Record<ProviderKeyId, string>> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new SettingsError('providerKeys must be an object');
+  const out: Partial<Record<ProviderKeyId, string>> = {};
+  for (const [id, raw] of Object.entries(value as Record<string, unknown>)) {
+    if (!(PROVIDER_KEY_IDS as string[]).includes(id)) throw new SettingsError(`providerKeys: unknown provider ${id}`);
+    if (typeof raw !== 'string') throw new SettingsError(`providerKeys.${id} must be a string`);
+    const key = raw.trim();
+    if (key && !PROVIDER_KEY_RE.test(key)) throw new SettingsError(`providerKeys.${id} does not look like an API key`);
+    out[id as ProviderKeyId] = key; // '' = clear (dropped in SettingsStore.patch)
+  }
+  return out;
+}
+
+// The stored API key for a provider, '' when none. Only for launching that provider's consoles.
+export function providerKey(settings: AppSettings | undefined, id: ProviderKeyId): string {
+  const keys = (settings as Partial<StoredSettings> | undefined)?.providerKeys;
+  return typeof keys?.[id] === 'string' ? keys[id] : '';
+}
+
 export function webhookInfo(url: string): WebhookInfo {
   return url ? { set: true, hint: url.slice(-4) } : { set: false, hint: '' };
 }
@@ -310,6 +350,12 @@ export class SettingsStore extends EventEmitter<SettingsEvents> {
 
   patch(raw: unknown): StoredSettings {
     const patch = validatePatch(raw);
+    if (patch.providerKeys) {
+      // Merged per provider so saving one key never wipes another; '' removes that key
+      const keys = { ...this.current.providerKeys, ...patch.providerKeys };
+      for (const id of Object.keys(keys) as ProviderKeyId[]) if (!keys[id]) delete keys[id];
+      patch.providerKeys = keys;
+    }
     this.current = { ...this.current, ...patch };
     this.save();
     this.emit('change', this.current);
@@ -324,12 +370,13 @@ export class SettingsStore extends EventEmitter<SettingsEvents> {
   }
 
   publicView(extra: { port: number }): PublicSettings {
-    const { slackWebhookUrl, discordWebhookUrl, ntfyTopic, ntfyServer, ...settings } = this.current;
+    const { slackWebhookUrl, discordWebhookUrl, ntfyTopic, ntfyServer, providerKeys, ...settings } = this.current;
     return {
       settings,
       slack: webhookInfo(slackWebhookUrl),
       discord: webhookInfo(discordWebhookUrl),
       ntfy: { ...webhookInfo(ntfyTopic), server: ntfyServer },
+      providerKeys: Object.fromEntries(PROVIDER_KEY_IDS.map((id) => [id, webhookInfo(providerKeys[id] ?? '')])) as PublicSettings['providerKeys'],
       version: packageVersion(),
       dataDir: agentArmyHome(),
       port: extra.port,

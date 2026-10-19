@@ -122,6 +122,50 @@ Everything the MVP needs is exposed by the Claude Code CLI itself:
 **Our gap to fill:** free, open source, cross-platform (Windows first — Symvibe has no
 Windows or Intel Mac build), spatial board of real Claude Code terminals with hook-based status.
 
+## Other agent CLIs
+
+### xAI Grok (researched 2026-10-19)
+
+- **Official: Grok Build** (`grok`), xAI's coding-agent CLI/TUI. Early beta since 2026-05-14
+  (SuperGrok Heavy first, then SuperGrok and X Premium+). Source: github.com/xai-org/grok-build
+  (Rust, Apache-2.0). Install: `curl -fsSL https://x.ai/cli/install.sh | bash`, Windows
+  `irm https://x.ai/cli/install.ps1 | iex` (no npm package).
+- **Auth:** browser sign-in on first run (subscription), or `XAI_API_KEY` (pay per token at xAI).
+  Config, login and sessions live in `~/.grok` (`GROK_HOME`).
+- **Flags:** `-m/--model`, `-p/--single` (headless), `-c/--continue` (newest session in the folder),
+  `-r/--resume <id>`, `-s/--session-id <id>`, `--always-approve`, `--output-format`, `--no-alt-screen`.
+- **MCP:** yes, but only from config files (`[mcp_servers.<name>]` in `~/.grok/config.toml` or the
+  project's `.grok/config.toml`; it also reads `~/.claude.json`, `.cursor/mcp.json`, `.mcp.json`).
+  **Hooks:** Claude-style events incl. `type: "http"`, but only from `~/.grok/hooks/*.json` or
+  `.grok/hooks/*.json`. No per-run flag or env var adds either one.
+- **Community alternative:** superagent-ai/grok-cli (npm `grok-dev`, formerly `@vibe-kit/grok-cli`,
+  ~3.5k stars, not affiliated with xAI). Also installs a `grok` binary; API key only
+  (`GROK_API_KEY`), MCP via `.grok/settings.json`.
+- **OpenCode** lists xAI as a provider (SuperGrok device-code login or an API key via `/connect`),
+  so "OpenCode with a Grok model" also works through our OpenCode adapter.
+
+**Decision:** the `grok` agent runs the official Grok Build (it exists, is open source, and supports
+the subscription login, so no API key is needed). Restart uses `--continue`; a model goes in `-m`.
+Status comes from terminal output heuristics. No agentarmy MCP tools: injecting them would mean
+writing the user's or the project's config, which we never do. An xAI key entered in Settings is
+stored in `settings.json` (masked like webhooks) and set as `XAI_API_KEY` (and `GROK_API_KEY`, for
+the community CLI) for Grok consoles only.
+
+Sources: https://docs.x.ai/build/overview, https://docs.x.ai/build/cli/headless-scripting,
+https://docs.x.ai/build/settings/reference, https://docs.x.ai/build/features/hooks,
+https://github.com/xai-org/grok-build (user guide 07-mcp-servers.md),
+https://github.com/superagent-ai/grok-cli, https://opencode.ai/docs/providers/,
+https://gigazine.net/gsc_news/en/20260515-grok-build-beta/
+
+### Limit messages of other CLIs (for the cross-provider fallback)
+
+- Codex (strings in the codex-cli 0.142.5 binary): "You've hit your usage limit. … or try again at
+  3:45 PM.", "Usage limit reached. You've reached your usage limit.", "Your workspace is out of credits."
+- Gemini CLI (not run here): "You have reached your daily … quota limit", "Quota exceeded for quota
+  metric", "Usage limit reached for all Pro models".
+- Grok Build / OpenCode: no documented wording; we match API error lines with 429 / rate limit /
+  insufficient credits. Patterns live in `src/server/agent-limits.ts`.
+
 ## Technical risks (to settle in the M0 spike)
 
 1. **Blurry terminals when zoomed.** xterm's WebGL/canvas renderers blur under CSS

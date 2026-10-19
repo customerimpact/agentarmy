@@ -43,9 +43,9 @@ test('key 4 opens the Settings window and search filters across categories', asy
   await page.getByTestId('settings-nav-appearance').click();
   await expect(row('theme')).toBeVisible();
   await expect(page.getByTestId('theme-card-paper')).toBeVisible();
-  // Accounts has a placeholder until account profiles land
-  await page.getByTestId('settings-nav-accounts').click();
-  await expect(page.getByTestId('settings-title')).toHaveText('Accounts');
+  // Agents & accounts: agent CLIs, their logins and the Claude accounts
+  await page.getByTestId('settings-nav-agents').click();
+  await expect(page.getByTestId('settings-title')).toHaveText('Agents & accounts');
 
   // '/' focuses the search box
   await page.getByTestId('settings-title').click();
@@ -82,7 +82,7 @@ test('Ctrl+, toggles the window and it reopens on the last category', async () =
   await page.locator('body').click({ position: { x: 900, y: 450 } });
   await page.keyboard.press('Control+Comma');
   await expect(page.getByTestId('settings-window')).toBeVisible();
-  await expect(page.getByTestId('settings-title')).toHaveText('Accounts');
+  await expect(page.getByTestId('settings-title')).toHaveText('Agents & accounts');
   await page.getByTestId('settings-nav-claude').click();
   await page.keyboard.press('Control+Comma');
   await expect(page.getByTestId('settings-window')).toHaveCount(0);

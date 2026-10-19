@@ -25,12 +25,15 @@ import { registerSettingsRoutes } from './settings-routes.js';
 import { registerAgentRoutes } from './agents/index.js';
 import { registerUsageRoutes } from './usage-routes.js';
 import { registerAccountRoutes } from './account-routes.js';
+import { registerProviderRoutes } from './provider-routes.js';
 import { SettingsStore } from './settings.js';
 import { WebhookNotifier } from './webhooks.js';
 import { NtfyNotifier, registerNtfyRoutes } from './ntfy.js';
 import { registerPreviewRoutes } from './previews/preview-service.js';
 import { registerRecapRoutes } from './recap.js';
 import { registerHandoffRoutes } from './handoffs.js';
+import { registerSwitchAgentRoutes } from './switch-agent.js';
+import { ProviderFallback, agentReadiness } from './provider-fallback.js';
 import { registerMemoryRoutes } from './memory.js';
 import { registerPauseRoutes } from './pause.js';
 import { CustomTemplates, registerComposerRoutes } from './composer.js';
@@ -249,11 +252,24 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
     imagesDir: settings.filePath ? path.join(path.dirname(settings.filePath), 'images') : null,
   });
   // Claude Code accounts live next to settings.json; an in-memory settings store means a throwaway server
-  await registerAccountRoutes(app, { manager, broadcast, dataDir: settings.filePath ? path.dirname(settings.filePath) : null });
+  const accountService = await registerAccountRoutes(app, { manager, broadcast, dataDir: settings.filePath ? path.dirname(settings.filePath) : null });
+  // Agents & accounts hub: install / login / status per agent CLI (src/shared/providers.ts)
+  registerProviderRoutes(app, { manager, broadcast, accounts: accountService, settings: () => settings.get() });
   await registerNtfyRoutes(app, { settings, notifier: ntfy });
   // Daily recap log sits next to settings.json; an in-memory settings store means a throwaway server
   // Handoffs (brief from one agent's transcript into another) and project memory (next to settings.json)
-  registerHandoffRoutes(app, { manager, settings: () => settings.get() });
+  const handoffs = registerHandoffRoutes(app, { manager, settings: () => settings.get() });
+  // Switch a running agent to another CLI, and continue on another CLI when every Claude account is limited
+  const switcher = registerSwitchAgentRoutes(app, { manager, handoffs, settings: () => settings.get() });
+  const fallback = new ProviderFallback({
+    manager,
+    store: accountService.store,
+    switcher,
+    settings: () => settings.get(),
+    readiness: (agent) => agentReadiness(agent, settings.get()),
+  });
+  accountService.switcher.setFallback(fallback);
+  app.addHook('onClose', async () => fallback.stop());
   registerMemoryRoutes(app, { manager, dir: settings.filePath ? path.join(path.dirname(settings.filePath), 'memory') : null });
   const recap = registerRecapRoutes(app, {
     manager,

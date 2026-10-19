@@ -1,4 +1,6 @@
 import type { ConsoleStatus } from '../../shared/protocol';
+import { AGENT_META, type AgentKind } from '../../shared/agents';
+import { AgentIcon } from './AgentIcon';
 
 // Pill + avatar shared by the Agents tab, the Mission Map and the Progress tab
 interface PillMeta {
@@ -86,18 +88,37 @@ export function Avatar({
   name,
   status,
   size = 28,
+  agent,
 }: {
   name: string;
   status: ConsoleStatus;
   size?: number;
+  agent?: AgentKind; // shows which AI runs it as a corner badge (missing = Claude Code)
 }) {
   return (
     <span
       aria-hidden
-      className={`grid shrink-0 place-items-center rounded-lg font-semibold ${PILL[status].avatar}`}
+      className={`relative grid shrink-0 place-items-center rounded-lg font-semibold ${PILL[status].avatar}`}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.45) }}
     >
       {(name.trim()[0] ?? '?').toUpperCase()}
+      <span
+        data-testid="avatar-agent"
+        data-agent={agent ?? 'claude'}
+        className="absolute -right-1 -bottom-1 grid place-items-center rounded-full bg-surface text-accent ring-1 ring-line-strong"
+        style={{ width: Math.round(size * 0.5), height: Math.round(size * 0.5) }}
+      >
+        <AgentIcon agent={agent ?? 'claude'} size={Math.round(size * 0.32)} />
+      </span>
+    </span>
+  );
+}
+
+// Inline "which AI" mark next to a console name (Mission Map, Progress)
+export function AgentMark({ agent, className = '' }: { agent?: AgentKind; className?: string }) {
+  return (
+    <span data-testid="agent-mark" data-agent={agent ?? 'claude'} title={AGENT_META[agent ?? 'claude']?.label} className={`inline-grid shrink-0 place-items-center text-accent ${className}`}>
+      <AgentIcon agent={agent ?? 'claude'} size={11} />
     </span>
   );
 }

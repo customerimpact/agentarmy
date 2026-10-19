@@ -103,6 +103,23 @@ export function DictationButton({ value, setValue, send, inputRef }: Props) {
   // Alt+V anywhere (also inside terminals) starts / stops dictation into the command bar
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Esc / Enter while dictating are handled here too: the command bar input can be re-created,
+      // which would leave the input-level listener above attached to a detached element
+      if (dictation.active && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        const inBar = e.target === inputRef.current;
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          dictation.cancel();
+          return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey && inBar) {
+          e.preventDefault();
+          e.stopPropagation();
+          dictation.stop(true);
+          return;
+        }
+      }
       if (!e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || e.code !== 'KeyV') return;
       e.preventDefault();
       e.stopPropagation();

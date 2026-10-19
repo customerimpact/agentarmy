@@ -1,9 +1,10 @@
 import { memo, useEffect, useRef, type PointerEvent, type ReactNode } from 'react';
 import { NodeResizer, useStore, type Node, type NodeProps } from '@xyflow/react';
-import { ArrowRightLeft, Play, RotateCcw, X } from 'lucide-react';
+import { ArrowRightLeft, Play, Repeat2, RotateCcw, X } from 'lucide-react';
 import type { ConsoleStatus } from '../../shared/protocol';
 import { AGENT_META, type AgentKind } from '../../shared/agents';
-import { AGENT_ICONS } from './AgentIcon';
+import { AGENT_ICONS, AgentIcon } from './AgentIcon';
+import { openSwitchAgent } from '../lib/switch-agent';
 import {
   COMPACT_ZOOM,
   MIN_SIZE,
@@ -236,21 +237,31 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
           >
             <AgentAvatar status={c.status} color={projectColor} agent={c.agent} />
             <span className="truncate text-[13px] font-semibold text-fg">{c.name}</span>
-            {c.agent && c.agent !== 'claude' && (
+            {c.agent === 'custom' ? (
               <span
                 data-testid="console-agent"
                 data-agent={c.agent}
                 className="aa-label inline-flex min-w-0 shrink items-center gap-1 rounded-md bg-surface px-1.5 py-[2px] text-fg-muted ring-1 ring-line"
-                title={c.agent === 'custom' ? `Runs: ${c.command ?? ''}` : AGENT_META[c.agent].label}
+                title={`Runs: ${c.command ?? ''}`}
               >
-                {c.agent === 'custom' ? (
-                  <code data-testid="console-command" className="truncate font-mono text-[10.5px] normal-case tracking-normal text-fg">
-                    {c.command}
-                  </code>
-                ) : (
-                  AGENT_META[c.agent].short
-                )}
+                <code data-testid="console-command" className="truncate font-mono text-[10.5px] normal-case tracking-normal text-fg">
+                  {c.command}
+                </code>
               </span>
+            ) : (
+              // Which AI runs this terminal, always visible; click to switch it to another one
+              <button
+                type="button"
+                data-testid="console-agent"
+                data-agent={c.agent ?? 'claude'}
+                onClick={() => openSwitchAgent(id)}
+                className="aa-label nodrag inline-flex shrink-0 items-center gap-1 rounded-md bg-surface px-1.5 py-[2px] text-fg ring-1 ring-line transition-colors
+                           hover:text-accent hover:ring-accent/50"
+                title={`Runs ${AGENT_META[c.agent ?? 'claude'].label} · click to switch agent…`}
+              >
+                <AgentIcon agent={c.agent ?? 'claude'} size={11} className="text-accent" />
+                {AGENT_META[c.agent ?? 'claude'].short}
+              </button>
             )}
             {c.role && (
               <span
@@ -312,6 +323,11 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
             <IconButton testId="console-handoff" label="Hand off to…" onClick={() => openHandoff(id)}>
               <ArrowRightLeft size={13} />
             </IconButton>
+            {c.agent !== 'custom' && (
+              <IconButton testId="console-switch-agent" label="Switch agent…" onClick={() => openSwitchAgent(id)}>
+                <Repeat2 size={13} />
+              </IconButton>
+            )}
             <MoveToWorkspaceButton consoleId={id} />
             <PopOutButton view={consoleView(id)} testId="console-popout" />
             <IconButton testId="console-close" label="Close console" onClick={askClose} danger>

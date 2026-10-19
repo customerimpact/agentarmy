@@ -3,6 +3,8 @@ import { ExternalLink, LoaderCircle } from 'lucide-react';
 import { AGENT_KINDS, AGENT_META, CUSTOM_COMMAND_PRESETS, type AgentKind } from '../../shared/agents';
 import { detectionFor, useAgents } from '../lib/agents';
 import { AgentIcon } from './AgentIcon';
+import { ProviderQuickFix } from './ProviderQuickFix';
+import { ReadinessDots, useLoadProviders } from './ProviderPicker';
 
 // Which CLI a new console runs: Claude Code (default), Codex, Gemini CLI, OpenCode or any command.
 // CLIs that are not on PATH stay pickable but show how to install them, and the dialog won't launch.
@@ -30,6 +32,7 @@ export function AgentPicker({
 }) {
   const agents = useAgents((s) => s.agents);
   const loading = useAgents((s) => s.loading);
+  useLoadProviders();
   useEffect(() => {
     void useAgents.getState().load();
   }, []);
@@ -38,36 +41,43 @@ export function AgentPicker({
   const missing = value !== 'custom' && selected && !selected.installed;
 
   return (
-    <div className="border-b border-line px-5 py-2.5" data-testid="agent-picker">
-      <div className="flex items-center gap-2">
-        <span className="aa-label shrink-0 text-fg-subtle">Agent</span>
-        <div role="radiogroup" aria-label="Agent" className="flex min-w-0 flex-wrap gap-1">
-          {AGENT_KINDS.map((id) => {
-            const found = detectionFor(agents, id);
-            const notInstalled = id !== 'custom' && found && !found.installed;
-            const active = id === value;
-            return (
-              <button
-                key={id}
-                type="button"
-                role="radio"
-                aria-checked={active}
-                data-testid={`agent-option-${id}`}
-                data-installed={notInstalled ? 'false' : 'true'}
-                title={found?.version ?? (notInstalled ? 'Not installed' : AGENT_META[id].label)}
-                onClick={() => onChange(id)}
-                className={`inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[12px] font-medium transition-colors
-                            ${active ? 'bg-accent/15 text-fg ring-1 ring-accent/40' : 'text-fg-muted ring-1 ring-line hover:bg-hover hover:text-fg'}
-                            ${notInstalled && !active ? 'opacity-55' : ''}`}
-              >
-                <AgentIcon agent={id} size={12} />
-                {AGENT_META[id].label}
-                {notInstalled && <span className="text-[10px] font-normal text-fg-subtle">not installed</span>}
-              </button>
-            );
-          })}
-          {loading && !agents && <LoaderCircle size={13} className="mt-1.5 animate-spin text-fg-subtle" />}
-        </div>
+    <div className="border-b border-line px-5 py-3" data-testid="agent-picker">
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="aa-label text-fg-subtle">Which AI runs it</span>
+        {loading && !agents && <LoaderCircle size={12} className="animate-spin text-fg-subtle" />}
+      </div>
+      <div role="radiogroup" aria-label="Agent" className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+        {AGENT_KINDS.map((id) => {
+          const found = detectionFor(agents, id);
+          const notInstalled = id !== 'custom' && found && !found.installed;
+          const active = id === value;
+          return (
+            <button
+              key={id}
+              type="button"
+              role="radio"
+              aria-checked={active}
+              data-testid={`agent-option-${id}`}
+              data-installed={notInstalled ? 'false' : 'true'}
+              title={found?.version ?? (notInstalled ? 'Not installed' : AGENT_META[id].label)}
+              onClick={() => onChange(id)}
+              className={`flex min-w-0 flex-col items-start gap-1 rounded-xl border px-2.5 py-2 text-left transition-colors
+                          ${active ? 'border-accent/70 bg-accent/10 shadow-[0_0_0_3px_color-mix(in_srgb,var(--aa-accent)_12%,transparent)]' : 'border-line bg-surface hover:border-line-strong hover:bg-hover'}
+                          ${notInstalled && !active ? 'opacity-60' : ''}`}
+            >
+              <span className="flex w-full items-center gap-1.5">
+                <span className={`grid size-6 shrink-0 place-items-center rounded-lg ${active ? 'bg-accent/20 text-accent' : 'bg-surface-2 text-fg-muted'}`}>
+                  <AgentIcon agent={id} size={13} />
+                </span>
+                {id !== 'custom' && !notInstalled && <ReadinessDots kind={id} className="ml-auto" />}
+              </span>
+              <span className="w-full truncate text-[12.5px] font-semibold text-fg">{AGENT_META[id].short}</span>
+              <span className={`w-full truncate text-[10.5px] ${notInstalled ? 'text-needs' : 'text-fg-subtle'}`}>
+                {id === 'custom' ? 'Any command' : notInstalled ? 'not installed' : found ? 'Ready' : id === 'claude' ? 'Ready' : 'Checking…'}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {value === 'custom' && (
@@ -107,13 +117,14 @@ export function AgentPicker({
         </div>
       )}
 
+      {value !== 'custom' && <ProviderQuickFix agent={value} />}
       {missing && (
         <div data-testid="agent-install-hint" className="mt-2 rounded-lg border border-needs/30 bg-needs/10 px-3 py-2 text-[12px] text-fg">
           <div className="font-medium">{meta.label} was not found on PATH.</div>
           {meta.installCommand && (
             <div className="mt-1">
               Install it with <code className="rounded bg-surface px-1 font-mono text-[11.5px]">{meta.installCommand}</code>, or set its path in
-              Settings › Agents.
+              Settings › Agents & accounts.
             </div>
           )}
           {meta.installUrl && (

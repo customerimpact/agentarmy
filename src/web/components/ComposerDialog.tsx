@@ -1,5 +1,7 @@
 import { useState, type KeyboardEvent, type MouseEvent } from 'react';
-import { RowAgentSelect } from './AgentPicker';
+import { ModelField, ProviderAccountSelect, ProviderSelect, ReadinessWarning, RunOnControl, useLoadProviders } from './ProviderPicker';
+import { applyAllRows, cleanComposerRow, rowsRunOn } from '../lib/agent-choice';
+import { readinessOf, providerShort } from '../lib/provider-readiness';
 import { useReactFlow } from '@xyflow/react';
 import { BookmarkPlus, Check, GitBranch, LoaderCircle, Minus, Plus, Rocket, Users, X } from 'lucide-react';
 import { COMPOSER_ROLES, MAX_COMPOSER_ROWS, type ComposerRow } from '../../shared/protocol';
@@ -29,6 +31,7 @@ const fromRow = (row: ComposerRow): RowDraft => ({
   accountId: row.accountId,
   worktree: row.worktree,
   agent: row.agent,
+  model: row.model,
   customRole: !!row.role && !(COMPOSER_ROLES as readonly string[]).includes(row.role),
 });
 
@@ -91,6 +94,11 @@ export function ComposerDialog() {
   const [saveName, setSaveName] = useState<string | null>(null);
   const repo = useRepoInfo(cwd);
   const inRepo = !!repo?.repoRoot;
+  const providers = useLoadProviders();
+  const runOn = rowsRunOn(rows);
+  const missing = [...new Set(rows.map((r) => r.agent ?? 'claude'))].find(
+    (k) => readinessOf(providers?.find((p) => p.id === k), k) === 'not_installed',
+  );
 
   const patchRow = (key: number, patch: Partial<RowDraft>) => setRows((list) => list.map((r) => (r.key === key ? { ...r, ...patch } : r)));
   const setCount = (n: number) => {
@@ -106,14 +114,17 @@ export function ComposerDialog() {
   };
 
   const cleanRows = (): ComposerRow[] =>
-    rows.map((r) => ({
-      ...(r.name?.trim() ? { name: r.name.trim() } : {}),
-      role: r.role?.trim() || 'General',
-      ...(r.prompt?.trim() ? { prompt: r.prompt.trim() } : {}),
-      ...(r.accountId && r.accountId !== 'auto' ? { accountId: r.accountId } : {}),
-      ...(r.worktree && inRepo ? { worktree: true } : {}),
-      ...(r.agent && r.agent !== 'claude' ? { agent: r.agent } : {}),
-    }));
+    rows.map((r) =>
+      cleanComposerRow({
+        ...(r.name?.trim() ? { name: r.name.trim() } : {}),
+        role: r.role?.trim() || 'General',
+        ...(r.prompt?.trim() ? { prompt: r.prompt.trim() } : {}),
+        ...(r.accountId && r.accountId !== 'auto' ? { accountId: r.accountId } : {}),
+        ...(r.worktree && inRepo ? { worktree: true } : {}),
+        agent: r.agent,
+        model: r.model,
+      }),
+    );
 
   // Top-left of the visible board if the grid fits there, else to the right of everything
   const pickOrigin = (): { x: number; y: number } => {
@@ -129,7 +140,7 @@ export function ComposerDialog() {
   };
 
   const launch = async () => {
-    if (!cwd || launching) return;
+    if (!cwd || launching || missing) return;
     setLaunching(true);
     setError(null);
     try {
@@ -219,6 +230,19 @@ export function ComposerDialog() {
         )}
       </div>
 
+      <div className="border-t border-line px-5 py-2.5">
+        <RunOnControl
+          value={runOn}
+          testId="composer-run-on"
+          label="All rows on"
+          allowMixed={runOn === 'mixed'}
+          onChange={(kind) => {
+            // Switching the provider resets models (they are per CLI) and provider accounts
+            if (kind !== 'mixed') setRows((list) => applyAllRows(list, kind, '').map((r) => ({ ...r, accountId: undefined })));
+          }}
+        />
+      </div>
+
       <ol data-testid="composer-rows" className="aa-scroll flex max-h-[38vh] flex-col gap-2 overflow-y-auto px-5 py-3">
         {rows.map((row, i) => (
           <li key={row.key} data-testid="composer-row" className="rounded-xl border border-line bg-surface p-2.5">
@@ -253,8 +277,29 @@ export function ComposerDialog() {
                 placeholder="First prompt (optional). {name}, {role} and {team} are filled in."
                 className={`${field} aa-scroll min-h-7 flex-1 resize-y leading-5`}
               />
-              <RowAgentSelect value={row.agent ?? 'claude'} onChange={(agent) => patchRow(row.key, { agent })} className={`${field} w-32 shrink-0`} />
-              {accounts.length > 1 && (
+              <ProviderSelect
+                testId="composer-agent"
+                value={row.agent ?? 'claude'}
+                onChange={(agent) => patchRow(row.key, { agent, model: '', accountId: undefined })}
+                className={`${field} w-32 shrink-0`}
+              />
+              <ModelField
+                kind={row.agent ?? 'claude'}
+                value={row.model ?? ''}
+                onChange={(model) => patchRow(row.key, { model })}
+                className="w-32 shrink-0"
+                testId="composer-model"
+              />
+              {(row.agent ?? 'claude') !== 'claude' && (
+                <ProviderAccountSelect
+                  kind={row.agent ?? 'claude'}
+                  value={row.accountId ?? 'auto'}
+                  onChange={(accountId) => patchRow(row.key, { accountId })}
+                  className="w-32 shrink-0"
+                  testId="composer-account"
+                />
+              )}
+              {(row.agent ?? 'claude') === 'claude' && accounts.length > 1 && (
                 <select
                   data-testid="composer-account"
                   value={row.accountId ?? 'auto'}
@@ -283,6 +328,7 @@ export function ComposerDialog() {
                 </label>
               )}
             </div>
+            <ReadinessWarning kind={row.agent ?? 'claude'} className="mt-1 pl-8" />
           </li>
         ))}
         {rows.length < MAX_COMPOSER_ROWS && (
@@ -354,7 +400,8 @@ export function ComposerDialog() {
         <button
           type="button"
           data-testid="composer-launch"
-          disabled={!cwd || launching}
+          disabled={!cwd || launching || !!missing}
+          title={missing ? `${providerShort(missing)} is not installed` : undefined}
           onClick={() => void launch()}
           className="aa-btn-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50"
         >

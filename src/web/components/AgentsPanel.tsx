@@ -12,6 +12,7 @@ import {
   Ungroup,
   X,
   ArrowRightLeft,
+  Repeat2,
 } from 'lucide-react';
 import type { ConsoleInfo, Project } from '../../shared/protocol';
 import { api } from '../lib/api';
@@ -20,6 +21,7 @@ import { openPopout } from '../lib/popout';
 import { openReview } from '../lib/review';
 import { GitLink } from './GitPanel';
 import { openHandoff } from '../lib/handoff-memory';
+import { openSwitchAgent } from '../lib/switch-agent';
 import {
   folderName,
   groupByProject,
@@ -67,7 +69,7 @@ function AgentRow({
                   ${selected ? 'bg-accent/10 ring-1 ring-accent/50 hover:bg-accent/15' : ''}
                   ${needs && !selected ? 'bg-needs/8 ring-1 ring-needs/35 hover:bg-needs/12' : ''}`}
     >
-      <Avatar name={c.name} status={c.status} />
+      <Avatar name={c.name} status={c.status} agent={c.agent} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] leading-5 font-medium text-fg">{c.name}</span>
         <span className="block truncate text-[11.5px] leading-4 text-fg-subtle">{meta}</span>
@@ -130,6 +132,29 @@ function AgentRow({
       >
         <ArrowRightLeft size={12} />
       </span>
+      {c.agent !== 'custom' && (
+        <span
+          role="button"
+          tabIndex={0}
+          data-testid="mission-switch-agent"
+          title={`Switch ${c.name} to another AI…`}
+          aria-label={`Switch ${c.name} to another AI`}
+          onClick={(e) => {
+            e.stopPropagation();
+            openSwitchAgent(c.id);
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            e.stopPropagation();
+            openSwitchAgent(c.id);
+          }}
+          className="grid size-6 shrink-0 place-items-center rounded-md text-fg-subtle opacity-0 transition-opacity
+                     group-hover:opacity-100 hover:bg-hover hover:text-accent focus-visible:opacity-100"
+        >
+          <Repeat2 size={12} />
+        </span>
+      )}
       <span className="flex shrink-0 flex-col items-end gap-0.5">
         <span className="flex items-center gap-1">
           {c.paused && <PausedPill />}

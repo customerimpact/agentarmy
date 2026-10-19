@@ -62,3 +62,8 @@ export async function detectExecutable(command: string, override: string, label:
 export function assertCwd(cwd: string): void {
   if (!fs.existsSync(cwd)) throw new Error(`Folder no longer exists: ${cwd}`);
 }
+
+// The CLI's model flag for a console created with a model (CreateConsoleRequest.model)
+export function modelArgs(info: { launchModel?: string }, flag = '-m'): string[] {
+  return info.launchModel ? [flag, info.launchModel] : [];
+}

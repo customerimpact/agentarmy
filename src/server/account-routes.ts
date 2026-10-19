@@ -7,6 +7,7 @@ import { AccountError, AccountNotFound, AccountStore, DEFAULT_ACCOUNT_ID } from 
 import { AccountSwitcher } from './account-switch.js';
 import type { ConsoleManager } from './consoles.js';
 import { setTranscriptRoots } from './usage.js';
+import { defaultAccountId, isProviderId, providerOfAgent } from '../shared/providers.js';
 
 // Accounts REST routes, the launch hook that gives each console its CLAUDE_CONFIG_DIR, the login
 // flow and the auto-switcher. See the Accounts section of src/shared/protocol.ts.
@@ -71,15 +72,25 @@ export async function registerAccountRoutes(app: FastifyInstance, options: Accou
   });
 
   // Every launch: 'auto' becomes a real account; the account's config dir goes into the env
+  // (CLAUDE_CONFIG_DIR, or CODEX_HOME / GEMINI_CLI_HOME / XDG_DATA_HOME for the other CLIs).
+  // Custom commands (Install / Login consoles) use the provider of the account they were given.
   manager.accountEnv = (info) => {
-    const multi = store.list().length > 1;
     if (info.accountId && info.accountId !== 'auto' && !store.get(info.accountId)) delete info.accountId; // removed account
+    const provider = info.agent === 'custom' ? store.providerOf(info.accountId) : providerOfAgent(info.agent);
+    if (!provider) {
+      if (info.accountId === 'auto') delete info.accountId;
+      return {};
+    }
+    // An account of another CLI (e.g. the agent was switched from Claude to Codex): its own default
+    if (info.accountId && info.accountId !== 'auto' && store.providerOf(info.accountId) !== provider) delete info.accountId;
     if (info.accountId === 'auto') {
-      const picked = store.resolveForNew('auto');
-      if (picked === DEFAULT_ACCOUNT_ID && !multi) delete info.accountId;
+      const multi = store.list(provider).length > 1;
+      const picked = store.resolveForNew('auto', provider);
+      if (picked === defaultAccountId(provider) && (!multi || provider !== 'claude')) delete info.accountId;
       else info.accountId = picked;
     }
-    store.touch(info.accountId);
+    if (info.accountId === defaultAccountId(provider) && provider !== 'claude') delete info.accountId;
+    store.touch(info.accountId ?? (provider === 'claude' ? DEFAULT_ACCOUNT_ID : defaultAccountId(provider)));
     return store.envFor(info.accountId);
   };
 
@@ -96,7 +107,8 @@ export async function registerAccountRoutes(app: FastifyInstance, options: Accou
         continue;
       }
       const account = store.get(accountId);
-      if (account && account.status === 'needs_login') continue;
+      // Other CLIs' login consoles are tracked by provider-routes.ts
+      if (account && ((account.provider ?? 'claude') !== 'claude' || account.status === 'needs_login')) continue;
       store.loginConsoles.delete(accountId);
       changed = true;
       const t = setTimeout(() => {
@@ -109,6 +121,7 @@ export async function registerAccountRoutes(app: FastifyInstance, options: Accou
 
   const openLogin = (accountId: string): ConsoleInfo => {
     const account = store.require(accountId);
+    if ((account.provider ?? 'claude') !== 'claude') throw new AccountError('Use POST /api/providers/:id/login for this account');
     const existing = store.loginConsoles.get(accountId);
     const open = existing ? manager.get(existing) : undefined;
     if (open) return open;
@@ -167,7 +180,9 @@ export async function registerAccountRoutes(app: FastifyInstance, options: Accou
 
   app.post('/api/accounts', async (request, reply) => {
     try {
-      return store.create((request.body as { name?: unknown } | undefined)?.name as string);
+      const body = (request.body ?? {}) as { name?: unknown; provider?: unknown };
+      if (body.provider !== undefined && !isProviderId(body.provider)) throw new AccountError(`Unknown provider ${String(body.provider)}`);
+      return store.create(body.name as string, isProviderId(body.provider) ? body.provider : 'claude');
     } catch (err) {
       return sendError(reply, err);
     }

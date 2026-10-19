@@ -25,7 +25,7 @@ import { Badge, Highlight, Note } from './settings/fields';
 // Nav order. Sections not listed here (added later) slot in before Advanced, in registry order.
 const ORDER = [
   'general',
-  'accounts',
+  'agents',
   'appearance',
   'notifications',
   'board',
@@ -37,17 +37,20 @@ const ORDER = [
   'advanced',
 ];
 
-// Nav items that may exist before their section does (Accounts shows a placeholder)
+// Nav items that may exist before their section does
 const FALLBACK_NAV: Record<string, { label: string; icon: LucideIcon }> = {
-  accounts: { label: 'Accounts', icon: UsersRound },
+  agents: { label: 'Agents & accounts', icon: UsersRound },
   usage: { label: 'Usage & Budgets', icon: Gauge },
   integrations: { label: 'Integrations', icon: Plug },
 };
-const ALWAYS_SHOWN = new Set(['accounts']);
+const ALWAYS_SHOWN = new Set(['agents']);
+// Old nav keys (links, remembered category) -> where those rows live now
+const ALIASES: Record<string, string> = { accounts: 'agents' };
+const aliased = (key: string | null): string | null => (key ? (ALIASES[key] ?? key) : key);
 
 const SUBTITLES: Record<string, string> = {
   general: 'Startup behaviour and the sidebar.',
-  accounts: 'Claude accounts used by your agents.',
+  agents: 'Agent CLIs, their logins and accounts.',
   appearance: 'How AgentArmy looks in this browser.',
   notifications: 'How AgentArmy tells you an agent needs you or is stuck.',
   board: 'Snapping, layout and motion on the canvas.',
@@ -145,6 +148,7 @@ function buildCategories(): Category[] {
 
 // Card order where registry order would read oddly; unlisted groups follow in registry order
 const GROUP_ORDER: Record<string, string[]> = {
+  agents: ['', 'Claude: when an account hits its limit', 'Claude: new agents'],
   integrations: ['Chat webhooks', 'Phone', 'Daily recap'],
 };
 
@@ -274,9 +278,9 @@ function Profile() {
 
 export function SettingsView({ onClose, onPopout }: { onClose?: () => void; onPopout?: () => void }) {
   const categories = useMemo(buildCategories, []);
-  const requested = useBoard((s) => s.settingsCategory);
+  const requested = aliased(useBoard((s) => s.settingsCategory));
   const [active, setActive] = useState(() => {
-    const wanted = requested ?? loadCategory();
+    const wanted = requested ?? aliased(loadCategory());
     return categories.some((c) => c.key === wanted) ? wanted! : categories[0].key;
   });
   const [query, setQuery] = useState('');

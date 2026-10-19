@@ -114,6 +114,14 @@ export async function registerWorkspaceRoutes(
         origin: origin ? { x: origin.x, y: origin.y } : undefined,
         accountId: typeof body.accountId === 'string' ? body.accountId : undefined,
         teamAgents: Array.isArray(body.teamAgents) ? body.teamAgents.map((a) => (isAgentKind(a) ? a : 'claude')) : undefined,
+        // "Run this team on": per-team models, the orchestrator's CLI + model, account per provider
+        teamModels: Array.isArray(body.teamModels) ? body.teamModels.map((m) => (typeof m === 'string' ? m.slice(0, 200) : '')) : undefined,
+        orchestratorAgent: isAgentKind(body.orchestratorAgent) ? body.orchestratorAgent : undefined,
+        orchestratorModel: typeof body.orchestratorModel === 'string' ? body.orchestratorModel.slice(0, 200) : undefined,
+        agentAccounts:
+          body.agentAccounts && typeof body.agentAccounts === 'object' && !Array.isArray(body.agentAccounts)
+            ? Object.fromEntries(Object.entries(body.agentAccounts).filter(([k, v]) => isAgentKind(k) && typeof v === 'string'))
+            : undefined,
       };
       const custom = options.custom?.launch(id, { ...req, worktrees: body.worktrees === true });
       if (custom) return await custom;

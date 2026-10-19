@@ -58,8 +58,15 @@ export function planSwitch(mode: 'on' | 'ask' | 'off', candidates: Account[], fr
   return { action: mode === 'ask' ? 'ask' : 'switch', to };
 }
 
+// Cross-provider fallback (provider-fallback.ts): takes over when no Claude account is left
+export interface LimitFallbackHandler {
+  onClaudeLimited(consoleId: string, from: Account, label: string): boolean; // true = it filed the item
+  answer(item: ActionItem, key: string): boolean; // true = the key was its own
+}
+
 export class AccountSwitcher {
   private readonly now: () => number;
+  private fallback: LimitFallbackHandler | null = null;
   private tails = new Map<string, string>();
   private prompts = new Map<string, { text: string; at: number; done: boolean }>();
   private transcripts = new Map<string, string>();
@@ -77,6 +84,10 @@ export class AccountSwitcher {
     manager.on('console', (info) => this.onConsole(info));
     manager.on('removed', (id) => this.forget(id));
     setAccountActionHandler(manager, (item, key) => this.answer(item, key));
+  }
+
+  setFallback(handler: LimitFallbackHandler | null): void {
+    this.fallback = handler;
   }
 
   stop(): void {
@@ -103,6 +114,11 @@ export class AccountSwitcher {
     this.switching.delete(id);
   }
 
+  // Accounts are Claude Code config dirs: other CLIs' limit messages are provider-fallback.ts's job
+  private isClaude(info: ConsoleInfo): boolean {
+    return (info.agent ?? 'claude') === 'claude';
+  }
+
   private accountOf(info: ConsoleInfo): string {
     return info.accountId && info.accountId !== 'auto' ? info.accountId : DEFAULT_ACCOUNT_ID;
   }
@@ -115,7 +131,7 @@ export class AccountSwitcher {
     this.tails.set(id, tail);
     if (!/limit/i.test(tail)) return;
     const info = this.options.manager.get(id);
-    if (!info || info.role === 'Login') return;
+    if (!info || info.role === 'Login' || !this.isClaude(info)) return;
     const limit = parseLimitText(tail, this.now());
     if (!limit) return;
     if (limit.kind === 'warning') {
@@ -146,7 +162,7 @@ export class AccountSwitcher {
       this.onReady(id);
     }
     const info = this.options.manager.get(id);
-    if (!info || info.role === 'Login') return;
+    if (!info || info.role === 'Login' || !this.isClaude(info)) return;
     const limit = limitFromHook(payload, this.now());
     if (!limit) return;
     if (limit.kind === 'warning') this.noteWarning(id, info, limit);
@@ -166,7 +182,7 @@ export class AccountSwitcher {
   onLimitHit(id: string, limit: LimitInfo): void {
     const { manager, store } = this.options;
     const info = manager.get(id);
-    if (!info || this.pending.has(id) || this.switching.has(id)) return;
+    if (!info || !this.isClaude(info) || this.pending.has(id) || this.switching.has(id)) return;
     const last = this.lastHit.get(id) ?? 0;
     if (this.now() - last < HIT_DEBOUNCE_MS) return;
     this.lastHit.set(id, this.now());
@@ -175,6 +191,10 @@ export class AccountSwitcher {
     if (!from) return;
     const until = from.limitResetsAt ? ` until ${formatReset(from.limitResetsAt, this.now())}` : '';
     const plan = planSwitch(store.autoSwitch, store.list(), fromId);
+    // No Claude account left: the cross-provider fallback (Ask / Continue on <CLI> / Wait) decides
+    // (also with account auto-switch off: that setting is about Claude accounts only)
+    const noAccount = plan.action === 'none' && !store.list().some((a) => a.id !== fromId && a.status === 'ok');
+    if (noAccount && this.fallback?.onClaudeLimited(id, from, limit.label)) return;
     if (plan.action === 'none') {
       const why =
         plan.reason === 'off'
@@ -212,6 +232,7 @@ export class AccountSwitcher {
       this.resolve(item);
       return;
     }
+    if (this.fallback?.answer(item, key)) return;
     const match = /^switch:(.+)$/.exec(key);
     if (!match || !item.consoleId) throw new Error(`Unknown option ${key}`);
     const target = this.options.store.get(match[1]);
@@ -226,7 +247,9 @@ export class AccountSwitcher {
     const { manager, store } = this.options;
     const info = manager.get(id);
     const to = store.get(toId);
-    if (!info || !to) return null;
+    // Claude accounts are for Claude consoles only; other CLIs move via provider-fallback.ts
+    if (!info || !to || !this.isClaude(info)) return null;
+    if (store.providerOf(to.id) !== 'claude') return null;
     const fromId = this.accountOf(info);
     const from = store.get(fromId);
     if (!from || from.id === to.id) return null;

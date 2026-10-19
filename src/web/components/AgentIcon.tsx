@@ -1,4 +1,4 @@
-import { Asterisk, Braces, Code, Sparkles, SquareTerminal, type LucideIcon } from 'lucide-react';
+import { Asterisk, Braces, Code, Sparkles, SquareTerminal, Zap, type LucideIcon } from 'lucide-react';
 import { AGENT_META, type AgentKind } from '../../shared/agents';
 
 // Plain generic marks (no vendor logos) so each CLI is recognisable on the board
@@ -7,6 +7,7 @@ export const AGENT_ICONS: Record<AgentKind, LucideIcon> = {
   codex: Braces,
   gemini: Sparkles,
   opencode: Code,
+  grok: Zap,
   custom: SquareTerminal,
 };
 

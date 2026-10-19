@@ -9,6 +9,8 @@ import { formatReset, useAccounts } from './accounts';
 import { useLoops } from './loops';
 import { receiveItem, useItems } from './items';
 import { useDrawings } from './drawing/store';
+import { receiveProviderEvent, useProviderHub } from './providers-hub';
+import { useProviders } from './provider-store';
 
 export type TerminalStreamListener = (kind: 'replay' | 'output', data: string) => void;
 export type BrowserFrameListener = (
@@ -225,6 +227,11 @@ class BoardSocket {
         break;
       case 'accounts':
         useAccounts.getState().receive(message.accounts);
+        if (useProviderHub.getState().data) void useProviderHub.getState().load();
+        break;
+      case 'provider-event':
+        receiveProviderEvent(message.event);
+        void useProviders.getState().load(true);
         break;
       case 'account-switch': {
         const e = message.event;

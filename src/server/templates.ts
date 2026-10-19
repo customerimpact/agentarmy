@@ -16,7 +16,7 @@ import {
   TEAMS_PER_ROW,
   TEMPLATE_GAP,
 } from '../shared/templates.js';
-import type { AgentKind } from '../shared/agents.js';
+import { isAgentKind, type AgentKind } from '../shared/agents.js';
 import { NotFoundError, type ConsoleManager } from './consoles.js';
 import { DEFAULT_SIZE } from './placement.js';
 import type { ProjectService } from './projects.js';
@@ -188,13 +188,14 @@ export class TemplateService {
     let orchestrator: ConsoleInfo | null = null;
     if (layout.orchestrator) {
       // First, so a bad cwd fails before anything else is created
-      orchestrator = this.spawn(req.cwd, layout.orchestrator, 'Orchestrator', req.accountId);
+      orchestrator = this.spawn(req.cwd, layout.orchestrator, 'Orchestrator', req, req.orchestratorAgent, req.orchestratorModel);
       consoles.push(orchestrator);
     }
     template.teams.forEach((team, i) => {
       const name = projectName(team.name);
       const agent = req.teamAgents?.[i];
-      const members = layout.teams[i].consoles.map((l) => this.spawn(req.cwd, l, team.role, req.accountId, agent));
+      const model = req.teamModels?.[i];
+      const members = layout.teams[i].consoles.map((l) => this.spawn(req.cwd, l, team.role, req, agent, model));
       consoles.push(...members);
       projects.push(this.projects.create({ name, consoleIds: members.map((c) => c.id) }));
       roster.push(`${name} (${members.map((c) => c.name).join(', ')})`);
@@ -215,11 +216,23 @@ export class TemplateService {
     return { projects, consoles: consoles.map((c) => this.manager.get(c.id) ?? c) };
   }
 
-  private spawn(cwd: string, layout: ConsoleLayout, role: string, accountId?: string, agent?: AgentKind): ConsoleInfo {
+  private spawn(
+    cwd: string,
+    layout: ConsoleLayout,
+    role: string,
+    req: Pick<LaunchTemplateRequest, 'accountId' | 'agentAccounts'>,
+    agent?: AgentKind,
+    model?: string,
+  ): ConsoleInfo {
     const key = String(++this.spawnSeq);
     // Custom commands need a command line, which a team has none of, so they fall back to Claude Code
-    const cli = agent && agent !== 'custom' && agent !== 'claude' ? { agent } : {};
-    const info = this.manager.create({ cwd: this.hooks?.cwdFor(role, key) ?? cwd, layout, accountId, ...cli });
+    const kind: AgentKind = agent && isAgentKind(agent) && agent !== 'custom' ? agent : 'claude';
+    const cli = kind !== 'claude' ? { agent: kind } : {};
+    // Account per provider wins over the launch-wide one ('auto' = let the server pick)
+    const perAgent = req.agentAccounts?.[kind];
+    const accountId = perAgent && perAgent !== 'auto' ? perAgent : req.accountId;
+    const launchModel = typeof model === 'string' && model.trim() ? { model: model.trim().slice(0, 200) } : {};
+    const info = this.manager.create({ cwd: this.hooks?.cwdFor(role, key) ?? cwd, layout, accountId, ...cli, ...launchModel });
     this.hooks?.onSpawn(info, key);
     info.role = role;
     this.manager.touch(info.id);

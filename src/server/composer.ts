@@ -81,6 +81,7 @@ export function parseRows(raw: unknown): ComposerRow[] {
       ...(accountId ? { accountId } : {}),
       ...(row.worktree === true ? { worktree: true } : {}),
       ...(isAgentKind(row.agent) && row.agent !== 'claude' && row.agent !== 'custom' ? { agent: row.agent } : {}),
+      ...(typeof row.model === 'string' && row.model.trim() ? { model: cleanText(row.model, 200, 'model') } : {}),
     };
   });
 }
@@ -124,7 +125,14 @@ export class ComposerService {
     const created: ConsoleInfo[] = [];
     try {
       for (const [i, row] of rows.entries()) {
-        const base = { cwd, name: row.name, layout: layout.consoles[i], accountId: row.accountId, agent: row.agent };
+        const base = {
+          cwd,
+          name: row.name,
+          layout: layout.consoles[i],
+          accountId: row.accountId,
+          agent: row.agent,
+          ...(row.model ? { model: row.model } : {}),
+        };
         const info =
           row.worktree && this.worktrees
             ? await this.worktrees.createConsole({ ...base, worktree: true })
@@ -225,11 +233,24 @@ export class CustomTemplates {
     const template = this.find(id);
     if (!template) return null;
     if (!this.composer) throw new Error('Composer is not ready');
-    const rows = (template.rows ?? []).map((row) => ({
-      ...row,
-      ...(req.worktrees === true ? { worktree: true } : {}),
-      ...(req.accountId && req.accountId !== 'auto' ? { accountId: req.accountId } : {}),
-    }));
+    // Launch step overrides: "Run this team on: Codex" sets every row's agent (teamAgents is per team,
+    // and custom templates have one team per role), plus its model and account
+    const teams = template.teams.map((t) => t.name);
+    const rows = (template.rows ?? []).map((row) => {
+      const team = teams.indexOf(row.role || 'General');
+      const agent = team >= 0 ? req.teamAgents?.[team] : undefined;
+      const model = team >= 0 ? req.teamModels?.[team] : undefined;
+      const kind = agent ?? row.agent ?? 'claude';
+      const account = req.agentAccounts?.[kind];
+      return {
+        ...row,
+        ...(agent ? { agent: agent === 'claude' || agent === 'custom' ? undefined : agent } : {}),
+        ...(model ? { model } : {}),
+        ...(req.worktrees === true ? { worktree: true } : {}),
+        ...(req.accountId && req.accountId !== 'auto' ? { accountId: req.accountId } : {}),
+        ...(account && account !== 'auto' ? { accountId: account } : {}),
+      };
+    });
     return this.composer.launch({
       cwd: req.cwd,
       projectName: req.projectName ?? template.name,

@@ -72,7 +72,7 @@ function str(value: unknown): string {
 
 export class HandoffService {
   private live = new Map<string, LiveNotes>();
-  private waiting = new Map<string, { brief: string; job: Job; timer: NodeJS.Timeout }>();
+  private waiting = new Map<string, { brief: string; job: Job; timer: NodeJS.Timeout; onDone?: (sent: boolean) => void }>();
 
   constructor(
     private readonly manager: ConsoleManager,
@@ -243,16 +243,23 @@ export class HandoffService {
     } catch (err) {
       throw new HandoffError(err instanceof Error ? err.message : String(err));
     }
+    return { job: this.deliverWhenReady(from, target, brief), console: target };
+  }
+
+  // Records the handoff job now and types the brief into a just-created console once it is idle.
+  // onDone(true) after the brief went in, onDone(false) when it never became ready (switch-agent.ts).
+  deliverWhenReady(from: ConsoleInfo, target: ConsoleInfo, brief: string, onDone?: (sent: boolean) => void): Job {
     const job = this.record(from, target, brief);
     const timer = setTimeout(() => {
       if (this.waiting.get(target.id)?.job !== job) return;
       this.waiting.delete(target.id);
       this.finish(job, 'failed', `${target.name} did not become ready in time`);
+      onDone?.(false);
     }, NEW_AGENT_TIMEOUT_MS);
     timer.unref?.();
-    this.waiting.set(target.id, { brief, job, timer });
+    this.waiting.set(target.id, { brief, job, timer, onDone });
     this.onConsole(target);
-    return { job, console: target };
+    return job;
   }
 
   private onConsole(info: ConsoleInfo): void {
@@ -261,7 +268,9 @@ export class HandoffService {
     this.waiting.delete(info.id);
     clearTimeout(w.timer);
     const send = (): void => {
-      if (!this.manager.sendText(info.id, w.brief)) this.finish(w.job, 'failed', `${info.name} has no running terminal`);
+      const sent = this.manager.sendText(info.id, w.brief);
+      if (!sent) this.finish(w.job, 'failed', `${info.name} has no running terminal`);
+      w.onDone?.(sent);
     };
     const delay = this.options.newAgentDelayMs ?? NEW_AGENT_DELAY_MS;
     if (delay > 0) setTimeout(send, delay).unref?.();

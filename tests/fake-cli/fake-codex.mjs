@@ -5,6 +5,7 @@
 //            -c tui.notifications=true, an OSC 9 "Approval requested: ..." notification.
 //            y / 1 / 2 approve, n / 3 / Esc deny (single keys), then the turn finishes
 //   exit  -> exit 0
+//   limit -> Codex's "You've hit your usage limit ... try again at 11:45 PM." error
 //   anything else -> "• Working (Ns • esc to interrupt)" redrawn for FAKE_CODEX_DELAY_MS (default 1200),
 //            then "Done: <prompt>", OSC 9 "Agent turn complete" and the -c notify program is run with
 //            the agent-turn-complete JSON as its last argument, as Codex does.
@@ -20,6 +21,26 @@ if (argv.includes('--version')) {
   process.exit(0);
 }
 if (process.env.FAKE_CODEX_LOG) fs.appendFileSync(process.env.FAKE_CODEX_LOG, JSON.stringify(argv) + '\n');
+
+// `codex login`: like the real one, the user finishes it in the terminal (here: press Enter), then
+// auth.json is written into CODEX_HOME. Refuses without CODEX_HOME so it never touches a real ~/.codex.
+if (argv[0] === 'login') {
+  const home = process.env.CODEX_HOME;
+  if (!home) {
+    console.error('fake codex login: CODEX_HOME is not set');
+    process.exit(1);
+  }
+  process.stdout.write(`Fake Codex login\r\ncodex-home ${home}\r\nPress Enter to finish signing in\r\n`);
+  if (process.stdin.isTTY) process.stdin.setRawMode(true);
+  process.stdin.on('data', (d) => {
+    if (!/[\r\n]/.test(String(d))) return;
+    fs.mkdirSync(home, { recursive: true });
+    fs.writeFileSync(`${home}/auth.json`, JSON.stringify({ fake: true }));
+    process.stdout.write('Successfully logged in\r\n');
+    setTimeout(() => process.exit(0), 300);
+  });
+  await new Promise(() => {}); // the TUI below never starts
+}
 
 const config = {};
 let resume = null;
@@ -49,6 +70,7 @@ const notifyTerminal = (msg) => {
 
 out('\x1b[2J\x1b[H\x1b[1m>_ OpenAI Codex\x1b[0m (fake)\r\n');
 out(`\x1b[2mthread ${threadId}\x1b[0m\r\n`);
+if (process.env.CODEX_HOME) out(`\x1b[2mcodex-home ${process.env.CODEX_HOME}\x1b[0m\r\n`);
 if (resume) out(`Resumed session ${resume}\r\n`);
 if (config['mcp_servers.agentarmy.command']) out('\x1b[2mmcp: agentarmy ready\x1b[0m\r\n');
 out('\r\n');
@@ -113,13 +135,31 @@ function submit(text) {
   out('\r\n');
   if (text === 'exit') process.exit(0);
   if (text === 'ask') return ask(text);
-  work(text, () => finishTurn(text));
+  if (text === 'limit') {
+    // Codex's own wording (codex-cli 0.142 binary): usage limit hit, with a reset time
+    out("\x1b[31m■ You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), or try again at 11:45 PM.\x1b[0m\r\n\r\n");
+    return prompt();
+  }
+  work(text, () => finishTurn(text.slice(0, 200)));
 }
 
 if (process.stdin.isTTY) process.stdin.setRawMode(true);
 process.stdin.setEncoding('utf8');
+let pasting = false; // bracketed paste (ESC[200~ ... ESC[201~): one prompt, newlines become spaces
+let esc = '';
 process.stdin.on('data', (data) => {
   for (const ch of data) {
+    if (esc || (ch === '\x1b' && pendingApproval === null)) {
+      esc += ch;
+      if (esc === '\x1b[200~') (pasting = true), (esc = '');
+      else if (esc === '\x1b[201~') (pasting = false), (esc = '');
+      else if (!'\x1b[200~'.startsWith(esc) && !'\x1b[201~'.startsWith(esc)) esc = '';
+      continue;
+    }
+    if (pasting && !busy) {
+      line += ch === '\r' || ch === '\n' ? ' ' : ch;
+      continue;
+    }
     if (pendingApproval !== null) {
       const text = pendingApproval;
       if (ch === 'y' || ch === '1' || ch === '2' || ch === 'a' || ch === '\r') {
@@ -136,7 +176,7 @@ process.stdin.on('data', (data) => {
     if (ch === '\x03') process.exit(130);
     if (busy) continue;
     if (ch === '\r' || ch === '\n') {
-      const text = line.trim();
+      const text = line.replace(/\s+/g, ' ').trim();
       line = '';
       if (text) submit(text);
       else prompt();

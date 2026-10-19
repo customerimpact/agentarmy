@@ -5,6 +5,7 @@ import { claudeAdapter } from './claude.js';
 import { codexAdapter } from './codex.js';
 import { customAdapter } from './custom.js';
 import { geminiAdapter } from './gemini.js';
+import { grokAdapter } from './grok.js';
 import { opencodeAdapter } from './opencode.js';
 import { AGENT_HEURISTICS, CUSTOM_HEURISTICS, OutputStatusTracker } from './output-status.js';
 import type { AgentAdapter } from './types.js';
@@ -16,6 +17,7 @@ const ADAPTERS: Record<AgentKind, AgentAdapter> = {
   codex: codexAdapter,
   gemini: geminiAdapter,
   opencode: opencodeAdapter,
+  grok: grokAdapter,
   custom: customAdapter,
 };
 
