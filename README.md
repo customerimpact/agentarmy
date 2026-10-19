@@ -147,6 +147,8 @@ AgentArmy itself makes no network calls beyond your machine (the desktop app onl
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The code is MIT; the AgentArmy name and logo are not, see [TRADEMARKS.md](TRADEMARKS.md) (forks need their own name). Contributions require accepting the [CLA](CLA.md); a bot asks on your first pull request.
+
+AgentArmy runs entirely on your computer and sends no data to its authors; see the [privacy notice](https://agentarmy-site.vercel.app/privacy). Use it within the [terms that apply to your Claude account](https://www.anthropic.com/legal); in particular, don't use extra accounts to get around usage limits.
 
 AgentArmy is an independent community project. It is not affiliated with or endorsed by Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic.

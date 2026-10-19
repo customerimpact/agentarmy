@@ -503,7 +503,7 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
     const fresh: AccountsFile = {
       version: FILE_VERSION,
       accounts: [{ id: DEFAULT_ACCOUNT_ID, name: 'Default', lastSeenAt: now, createdAt: now }],
-      autoSwitch: 'on',
+      autoSwitch: 'ask',
       newAgentAccount: 'auto',
     };
     if (!this.options.file) return fresh;

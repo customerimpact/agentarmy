@@ -23,6 +23,8 @@ test('a console that hits its limit moves to the other account and resumes', asy
   const server = await AgentArmyServer.start({ home, env: { FAKE_CLAUDE_REAL_TRANSCRIPTS: '1', FAKE_CLAUDE_DELAY_MS: '400' } });
   try {
     await server.api('PATCH', '/api/accounts/default', { name: 'Work' });
+    // The default is 'ask first'; this test covers fully automatic switching
+    await server.api('PATCH', '/api/accounts', { autoSwitch: 'on' });
     await page.goto(server.url);
 
     // Add an account and log in to it from Settings › Accounts

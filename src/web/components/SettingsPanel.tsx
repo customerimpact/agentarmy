@@ -764,7 +764,7 @@ const SETTINGS: SettingDef[] = [
   { id: 'sidebar-tab', section: 'general', label: 'Sidebar opens on', description: 'The tab shown when the app loads.', keywords: 'default tab panel start', Control: SidebarTabControl },
 
   { id: 'accounts', section: 'accounts', group: 'Your accounts', label: 'Claude accounts', description: 'Each account is its own Claude Code login (config folder). Log in once in a terminal; agents can then run on it.', keywords: 'account login profile subscription email plan claude_config_dir multiple switch limit usage', Below: AccountsBelow },
-  { id: 'account-auto-switch', section: 'accounts', group: 'When an account hits its limit', label: 'Auto-switch accounts', description: 'Move an agent that hits its plan limit to the next available account and resume its conversation there.', keywords: 'limit rate usage switch fallback failover weekly session 5-hour', Control: AutoSwitchControl, Below: AutoSwitchBelow },
+  { id: 'account-auto-switch', section: 'accounts', group: 'When an account hits its limit', label: 'Auto-switch accounts', description: 'Move an agent that hits its plan limit to another account you own and resume its conversation there. Only use accounts you are entitled to, and check Anthropic’s terms: using extra accounts to get around usage limits may not be allowed.', keywords: 'limit rate usage switch fallback failover weekly session 5-hour', Control: AutoSwitchControl, Below: AutoSwitchBelow },
   { id: 'account-priority', section: 'accounts', group: 'When an account hits its limit', label: 'Priority order', description: 'Auto and auto-switch use the first account that is logged in and not limited.', keywords: 'order rank fallback first', Below: PriorityBelow },
   { id: 'account-new-agents', section: 'accounts', group: 'New agents', label: 'New agents use', description: 'The account picked for New agent and templates unless you choose one there.', keywords: 'default account auto spawn', Control: NewAgentAccountControl },
 
@@ -812,7 +812,7 @@ const SETTINGS: SettingDef[] = [
   { id: 'port', section: 'advanced', label: 'Server port', description: 'Change it with agentarmy --port <n>.', keywords: 'network localhost url', Control: PortControl },
   { id: 'token', section: 'advanced', label: 'Access token', description: 'Rotate it if the board URL leaked: restart with --new-token, then open the new URL.', keywords: 'security rotate secret url new-token', Below: TokenBelow },
   { id: 'reset', section: 'advanced', label: 'Reset all settings', description: 'Back to defaults, in this browser and on the server.', keywords: 'defaults restore clear', Control: ResetControl },
-  { id: 'about', section: 'advanced', label: 'About', description: 'Free, open-source (MIT) board for Claude Code agents.', keywords: 'version license update', Control: AboutControl },
+  { id: 'about', section: 'advanced', label: 'About', description: 'Free, open-source (MIT) board for Claude Code agents. Independent project, not affiliated with or endorsed by Anthropic.', keywords: 'version license update', Control: AboutControl },
 ];
 
 export { SETTINGS };

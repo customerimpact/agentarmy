@@ -59,7 +59,7 @@ describe('account routes', () => {
     const t = await setup();
     const list = (await t.app.inject({ method: 'GET', url: '/api/accounts' })).json() as AccountsState;
     expect(list.accounts.map((a) => [a.id, a.status])).toEqual([[DEFAULT_ACCOUNT_ID, 'ok']]);
-    expect(list).toMatchObject({ autoSwitch: 'on', newAgentAccount: 'auto' });
+    expect(list).toMatchObject({ autoSwitch: 'ask', newAgentAccount: 'auto' });
 
     const res = await t.app.inject({ method: 'POST', url: '/api/accounts', payload: { name: 'Work' } });
     expect(res.statusCode).toBe(200);

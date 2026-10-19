@@ -27,7 +27,8 @@ function setup(opts: { workLoggedIn?: boolean; mode?: 'on' | 'ask' | 'off' } = {
   writeLogin(path.join(tmp, 'default'), 'me@home.com');
   const work = store.create('Work');
   if (opts.workLoggedIn !== false) writeLogin(work.configDir, 'me@work.com');
-  if (opts.mode) store.patch({ autoSwitch: opts.mode });
+  // The product default is 'ask'; these tests exercise automatic switching unless a mode is given
+  store.patch({ autoSwitch: opts.mode ?? 'on' });
   const ctx = fakeManager([fakeConsole('ada', 'working')]);
   const ada = ctx.manager.get('ada')!;
   const restarts: Array<{ id: string; accountId?: string }> = [];

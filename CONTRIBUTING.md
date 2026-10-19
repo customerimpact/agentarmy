@@ -2,6 +2,10 @@
 
 Thanks for helping. Bug reports, fixes and small focused features are welcome. For anything large, open an issue first so we can agree on the approach.
 
+## Contributor License Agreement
+
+Before your first pull request can be merged, please accept the [CLA](CLA.md). A bot comments on your pull request with the exact sentence to reply. You keep the copyright of your work; the CLA lets the project keep shipping it under its current or a future license.
+
 ## Setup
 
 Requirements: Node 20+ (22 recommended), Claude Code installed and logged in, and build tools for `node-pty` (see the README).
