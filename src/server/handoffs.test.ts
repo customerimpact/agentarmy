@@ -24,7 +24,8 @@ function setup(smart?: () => Promise<string>) {
   const { manager, typed, setStatus } = fakeManager([fakeConsole('ada'), fakeConsole('bex'), fakeConsole('cy', 'needs_you')]);
   const jobs = new JobService(manager);
   const service = new HandoffService(manager, {
-    settings: () => ({ ...DEFAULT_SETTINGS }),
+    // Any existing executable will do: CI machines have no claude, and smart mode is stubbed
+    settings: () => ({ ...DEFAULT_SETTINGS, claudePath: process.execPath }),
     ...(smart ? { smart: vi.fn(smart) } : {}),
   });
   manager.handleHook('ada', { hook_event_name: 'SessionStart', transcript_path: transcript, source: 'startup' });

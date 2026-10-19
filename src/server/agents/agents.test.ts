@@ -139,7 +139,8 @@ describe('codex adapter', () => {
       accountEnv: () => ({ CLAUDE_CONFIG_DIR: 'nope' }),
     });
     const args = typeof spec.args === 'string' ? spec.args : spec.args.join(' ');
-    expect(args).toContain(process.platform === 'win32' ? 'codex.cmd' : 'fake-cli');
+    // The fake may run directly (file) or through node/cmd.exe (args), depending on the platform
+    expect(`${spec.file} ${args}`).toMatch(/fake-cli|codex\.cmd/);
     expect(args).toContain("mcp_servers.agentarmy.command=");
     expect(spec.env.CLAUDE_CONFIG_DIR).toBeUndefined();
     expect(spec.env.HOME).toBe('h');
