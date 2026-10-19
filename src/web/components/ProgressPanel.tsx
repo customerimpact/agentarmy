@@ -17,6 +17,7 @@ import { ProgressBar } from './AgentBadges';
 import { StatusDot } from './StatusDot';
 import { RecapButton } from './RecapModal';
 import { UsageSection } from './UsageSection';
+import { LoopProgress } from './LoopProgress';
 
 export function TodoList({ todos }: { todos: TodoItem[] }) {
   return (
@@ -227,6 +228,7 @@ export function ProgressPanel() {
           <BucketCard key={b.key} bucket={b} jobs={jobs} />
         ))}
 
+        <LoopProgress />
         {jobs.length > 0 && (
           <section className="mt-2 px-1">
             <h3 className="mb-2 flex items-center gap-2 text-[11px] font-semibold tracking-wider text-fg-subtle uppercase">

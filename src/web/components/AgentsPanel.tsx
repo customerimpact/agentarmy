@@ -11,12 +11,15 @@ import {
   Plus,
   Ungroup,
   X,
+  ArrowRightLeft,
 } from 'lucide-react';
 import type { ConsoleInfo, Project } from '../../shared/protocol';
 import { api } from '../lib/api';
 import { flyTo } from '../lib/board-actions';
 import { openPopout } from '../lib/popout';
 import { openReview } from '../lib/review';
+import { GitLink } from './GitPanel';
+import { openHandoff } from '../lib/handoff-memory';
 import {
   folderName,
   groupByProject,
@@ -28,6 +31,9 @@ import {
 import { formatSince } from '../lib/status';
 import { useBoard, useClock } from '../lib/store';
 import { Avatar, Ring, StatusPill } from './AgentBadges';
+import { LoopsButton, PausedPill } from './TeamControls';
+import { useItems, workspaceOf } from '../lib/items';
+import { MoveProjectMenuItems, WorkspaceSection } from './WorkspaceTabs';
 
 const fail = (what: string) => (error: unknown) =>
   useBoard.getState().toast(`${what} failed: ${(error as Error).message}`);
@@ -65,6 +71,7 @@ function AgentRow({
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] leading-5 font-medium text-fg">{c.name}</span>
         <span className="block truncate text-[11.5px] leading-4 text-fg-subtle">{meta}</span>
+        <GitLink console={c} />
         {c.git && (
           // Own branch: open the Review panel without flying to the console
           <span
@@ -102,8 +109,32 @@ function AgentRow({
           </span>
         )}
       </span>
+      <span
+        role="button"
+        tabIndex={0}
+        data-testid="mission-handoff"
+        title={`Hand off ${c.name}'s work to…`}
+        aria-label={`Hand off ${c.name}'s work`}
+        onClick={(e) => {
+          e.stopPropagation();
+          openHandoff(c.id);
+        }}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          e.stopPropagation();
+          openHandoff(c.id);
+        }}
+        className="grid size-6 shrink-0 place-items-center rounded-md text-fg-subtle opacity-0 transition-opacity
+                   group-hover:opacity-100 hover:bg-hover hover:text-accent focus-visible:opacity-100"
+      >
+        <ArrowRightLeft size={12} />
+      </span>
       <span className="flex shrink-0 flex-col items-end gap-0.5">
-        <StatusPill status={c.status} />
+        <span className="flex items-center gap-1">
+          {c.paused && <PausedPill />}
+          <StatusPill status={c.status} />
+        </span>
         <span className="text-[10px] text-fg-subtle tabular-nums">
           {formatSince(c.statusChangedAt, now)}
         </span>
@@ -167,6 +198,11 @@ function ProjectMenu({
           )}
       {item(<Pencil size={14} />, 'Rename', onRename)}
       {item(<ExternalLink size={14} />, 'Pop out to a window', () => openPopout({ kind: 'project', id: project.id }))}
+      <MoveProjectMenuItems
+        projectId={project.id}
+        onDone={onClose}
+        className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[12.5px] text-fg hover:bg-hover"
+      />
       {item(<Ungroup size={14} />, 'Ungroup', () =>
         api
           .deleteProject(project.id)
@@ -357,6 +393,7 @@ export function AgentsPanel() {
 
   const list = Object.values(consoles);
   const { groups, ungrouped } = groupByProject(list, projects);
+  const workspaces = useItems((s) => s.workspaces);
   const projectCount = groups.length;
   const working = list.filter((c) => c.status === 'working').length;
   const order = [
@@ -445,6 +482,7 @@ export function AgentsPanel() {
           <LayoutTemplate size={13} />
           Templates
         </button>
+        <LoopsButton />
       </div>
 
       {selectedConsoles.length >= 2 && (
@@ -498,23 +536,44 @@ export function AgentsPanel() {
             </p>
           </div>
         )}
-        {groups.map((g) => (
-          <ProjectSection key={g.project.id} project={g.project} consoles={g.consoles}>
-            {g.consoles.map(row)}
-          </ProjectSection>
-        ))}
-        {ungrouped.length > 0 && (
-          <section className="mt-3">
-            {groups.length > 0 && (
-              <h3 className="mb-1 flex h-7 items-center gap-1.5 px-1.5 text-[11px] font-semibold tracking-wider text-fg-subtle uppercase">
-                <span className="size-2 rounded-full border border-fg-subtle" />
-                Ungrouped
-                <span className="font-normal tabular-nums normal-case">{ungrouped.length}</span>
-              </h3>
-            )}
-            <div className="flex flex-col gap-0.5">{ungrouped.map(row)}</div>
-          </section>
-        )}
+        {(workspaces.length > 1
+          ? workspaces.map((ws) => ({
+              ws,
+              groups: groups.filter((g) => workspaceOf(g.project) === ws.id),
+              ungrouped: ungrouped.filter((c) => workspaceOf(c) === ws.id),
+            }))
+          : [{ ws: null, groups, ungrouped }]
+        ).map(({ ws, groups, ungrouped }) => {
+          const fleet = (
+            <>
+              {groups.map((g) => (
+                <ProjectSection key={g.project.id} project={g.project} consoles={g.consoles}>
+                  {g.consoles.map(row)}
+                </ProjectSection>
+              ))}
+              {ungrouped.length > 0 && (
+                <section className="mt-3">
+                  {groups.length > 0 && (
+                    <h3 className="mb-1 flex h-7 items-center gap-1.5 px-1.5 text-[11px] font-semibold tracking-wider text-fg-subtle uppercase">
+                      <span className="size-2 rounded-full border border-fg-subtle" />
+                      Ungrouped
+                      <span className="font-normal tabular-nums normal-case">{ungrouped.length}</span>
+                    </h3>
+                  )}
+                  <div className="flex flex-col gap-0.5">{ungrouped.map(row)}</div>
+                </section>
+              )}
+            </>
+          );
+          if (!ws) return <div key="all">{fleet}</div>;
+          const count = ungrouped.length + groups.reduce((n, g) => n + g.consoles.length, 0);
+          // One collapsible section per workspace when there are several
+          return (
+            <WorkspaceSection key={ws.id} workspace={ws} count={count}>
+              {count ? fleet : <p className="px-2 py-1 text-[11.5px] text-fg-subtle">No agents here.</p>}
+            </WorkspaceSection>
+          );
+        })}
         {list.length >= 2 && selectedConsoles.length < 2 && (
           <p className="mt-4 px-2 text-center text-[11px] text-fg-subtle">
             Ctrl/Shift+click agents to group them into a project.

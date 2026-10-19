@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import {
+  Brain,
   Inbox,
   LayoutDashboard,
   ListChecks,
@@ -13,6 +14,7 @@ import {
 import { attentionCount } from '../lib/fleet';
 import { useBoard, type SidebarTab } from '../lib/store';
 import { openPopout } from '../lib/popout';
+import { openMemory } from '../lib/handoff-memory';
 import { ActionsPanel } from './ActionsPanel';
 import { AgentsPanel } from './AgentsPanel';
 import { ProgressPanel } from './ProgressPanel';
@@ -149,6 +151,16 @@ export function Sidebar() {
         <span className="font-semibold tracking-tight text-fg">AgentArmy</span>
         <span className="ml-auto" />
         <AccountSwitcherChip />
+        <button
+          type="button"
+          data-testid="open-memory"
+          title="Project memory: notes you push into agents"
+          aria-label="Project memory"
+          onClick={() => openMemory()}
+          className={iconButton}
+        >
+          <Brain size={15} />
+        </button>
         <button
           type="button"
           data-testid="open-mission-map"

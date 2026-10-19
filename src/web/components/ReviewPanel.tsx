@@ -62,7 +62,18 @@ const ROW_CLS: Record<DiffLine['kind'], string> = {
   meta: 'text-fg-subtle italic',
 };
 
-function DiffView({ id, file, scope }: { id: string; file: string; scope: Scope }) {
+// Also used by the Git panel: pass load() for any other diff source (id/file/scope then only key the fetch)
+export function DiffView({
+  id,
+  file,
+  scope,
+  load,
+}: {
+  id: string;
+  file: string;
+  scope: string;
+  load?: () => Promise<{ diff: string; truncated: boolean }>;
+}) {
   const [rows, setRows] = useState<DiffLine[] | null>(null);
   const [truncated, setTruncated] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,8 +81,7 @@ function DiffView({ id, file, scope }: { id: string; file: string; scope: Scope 
 
   useEffect(() => {
     let cancelled = false;
-    gitApi
-      .diff(id, file, scope)
+    (load ? load() : gitApi.diff(id, file, scope as Scope))
       .then((res) => {
         if (cancelled) return;
         setRows(parseUnifiedDiff(res.diff));
@@ -81,6 +91,7 @@ function DiffView({ id, file, scope }: { id: string; file: string; scope: Scope 
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load is keyed by id/file/scope
   }, [id, file, scope]);
 
   if (error) return <p className="px-4 py-2 text-[12px] text-error">{error}</p>;

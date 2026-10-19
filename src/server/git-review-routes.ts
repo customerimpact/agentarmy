@@ -78,7 +78,7 @@ export class WorktreeService {
     const made = await createWorktree(req.cwd, name);
     let info: ConsoleInfo;
     try {
-      info = this.manager.create({ cwd: made.cwd, name, layout: req.layout, accountId: req.accountId });
+      info = this.manager.create({ cwd: made.cwd, name, layout: req.layout, accountId: req.accountId, workspaceId: req.workspaceId, agent: req.agent, command: req.command });
     } catch (err) {
       await discardWorktree(made.git).catch(() => undefined);
       throw err;

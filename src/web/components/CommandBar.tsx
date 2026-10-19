@@ -7,11 +7,13 @@ import {
   LayoutTemplate,
   Maximize2,
   Network,
+  Pause,
   Play,
   Plus,
   SendHorizontal,
   Users,
   X,
+  Brain,
 } from 'lucide-react';
 import type { ConsoleInfo, ConsoleStatus } from '../../shared/protocol';
 import { api } from '../lib/api';
@@ -19,8 +21,13 @@ import { fitAll, sendLine } from '../lib/board-actions';
 import { isDormant } from '../lib/status';
 import { consoleList, useBoard } from '../lib/store';
 import { StatusDot } from './StatusDot';
+import { DictationButton } from './LazyDictationButton';
+import { agentsLabel, pauseAll, resumePaused, teamApi, useLoops } from '../lib/loops';
+import { parseTeamMention } from '../lib/team-mention';
+import { openMemory } from '../lib/handoff-memory';
 
 const ALL = 'all';
+const PROJECT = 'project:';
 const HISTORY_KEY = 'agentarmy.commandHistory';
 const MAX_HISTORY = 50;
 // @all skips consoles that are busy or have no process; interrupting a working agent is never wanted
@@ -99,6 +106,7 @@ export function CommandBar() {
   const consoles = useBoard((s) => s.consoles);
   const selectedId = useBoard((s) => s.selectedId);
   const selectedIds = useBoard((s) => s.selectedIds);
+  const projects = useBoard((s) => s.projects);
   const [groupName, setGroupName] = useState<string | null>(null);
   const [value, setValue] = useState('');
   const [caret, setCaret] = useState(0);
@@ -117,15 +125,19 @@ export function CommandBar() {
   const list = consoleList(consoles);
   const readyCount = list.filter(isReady).length;
   const suspendedCount = list.filter((c) => c.status === 'suspended').length;
+  const workingCount = list.filter((c) => c.status === 'working').length;
+  const pausedCount = list.filter((c) => c.paused).length;
+  // "@<project>" (or @team:<name>) targets every running console of that project
+  const targetProject = explicitTarget?.startsWith(PROJECT) ? projects[explicitTarget.slice(PROJECT.length)] : undefined;
   const targetId =
     explicitTarget === ALL
       ? ALL
-      : explicitTarget && consoles[explicitTarget]
+      : targetProject || (explicitTarget && consoles[explicitTarget])
         ? explicitTarget
         : selectedId && consoles[selectedId]
           ? selectedId
           : null;
-  const targetConsole = targetId && targetId !== ALL ? consoles[targetId] : null;
+  const targetConsole = targetId && targetId !== ALL && !targetProject ? consoles[targetId] : null;
 
   const mention = suggestionsSuppressed ? null : findMention(value, caret);
   const options: Option[] = mention
@@ -137,7 +149,13 @@ export function CommandBar() {
           hint: c.status.replace('_', ' '),
           status: c.status,
         })),
-      ].filter((o) => o.label.toLowerCase().includes(mention.query))
+      ]
+        .filter((o) => o.label.toLowerCase().includes(mention.query))
+        .concat(
+          Object.values(projects)
+            .filter((p) => p.open && p.name.toLowerCase().includes(mention.query.replace(/^team:/, '')))
+            .map((p) => ({ id: `${PROJECT}${p.id}`, label: p.name, hint: `team · ${agentsLabel(p.consoleIds.length)}` })),
+        )
     : [];
   const suggestionsOpen = options.length > 0;
 
@@ -170,7 +188,26 @@ export function CommandBar() {
     const text = value.replace(/\s+$/, '');
     if (!text.trim()) return;
 
-    if (targetId === ALL) {
+    const typedTeam = targetProject ? null : parseTeamMention(text, Object.values(projects), list.map((c) => c.name));
+    const teamId = targetProject?.id ?? typedTeam?.projectId;
+    if (teamId) {
+      const body = typedTeam ? typedTeam.rest : text;
+      if (!body.trim()) {
+        showFeedback('Type a message after the team name', false);
+        return;
+      }
+      teamApi
+        .sendToProject(teamId, body)
+        .then((res) =>
+          showFeedback(
+            res.sent
+              ? `Sent to ${agentsLabel(res.sent)}${res.skipped.length ? ` · ${res.skipped.length} skipped` : ''}`
+              : 'No agent in that team is running',
+            res.sent > 0,
+          ),
+        )
+        .catch((error: Error) => showFeedback(`Send failed: ${error.message}`, false));
+    } else if (targetId === ALL) {
       const ready = list.filter(isReady);
       if (!ready.length) {
         showFeedback('No agent is ready (idle, resting or needs you)', false);
@@ -287,6 +324,10 @@ export function CommandBar() {
           <LayoutTemplate size={13} />
           Templates
         </Chip>
+        <Chip testId="command-bar-compose" title="Launch up to 12 agents with roles and first prompts" onClick={() => useLoops.getState().openComposer()}>
+          <Users size={13} />
+          Compose team
+        </Chip>
         <Chip testId="command-bar-spawn4" onClick={() => setNewAgentOpen(true, 4)}>
           <Grid2x2 size={13} />
           Spawn 4
@@ -340,6 +381,10 @@ export function CommandBar() {
             </button>
           </form>
         )}
+        <Chip testId="command-bar-memory" onClick={() => openMemory()}>
+          <Brain size={12} />
+          Memory
+        </Chip>
         <Chip testId="command-bar-mission-map" onClick={() => setMissionMapOpen(true)}>
           <Network size={13} />
           Mission map
@@ -348,6 +393,18 @@ export function CommandBar() {
           <Maximize2 size={12} />
           Fit all
         </Chip>
+        {workingCount > 0 && (
+          <Chip testId="command-bar-pause-all" title="Interrupt every working agent (Shift+P)" onClick={() => void pauseAll()}>
+            <Pause size={12} />
+            Pause all
+          </Chip>
+        )}
+        {pausedCount > 0 && (
+          <Chip testId="command-bar-resume-paused" title={`Type "Continue where you left off." into the ${pausedCount} paused agents`} active onClick={() => void resumePaused()}>
+            <Play size={12} />
+            Resume all ({pausedCount})
+          </Chip>
+        )}
         {suspendedCount > 0 && (
           <Chip
             testId="command-bar-resume-all"
@@ -427,6 +484,11 @@ export function CommandBar() {
             <ArrowRight size={12} className="shrink-0 text-accent" />
             {targetId === ALL ? (
               <span className="truncate">all ({readyCount} ready)</span>
+            ) : targetProject ? (
+              <>
+                <Users size={12} className="shrink-0 text-accent" />
+                <span className="truncate">{targetProject.name}</span>
+              </>
             ) : targetConsole ? (
               <>
                 <StatusDot status={targetConsole.status} size={6} />
@@ -442,7 +504,7 @@ export function CommandBar() {
             rows={rows}
             value={value}
             spellCheck={false}
-            placeholder="Message the selected agent · @ to direct · @all for everyone"
+            placeholder="Message the selected agent · @ to direct · @all or a team for many"
             onChange={(e) => {
               updateValue(e.target.value, e.target.selectionStart);
               setHistoryIndex(null);
@@ -451,6 +513,8 @@ export function CommandBar() {
             onKeyDown={onKeyDown}
             className="aa-scroll min-h-8 flex-1 resize-none bg-transparent py-1.5 leading-5 text-fg outline-none placeholder:text-fg-subtle"
           />
+          {/* Voice dictation: mic button, hold Space / Alt+V (see DictationButton.tsx) */}
+          <DictationButton value={value} setValue={(v) => updateValue(v)} send={send} inputRef={inputRef} />
           <button
             type="button"
             data-testid="command-bar-send"

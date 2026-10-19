@@ -16,8 +16,13 @@ import { listDirectory } from './fs-list.js';
 import { registerBrowserRoutes } from './browsers/routes.js';
 import { registerOrchestrationRoutes } from './orchestration-routes.js';
 import { registerWorkspaceRoutes } from './workspace-routes.js';
+import { registerDrawingRoutes } from './drawings.js';
+import { registerItemRoutes } from './board-items.js';
+import { registerWorkspaceTabRoutes } from './workspaces.js';
 import { registerGitReviewRoutes } from './git-review-routes.js';
+import { registerRepoRoutes } from './repo-routes.js';
 import { registerSettingsRoutes } from './settings-routes.js';
+import { registerAgentRoutes } from './agents/index.js';
 import { registerUsageRoutes } from './usage-routes.js';
 import { registerAccountRoutes } from './account-routes.js';
 import { SettingsStore } from './settings.js';
@@ -25,6 +30,11 @@ import { WebhookNotifier } from './webhooks.js';
 import { NtfyNotifier, registerNtfyRoutes } from './ntfy.js';
 import { registerPreviewRoutes } from './previews/preview-service.js';
 import { registerRecapRoutes } from './recap.js';
+import { registerHandoffRoutes } from './handoffs.js';
+import { registerMemoryRoutes } from './memory.js';
+import { registerPauseRoutes } from './pause.js';
+import { CustomTemplates, registerComposerRoutes } from './composer.js';
+import { registerLoopRoutes } from './loops.js';
 import type { HookPayload } from './hook-status.js';
 import {
   isAllowedHost,
@@ -157,6 +167,13 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
   manager.on('project-removed', (id) => broadcast({ type: 'project-removed', id }));
   manager.on('browser', (browser) => broadcast({ type: 'browser', browser }));
   manager.on('browser-removed', (id) => broadcast({ type: 'browser-removed', id }));
+  manager.on('loop', (loop) => broadcast({ type: 'loop', loop }));
+  manager.on('loop-removed', (id) => broadcast({ type: 'loop-removed', id }));
+  manager.on('item', (item) => broadcast({ type: 'item', item }));
+  manager.on('item-removed', (id) => broadcast({ type: 'item-removed', id }));
+  manager.on('workspaces', () =>
+    broadcast({ type: 'workspaces', workspaces: manager.workspaces, activeWorkspaceId: manager.activeWorkspaceId }),
+  );
 
   const settings = options.settings ?? new SettingsStore(null);
   const notifier = new WebhookNotifier(manager, settings, options.port);
@@ -213,12 +230,31 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
   await registerUsageRoutes(app, { manager, settings, broadcast });
   await registerOrchestrationRoutes(app, { manager, port: options.port, token: options.token });
   const worktrees = await registerGitReviewRoutes(app, { manager });
-  await registerWorkspaceRoutes(app, { manager, worktrees });
+  await registerRepoRoutes(app, { manager }); // Git panel + code viewer
+  // Composer's saved templates live next to settings.json; in-memory settings = a throwaway server
+  const customTemplates = new CustomTemplates(settings.filePath ? path.join(path.dirname(settings.filePath), 'templates.json') : null);
+  const { projects } = await registerWorkspaceRoutes(app, { manager, worktrees, custom: customTemplates });
+  registerComposerRoutes(app, { manager, projects, worktrees, custom: customTemplates });
+  registerPauseRoutes(app, { manager });
+  registerItemRoutes(app, { manager });
+  registerWorkspaceTabRoutes(app, { manager, projects });
   await registerSettingsRoutes(app, { settings, notifier, port: options.port });
+  registerAgentRoutes(app, { settings: () => settings.get() });
+  // Drawings + annotation images (<AGENTARMY_HOME>/images; in memory for a throwaway settings store)
+  await registerDrawingRoutes(app, {
+    drawings: manager.drawings,
+    persist: () => manager.persist(),
+    broadcast,
+    activeWorkspaceId: () => manager.activeWorkspaceId,
+    imagesDir: settings.filePath ? path.join(path.dirname(settings.filePath), 'images') : null,
+  });
   // Claude Code accounts live next to settings.json; an in-memory settings store means a throwaway server
   await registerAccountRoutes(app, { manager, broadcast, dataDir: settings.filePath ? path.dirname(settings.filePath) : null });
   await registerNtfyRoutes(app, { settings, notifier: ntfy });
   // Daily recap log sits next to settings.json; an in-memory settings store means a throwaway server
+  // Handoffs (brief from one agent's transcript into another) and project memory (next to settings.json)
+  registerHandoffRoutes(app, { manager, settings: () => settings.get() });
+  registerMemoryRoutes(app, { manager, dir: settings.filePath ? path.join(path.dirname(settings.filePath), 'memory') : null });
   const recap = registerRecapRoutes(app, {
     manager,
     settings,
@@ -231,6 +267,12 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
     broadcast,
     ignorePorts: [options.port],
     onOpened: (consoleId, url) => recap.recordPreview(consoleId, url),
+  });
+  registerLoopRoutes(app, {
+    manager,
+    onRun: (loop, consoles) => {
+      for (const c of consoles) recap.record('loop', c.id, { id: loop.id, text: loop.name });
+    },
   });
 
   app.post('/api/consoles', async (request, reply) => {

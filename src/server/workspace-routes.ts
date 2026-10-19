@@ -1,7 +1,10 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
+import { isAgentKind } from '../shared/agents.js';
 import type {
   CreateProjectRequest,
   LaunchTemplateRequest,
+  LaunchTemplateResponse,
+  Template,
   UpdateProjectRequest,
 } from '../shared/protocol.js';
 import { NotFoundError, type ConsoleManager } from './consoles.js';
@@ -22,7 +25,12 @@ function isFiniteNumber(value: unknown): value is number {
 // Projects, templates, git clone and POST /api/consoles/:id/send.
 export async function registerWorkspaceRoutes(
   app: FastifyInstance,
-  options: { manager: ConsoleManager; worktrees?: WorktreeService },
+  options: {
+    manager: ConsoleManager;
+    worktrees?: WorktreeService;
+    // Composer's saved templates (composer.ts): listed after the built-ins; launch returns null for others
+    custom?: { list(): Template[]; launch(id: string, req: LaunchTemplateRequest): Promise<LaunchTemplateResponse> | null };
+  },
 ): Promise<{ projects: ProjectService; templates: TemplateService }> {
   const { manager, worktrees } = options;
   const projects = new ProjectService(manager);
@@ -84,7 +92,7 @@ export async function registerWorkspaceRoutes(
     }
   });
 
-  app.get('/api/templates', async () => templates.templates);
+  app.get('/api/templates', async () => [...templates.templates, ...(options.custom?.list() ?? [])]);
 
   app.post('/api/templates/:id/launch', async (request, reply) => {
     const { id } = request.params as { id: string };
@@ -105,7 +113,10 @@ export async function registerWorkspaceRoutes(
         projectName: body.projectName,
         origin: origin ? { x: origin.x, y: origin.y } : undefined,
         accountId: typeof body.accountId === 'string' ? body.accountId : undefined,
+        teamAgents: Array.isArray(body.teamAgents) ? body.teamAgents.map((a) => (isAgentKind(a) ? a : 'claude')) : undefined,
       };
+      const custom = options.custom?.launch(id, { ...req, worktrees: body.worktrees === true });
+      if (custom) return await custom;
       const template = templates.templates.find((t) => t.id === id);
       if (body.worktrees === true && worktrees && template) {
         // Each agent gets its own branch; worktrees are made before any console starts

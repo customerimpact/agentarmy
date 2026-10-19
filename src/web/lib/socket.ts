@@ -6,6 +6,9 @@ import { useUsage } from './usage';
 import { useBoard } from './store';
 import { usePreviewOffers } from './previews';
 import { formatReset, useAccounts } from './accounts';
+import { useLoops } from './loops';
+import { receiveItem, useItems } from './items';
+import { useDrawings } from './drawing/store';
 
 export type TerminalStreamListener = (kind: 'replay' | 'output', data: string) => void;
 export type BrowserFrameListener = (
@@ -108,10 +111,14 @@ class BoardSocket {
       // Statuses may have changed while we were away; resync the full list
       api
         .getState()
-        .then((state) => useBoard.getState().loadState(state))
+        .then((state) => {
+          useBoard.getState().loadState(state);
+          useItems.getState().load(state);
+        })
         .catch(() => undefined);
       void useUsage.getState().load();
       void useAccounts.getState().load();
+      void useLoops.getState().load();
     };
 
     ws.onmessage = (event) => {
@@ -183,6 +190,15 @@ class BoardSocket {
       case 'browser-removed':
         useBoard.getState().removeBrowser(message.id);
         break;
+      case 'item':
+        receiveItem(message.item);
+        break;
+      case 'item-removed':
+        useItems.getState().removeItem(message.id);
+        break;
+      case 'workspaces':
+        useItems.getState().setWorkspaces(message.workspaces, message.activeWorkspaceId);
+        break;
       case 'settings':
         useServerSettings.getState().receive(message.settings);
         break;
@@ -197,6 +213,15 @@ class BoardSocket {
         break;
       case 'preview-offer-removed':
         usePreviewOffers.getState().remove(message.id);
+        break;
+      case 'loop':
+        useLoops.getState().upsert(message.loop);
+        break;
+      case 'loop-removed':
+        useLoops.getState().remove(message.id);
+        break;
+      case 'drawings':
+        useDrawings.getState().applyRemote(message.upsert, message.remove, message.origin);
         break;
       case 'accounts':
         useAccounts.getState().receive(message.accounts);

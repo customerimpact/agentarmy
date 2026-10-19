@@ -17,6 +17,7 @@ import {
 } from '../lib/fleet';
 import { STATUS_META } from '../lib/status';
 import { useBoard, useClock } from '../lib/store';
+import { activeLoopCount, useLoops } from '../lib/loops';
 import { ProgressBar, StatusPill } from './AgentBadges';
 import { JobRow, TodoList } from './ProgressPanel';
 
@@ -601,6 +602,7 @@ function Overview({
   teams: number;
   consoles: number;
 }) {
+  const activeLoops = useLoops((s) => activeLoopCount(s.loops));
   return (
     <div data-testid="map-overview">
       <h3 className="mb-1 text-[11px] font-semibold tracking-wider text-fg-subtle uppercase">
@@ -615,7 +617,7 @@ function Overview({
       <Stat label="Orchestrators" value={orchestrators} />
       <Stat label="Teams" value={teams} />
       <Stat label="Consoles" value={consoles} />
-      <Stat label="Active loops" value={0} />
+      <Stat label="Active loops" value={activeLoops} />
       <p className="mt-5 text-[11.5px] leading-[17px] text-fg-subtle">
         Click a console or team to inspect it. Double-click to jump to it on the board.
       </p>

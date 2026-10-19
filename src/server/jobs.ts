@@ -187,6 +187,7 @@ export class JobService {
         const last = typeof payload.last_assistant_message === 'string' ? payload.last_assistant_message : '';
         for (const job of this.jobs.filter((j) => j.toId === consoleId && j.status === 'working')) {
           this.update(job, { status: 'done' });
+          if (job.kind === 'handoff') continue; // the source handed the work off; no note back
           const worker = this.manager.get(consoleId)?.name ?? 'An agent';
           this.notifySender(
             job,

@@ -12,6 +12,7 @@ import type {
 import { agentArmyHome } from './store.js';
 import { validateBudgetSetting } from './usage-budgets.js';
 import { NTFY_DEFAULT_SERVER, isNtfyServer, isNtfyTopic, normalizeNtfyServer } from './ntfy.js';
+import { validateAgentSetting } from './agents/settings.js';
 
 // App settings, persisted next to state.json. Webhook URLs are secrets: they are stored here
 // but never sent back to the browser (see publicView) and never logged.
@@ -44,6 +45,9 @@ export const DEFAULT_SETTINGS: StoredSettings = {
   budget5hTokens: 0,
   projectDailyBudgets: {},
   pauseJobsAtBudget: false,
+  defaultAgent: 'claude',
+  agentPaths: {},
+  handoffMode: 'quick',
   slackWebhookUrl: '',
   discordWebhookUrl: '',
   ntfyTopic: '',
@@ -165,6 +169,10 @@ export function validatePatch(raw: unknown): Partial<StoredSettings> {
       case 'recapAutoSend':
         out[key] = bool(key, value);
         break;
+      case 'handoffMode':
+        if (value !== 'quick' && value !== 'smart') throw new SettingsError('handoffMode must be "quick" or "smart"');
+        out.handoffMode = value;
+        break;
       case 'previewMode':
         if (value !== 'open' && value !== 'ask') throw new SettingsError('previewMode must be "open" or "ask"');
         out.previewMode = value;
@@ -220,6 +228,10 @@ export function validatePatch(raw: unknown): Partial<StoredSettings> {
       case 'projectDailyBudgets':
       case 'pauseJobsAtBudget':
         Object.assign(out, validateBudgetSetting(key, value, (m) => new SettingsError(m)));
+        break;
+      case 'defaultAgent':
+      case 'agentPaths':
+        Object.assign(out, validateAgentSetting(key, value, (m) => new SettingsError(m)));
         break;
       default:
         throw new SettingsError(`Unknown setting: ${key}`);

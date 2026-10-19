@@ -53,22 +53,26 @@ const SAFE_CONFIG = ['-c', 'core.fsmonitor=false', '-c', 'core.quotepath=false',
 export function runGit(
   cwd: string,
   args: string[],
-  options: { timeoutMs?: number; allowFail?: boolean; git?: string } = {},
+  // env: overrides (undefined removes a variable, e.g. GCM_INTERACTIVE for a user-started push)
+  options: { timeoutMs?: number; allowFail?: boolean; git?: string; env?: Record<string, string | undefined> } = {},
 ): Promise<GitResult> {
   return new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
     let settled = false;
+    const env: Record<string, string | undefined> = {
+      ...process.env,
+      GIT_TERMINAL_PROMPT: '0',
+      GCM_INTERACTIVE: 'never',
+      GIT_PAGER: 'cat',
+      GIT_OPTIONAL_LOCKS: '0',
+      LC_ALL: 'C',
+      ...options.env,
+    };
+    for (const key of Object.keys(env)) if (env[key] === undefined) delete env[key];
     const child = spawn(options.git ?? 'git', [...SAFE_CONFIG, ...args], {
       cwd,
-      env: {
-        ...process.env,
-        GIT_TERMINAL_PROMPT: '0',
-        GCM_INTERACTIVE: 'never',
-        GIT_PAGER: 'cat',
-        GIT_OPTIONAL_LOCKS: '0',
-        LC_ALL: 'C',
-      },
+      env,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     });
@@ -401,7 +405,7 @@ export async function gitDiff(
   return { file, scope, ...untrackedDiff(file, abs) };
 }
 
-function untrackedDiff(file: string, abs: string): { diff: string; truncated: boolean } {
+export function untrackedDiff(file: string, abs: string): { diff: string; truncated: boolean } {
   const header = `diff --git a/${file} b/${file}\nnew file\n--- /dev/null\n+++ b/${file}\n`;
   let buf: Buffer;
   try {

@@ -9,6 +9,8 @@ import { projectColor } from '../lib/board-ui';
 import { useBoard } from '../lib/store';
 import { openPopout } from '../lib/popout';
 import { ProjectPoppedOutTag } from './PopoutControls';
+import { MoveProjectMenuItems } from './WorkspaceTabs';
+import { TeamMenuItems } from './TeamControls';
 
 export type FrameFlowNode = Node<{ projectId: string }, 'frame'>;
 
@@ -145,6 +147,8 @@ function FrameMenu({
         <ExternalLink size={13} className="text-fg-subtle" />
         Pop out to a window
       </button>
+      <MoveProjectMenuItems projectId={project.id} onDone={onClose} className={item} />
+      <TeamMenuItems projectId={project.id} onDone={onClose} className={item} />
       <div className="flex items-center gap-1.5 px-2 py-2">
         {PROJECT_COLORS.map((color) => (
           <button

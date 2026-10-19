@@ -1,0 +1,60 @@
+/* highlight.js token colors from the theme tokens, so both themes (light/dark) just work */
+.hljs-comment,
+.hljs-quote {
+  color: var(--aa-fg-subtle);
+  font-style: italic;
+}
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-doctag,
+.hljs-meta .hljs-keyword {
+  color: var(--aa-accent);
+}
+.hljs-string,
+.hljs-regexp,
+.hljs-addition,
+.hljs-template-tag,
+.hljs-meta .hljs-string {
+  color: var(--aa-project-green);
+}
+.hljs-number,
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--aa-project-amber);
+}
+.hljs-title,
+.hljs-title.function_,
+.hljs-section,
+.hljs-selector-id {
+  color: var(--aa-project-blue);
+}
+.hljs-type,
+.hljs-built_in,
+.hljs-title.class_,
+.hljs-class .hljs-title {
+  color: var(--aa-project-violet);
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-property,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-selector-class,
+.hljs-name {
+  color: var(--aa-project-teal);
+}
+.hljs-meta,
+.hljs-tag,
+.hljs-punctuation {
+  color: var(--aa-fg-muted);
+}
+.hljs-deletion {
+  color: var(--aa-error);
+}
+.hljs-emphasis {
+  font-style: italic;
+}
+.hljs-strong {
+  font-weight: 600;
+}

@@ -28,6 +28,8 @@ describe('ConsoleManager.restore', () => {
         actions: [],
         projects: [],
         browsers: [],
+        items: [],
+        workspaces: [],
       },
       { resumeAll: false },
     );
@@ -50,6 +52,8 @@ describe('ConsoleManager.restore', () => {
         actions: [],
         projects: [],
         browsers: [],
+        items: [],
+        workspaces: [],
       },
       { resumeAll: false },
     );

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { TeamAgentsPicker } from './AgentPicker';
+import type { AgentKind } from '../../shared/agents';
 import { useReactFlow } from '@xyflow/react';
 import { ArrowLeft, LayoutTemplate, LoaderCircle, Rocket, Users } from 'lucide-react';
 import { PROJECT_COLORS, type Template } from '../../shared/protocol';
@@ -19,6 +21,8 @@ import { FolderPicker } from './FolderPicker';
 import { Modal } from './Modal';
 import { WorktreeToggle } from './WorktreeToggle';
 import { AccountPicker } from './settings/AccountsSettings';
+import { CustomTemplateTag, ScratchTemplateCard } from './ComposerDialog';
+import { useLoops } from '../lib/loops';
 
 export function agentCount(t: Pick<Template, 'orchestrator' | 'teams'>): number {
   return (t.orchestrator ? 1 : 0) + t.teams.reduce((sum, team) => sum + team.count, 0);
@@ -151,6 +155,7 @@ export function TemplatesDialog() {
   const [projectName, setProjectName] = useState('');
   const [isolated, setIsolated] = useState(false);
   const [accountId, setAccountId] = useState('auto');
+  const [teamAgents, setTeamAgents] = useState<AgentKind[]>([]);
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startFolder] = useState(() => getRecentFolders()[0]);
@@ -173,6 +178,7 @@ export function TemplatesDialog() {
 
   const choose = (t: Template) => {
     setChosen(t);
+    setTeamAgents([]);
     setProjectName(t.name);
     setError(null);
   };
@@ -210,6 +216,7 @@ export function TemplatesDialog() {
         origin: pickOrigin(chosen),
         ...(isolated ? { worktrees: true } : {}),
         ...(accountId !== 'auto' ? { accountId } : {}),
+        ...(teamAgents.some((a) => a !== 'claude') ? { teamAgents } : {}),
       });
       const store = useBoard.getState();
       for (const project of result.projects) store.upsertProject(project);
@@ -282,6 +289,12 @@ export function TemplatesDialog() {
             <div className="grid grid-cols-1 gap-3
                             sm:grid-cols-2
                             lg:grid-cols-3">
+              <ScratchTemplateCard
+                onClick={() => {
+                  close();
+                  useLoops.getState().openComposer();
+                }}
+              />
               {templates.map((t) => (
                 <button
                   key={t.id}
@@ -299,6 +312,13 @@ export function TemplatesDialog() {
                   <div className="flex flex-1 flex-col gap-1 p-3">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-fg group-hover:text-accent">{t.name}</span>
+                      {t.custom && (
+                        <CustomTemplateTag
+                          id={t.id}
+                          name={t.name}
+                          onDeleted={() => setTemplates((list) => list?.filter((x) => x.id !== t.id) ?? null)}
+                        />
+                      )}
                       <span className="aa-label ml-auto inline-flex items-center gap-1 rounded-full bg-accent/12 px-2 py-[2px] text-accent">
                         <Users size={10} />
                         {agentCount(t)}
@@ -335,6 +355,7 @@ export function TemplatesDialog() {
       {chosen && (
         <>
           <FolderPicker startPath={startFolder} onTargetChange={setCwd} heightClass="h-64" />
+          <TeamAgentsPicker teams={chosen.teams} value={teamAgents} onChange={setTeamAgents} />
           {error && (
             <pre className="aa-scroll max-h-32 overflow-auto border-t border-error/30 bg-error/10 px-5 py-2 font-mono text-[11.5px] whitespace-pre-wrap text-error">
               {error}

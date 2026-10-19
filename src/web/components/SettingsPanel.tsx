@@ -15,6 +15,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Gauge } from 'lucide-react';
+import { Mic } from 'lucide-react';
+import { DRAWING_SETTINGS, VOICE_SETTINGS } from './settings/DrawVoiceSettings';
 import { PauseJobsControl, ProjectBudgetsBelow, budgetBelow } from './settings/UsageSettings';
 import type { PermissionModeSetting, SettingsPatch, StartupResume, WebhookKind } from '../../shared/protocol';
 import { api } from '../lib/api';
@@ -26,7 +28,8 @@ import { useBoard } from '../lib/store';
 import { DEFAULT_THEME, THEMES, setTheme, useTheme } from '../lib/theme';
 import { NtfyBelow } from './settings/NtfySetting';
 import { AccountsBelow, AutoSwitchBelow, AutoSwitchControl, NewAgentAccountControl, PriorityBelow } from './settings/AccountsSettings';
-import { UsersRound } from 'lucide-react';
+import { UsersRound, Cpu } from 'lucide-react';
+import { AgentsDetectedBelow, DefaultAgentControl } from './settings/AgentsSettings';
 import { Note, Segmented, Select, SmallButton, Stepper, TextSave, Toggle } from './settings/fields';
 
 // Settings registry: general first, then increasingly specific sections. Every row is data
@@ -42,9 +45,11 @@ export type SectionKey =
   | 'board'
   | 'terminals'
   | 'claude'
+  | 'agents'
   | 'usage'
   | 'browser'
   | 'integrations'
+  | 'voice'
   | 'advanced';
 
 export interface SectionDef {
@@ -68,6 +73,12 @@ export const SECTIONS: SectionDef[] = [
     note: 'Applies to consoles you create or restart from now on. Running consoles keep their current settings.',
   },
   {
+    key: 'agents',
+    label: 'Agents',
+    icon: Cpu,
+    note: 'Other agent CLIs a console can run. Codex, Gemini CLI and OpenCode keep their own login; nothing is changed in their config files.',
+  },
+  {
     key: 'usage',
     label: 'Usage & budgets',
     icon: Gauge,
@@ -75,6 +86,7 @@ export const SECTIONS: SectionDef[] = [
   },
   { key: 'browser', label: 'Browser & Previews', icon: Globe },
   { key: 'integrations', label: 'Integrations', icon: Plug },
+  { key: 'voice', label: 'Voice', icon: Mic },
   { key: 'advanced', label: 'Advanced', icon: Wrench },
 ];
 
@@ -634,6 +646,22 @@ function PreviewModeControl() {
   );
 }
 
+function HandoffModeControl() {
+  const data = useServer();
+  if (!data) return <Loading />;
+  return (
+    <Segmented
+      label="Handoff brief"
+      value={data.settings.handoffMode}
+      options={[
+        { value: 'quick', label: 'Quick (free)' },
+        { value: 'smart', label: 'Smart (Claude)' },
+      ]}
+      onChange={(handoffMode) => void patchServer({ handoffMode })}
+    />
+  );
+}
+
 function RecapSendControl() {
   const data = useServer();
   if (!data) return <Loading />;
@@ -797,8 +825,11 @@ const SETTINGS: SettingDef[] = [
   { id: 'extra-args', section: 'claude', label: 'Extra flags', description: 'More claude command-line flags. Quotes group words; no shell is involved.', keywords: 'arguments args cli options command line', Below: ExtraArgsBelow },
   { id: 'task-list', section: 'claude', label: 'Task list', description: 'Let agents keep a task list that feeds the Progress tab.', keywords: 'todo tasks progress CLAUDE_CODE_ENABLE_TASKS', Control: serverToggle('enableTasks', 'Task list') },
   { id: 'api-key', section: 'claude', label: 'Use API key', description: 'Bill API credits instead of your Claude subscription login.', keywords: 'anthropic_api_key billing subscription credits token', Control: serverToggle('useApiKey', 'Use API key'), Below: ApiKeyBelow },
+  { id: 'handoff-mode', section: 'claude', label: 'Handoff brief', description: 'Default for Hand off to…: Quick builds the brief from the transcript for free; Smart has Haiku summarize it with claude -p (uses your plan). You can switch per handoff.', keywords: 'handoff hand off brief summary transfer haiku smart quick', Control: HandoffModeControl },
   { id: 'claude-path', section: 'claude', label: 'Claude executable', description: 'Path to claude, if it is not on PATH.', keywords: 'binary exe location install AGENTARMY_CLAUDE_PATH', Below: pathBelow('claudePath', 'Claude path', 'Auto-detect (claude on PATH)') },
 
+  { id: 'agents-default', section: 'agents', label: 'Default agent', description: 'Preselected in the New agent dialog. You can switch per console.', keywords: 'codex gemini opencode custom command cli default new console', Control: DefaultAgentControl },
+  { id: 'agents-detected', section: 'agents', label: 'Installed agent CLIs', description: 'Found on PATH (or at the path you set). Restart a console to pick up a new path.', keywords: 'codex gemini opencode version path install detect executable binary', Below: AgentsDetectedBelow },
   { id: 'budget-daily', section: 'usage', label: 'Daily budget', description: 'All Claude Code sessions on this machine, since midnight.', keywords: 'usage tokens limit cost spend today plan', Below: budgetBelow('budgetDailyTokens', 'Daily') },
   { id: 'budget-5h', section: 'usage', label: '5-hour budget', description: 'Rolling last 5 hours, like the plan’s session limit.', keywords: 'usage tokens limit pressure plan session window', Below: budgetBelow('budget5hTokens', '5-hour') },
   { id: 'budget-weekly', section: 'usage', label: 'Weekly budget', description: 'Rolling last 7 days, like the plan’s weekly limit.', keywords: 'usage tokens limit pressure plan week', Below: budgetBelow('budgetWeeklyTokens', 'Weekly') },
@@ -807,6 +838,9 @@ const SETTINGS: SettingDef[] = [
   { id: 'browser-path', section: 'browser', label: 'Browser executable', description: 'Chrome, Edge or Chromium used for browser tiles.', keywords: 'chrome edge chromium path binary AGENTARMY_BROWSER_PATH web', Below: pathBelow('browserPath', 'Browser path', 'Auto-detect Chrome / Edge / Chromium') },
   { id: 'auto-preview', section: 'browser', label: 'Auto-open dev previews', description: 'When an agent starts a dev server (e.g. http://localhost:5173), show it in a browser tile next to that agent.', keywords: 'preview localhost dev server vite next port url automatic', Control: AutoPreviewControl },
   { id: 'preview-mode', section: 'browser', label: 'Preview prompt', description: 'Open the preview right away, or ask first with a small prompt.', keywords: 'ask confirm toast preview automatic', Control: PreviewModeControl },
+
+  ...DRAWING_SETTINGS,
+  ...VOICE_SETTINGS,
 
   { id: 'data-dir', section: 'advanced', label: 'Data folder', description: 'Board, settings and token files live here.', keywords: 'storage state json home AGENTARMY_HOME location', Below: DataDirBelow },
   { id: 'port', section: 'advanced', label: 'Server port', description: 'Change it with agentarmy --port <n>.', keywords: 'network localhost url', Control: PortControl },

@@ -24,7 +24,8 @@ export type RecapEventType =
   | 'action_resolved'
   | 'file' // Edit / Write / MultiEdit / NotebookEdit target
   | 'command' // a notable shell command (tests, builds, git, deploys)
-  | 'preview'; // a dev preview tile opened
+  | 'preview' // a dev preview tile opened
+  | 'loop'; // a loop typed its prompt into the console (text = loop name)
 
 export interface RecapEvent {
   t: number;
@@ -178,6 +179,9 @@ export function buildRecap(
         break;
       case 'preview':
         if (a && ev.text) a.highlights.push(`Opened preview ${ev.text}`);
+        break;
+      case 'loop':
+        if (a && ev.text) a.highlights.push(`Loop "${ev.text}" ran`);
         break;
     }
   }

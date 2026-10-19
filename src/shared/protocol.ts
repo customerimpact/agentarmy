@@ -2,9 +2,13 @@
 // Both sides import from here; change it only with both sides in mind.
 
 import type { UsageBroadcast } from './usage.js';
+import type { AgentKind } from './agents.js';
+
+export type { AgentKind } from './agents.js';
+import type { Shape } from './drawings.js';
 
 export const DEFAULT_PORT = 4317;
-export const STATE_VERSION = 2; // v1 files load with empty jobs/actions
+export const STATE_VERSION = 3; // v1 files load with empty jobs/actions; v1/v2 load with no items and one 'main' workspace
 
 export type ConsoleStatus =
   | 'starting' // PTY spawned, no SessionStart hook yet
@@ -43,6 +47,11 @@ export interface ConsoleInfo {
   git?: ConsoleGit; // set when the console works in its own git worktree + branch
   gitStats?: GitStats; // branch + working tree vs base, refreshed by the server
   accountId?: string; // Claude Code account (config dir) it runs on; undefined = the default ~/.claude
+  workspaceId?: string; // board tab it lives on; missing = DEFAULT_WORKSPACE_ID
+  agent?: AgentKind; // CLI it runs (src/server/agents); missing = 'claude'
+  command?: string; // agent 'custom': the command line, run through the user's shell
+  agentSessionId?: string; // non-Claude CLIs: their own session id when known (e.g. Codex thread id), for resume
+  paused?: boolean; // stopped by "Pause all" (Esc); "Resume all" types a continue prompt and clears it
 }
 
 // ---------- Worktree + review (each agent on its own branch) ----------
@@ -117,6 +126,7 @@ export interface Project {
   consoleIds: string[]; // order = order inside the frame grid
   open: boolean;
   createdAt: number;
+  workspaceId?: string; // missing = DEFAULT_WORKSPACE_ID
 }
 
 export interface CreateProjectRequest {
@@ -146,6 +156,8 @@ export interface Template {
   description: string;
   orchestrator: boolean; // adds an orchestrator console wired to every other console
   teams: TemplateTeam[];
+  custom?: boolean; // saved by the user from the Composer (<AGENTARMY_HOME>/templates.json)
+  rows?: ComposerRow[]; // custom templates: one row per console (teams is derived from them)
 }
 
 export interface LaunchTemplateRequest {
@@ -154,6 +166,7 @@ export interface LaunchTemplateRequest {
   origin?: { x: number; y: number }; // board position for the top-left of the layout
   worktrees?: boolean; // give each agent (not the orchestrator) its own branch + worktree
   accountId?: string; // 'auto' (default) or an account id, for every console of the launch
+  teamAgents?: AgentKind[]; // agent per team (same order as Template.teams); missing = 'claude'
 }
 
 export interface LaunchTemplateResponse {
@@ -182,6 +195,110 @@ export interface BrowserTile {
   linkedConsoleId?: string | null; // the console whose agent drives this browser
   cursor?: { x: number; y: number; t: number; click?: boolean } | null; // last agent pointer position (page px); click = pressed at t
   error?: string | null; // set when the browser process could not start or crashed
+  workspaceId?: string; // missing = DEFAULT_WORKSPACE_ID
+}
+
+// ---------- Workspaces (board tabs) and board items (notes, checklists, kanban, files) ----------
+// Every console, project, browser tile and item lives on one workspace (missing workspaceId = 'main').
+// Switching tabs only changes what the board shows; consoles keep running everywhere.
+
+export const DEFAULT_WORKSPACE_ID = 'main';
+
+export interface Workspace {
+  id: string;
+  name: string;
+  color?: ProjectColor;
+  createdAt: number;
+  order: number; // tab order, ascending
+  viewport?: { x: number; y: number; zoom: number };
+}
+
+// GET    /api/workspaces                 -> { workspaces: Workspace[]; activeWorkspaceId: string }
+// POST   /api/workspaces  { name?, color? }            -> Workspace (also becomes active)
+// PATCH  /api/workspaces/:id { name?, color?, viewport? } -> Workspace
+// DELETE /api/workspaces/:id { moveTo? }  -> { ok: true }  (409 when not empty and no moveTo)
+// PUT    /api/workspaces/order { ids }   -> { ok: true }
+// PUT    /api/workspaces/active { id }   -> { ok: true }
+// POST   /api/workspaces/:id/move { consoleIds?, projectIds?, browserIds?, itemIds? } -> { ok: true }
+//        (a project moves with all its consoles)
+
+export interface WorkspacesState {
+  workspaces: Workspace[];
+  activeWorkspaceId: string;
+}
+
+export interface MoveToWorkspaceRequest {
+  consoleIds?: string[];
+  projectIds?: string[];
+  browserIds?: string[];
+  itemIds?: string[];
+}
+
+export type BoardItemKind = 'note' | 'checklist' | 'kanban' | 'file';
+export const BOARD_ITEM_KINDS: readonly BoardItemKind[] = ['note', 'checklist', 'kanban', 'file'];
+
+export interface BoardItem {
+  id: string;
+  kind: BoardItemKind;
+  workspaceId: string;
+  layout: ConsoleLayout;
+  color?: ProjectColor;
+  data: Record<string, unknown>; // kind-specific (see NoteData, ChecklistData, KanbanData); max ~256 KB JSON
+  createdAt: number;
+  updatedAt: number;
+}
+
+// POST   /api/items  CreateItemRequest   -> BoardItem (workspaceId defaults to the active workspace)
+// PATCH  /api/items/:id UpdateItemRequest -> BoardItem (data replaces the whole data object)
+// DELETE /api/items/:id                  -> { ok: true }
+
+export interface CreateItemRequest {
+  kind: BoardItemKind;
+  layout?: Partial<ConsoleLayout>;
+  data?: Record<string, unknown>;
+  workspaceId?: string;
+  color?: ProjectColor;
+}
+
+export interface UpdateItemRequest {
+  layout?: Partial<ConsoleLayout>;
+  data?: Record<string, unknown>;
+  color?: ProjectColor;
+}
+
+export interface NoteData {
+  text: string; // markdown-lite
+}
+
+export interface ChecklistEntry {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export interface ChecklistData {
+  title: string;
+  entries: ChecklistEntry[];
+}
+
+export interface KanbanCard {
+  id: string;
+  title: string;
+  description?: string;
+  assignedConsoleId?: string; // console the card was sent to
+  assignedAt?: number;
+  finishedAt?: number; // set by the server when that console's turn ended after assignment
+}
+
+export interface KanbanColumn {
+  id: string;
+  title: string;
+  cards: KanbanCard[];
+}
+
+export interface KanbanData {
+  title: string;
+  columns: KanbanColumn[];
 }
 
 // ---------- Agent-to-agent jobs (the lines between consoles on the board) ----------
@@ -200,6 +317,7 @@ export interface Job {
   result?: string; // the target's report
   createdAt: number;
   updatedAt: number;
+  kind?: 'handoff'; // a handoff brief (src/server/handoffs.ts): the sender is not told when the turn ends
 }
 
 export type TodoStatus = 'pending' | 'in_progress' | 'completed';
@@ -250,11 +368,17 @@ export interface BoardState {
   actions: ActionItem[]; // newest last; resolved ones are capped server-side
   projects: Project[];
   browsers: BrowserTile[];
-  viewport?: { x: number; y: number; zoom: number };
+  items: BoardItem[];
+  loops?: Loop[]; // missing in older files = []; the server always sends it
+  drawings?: Shape[]; // board annotations (src/shared/drawings.ts); missing in older files = []
+  workspaces: Workspace[]; // at least one; order by Workspace.order
+  activeWorkspaceId?: string; // missing = first workspace
+  viewport?: { x: number; y: number; zoom: number }; // legacy: the 'main' workspace viewport
 }
 
 // ---------- REST (all require ?token= or header x-agentarmy-token) ----------
 // GET    /api/state                      -> BoardState
+// GET    /api/agents/detect              -> AgentsDetectResponse (src/shared/agents.ts; installed CLIs, versions)
 // POST   /api/consoles   CreateConsoleRequest -> ConsoleInfo
 // PATCH  /api/consoles/:id UpdateConsoleRequest -> ConsoleInfo
 // DELETE /api/consoles/:id               -> { ok: true }   (kills the PTY)
@@ -281,6 +405,7 @@ export interface BoardState {
 // POST   /api/consoles/:id/git/commit { message } -> GitSummary
 // POST   /api/consoles/:id/git/merge     -> GitSummary  (409 GitMergeConflict when refused/conflicted)
 // POST   /api/consoles/:id/git/discard   -> { ok: true } (removes console, worktree and branch)
+// /api/git/repo/:id/... (Git panel) and /api/code/:id/... (code viewer): see src/shared/repo.ts
 // POST   /api/browsers   { url?, layout?, linkedConsoleId? } -> BrowserTile
 // PATCH  /api/browsers/:id { url?, layout?, linkedConsoleId? } -> BrowserTile
 // DELETE /api/browsers/:id               -> { ok: true }
@@ -324,6 +449,9 @@ export interface CreateConsoleRequest {
   layout?: Partial<ConsoleLayout>;
   worktree?: boolean; // isolated branch: create a git worktree and run the agent there
   accountId?: string; // 'auto' (default) = highest-priority account that is not limited, or an account id
+  workspaceId?: string; // default: the active workspace
+  agent?: AgentKind; // default 'claude' (the UI preselects settings.defaultAgent)
+  command?: string; // required for agent 'custom'
 }
 
 export interface UpdateConsoleRequest {
@@ -378,6 +506,9 @@ export interface AppSettings {
   budget5hTokens: number; // all sessions, last 5 hours (plan limit pressure)
   projectDailyBudgets: Record<string, number>; // project id -> daily budget for its consoles
   pauseJobsAtBudget: boolean; // block agent-to-agent send_job while a budget is used up
+  defaultAgent: AgentKind; // preselected in the New agent dialog and used when a request names none
+  agentPaths: Partial<Record<'codex' | 'gemini' | 'opencode', string>>; // '' / missing = find on PATH
+  handoffMode: HandoffMode; // default brief for 'Hand off to…': 'quick' (free, from the transcript) or 'smart' (claude -p, haiku)
 }
 
 export interface WebhookInfo {
@@ -447,13 +578,131 @@ export type ServerMessage =
   | { type: 'project-removed'; id: string }
   | { type: 'browser'; browser: BrowserTile } // added or updated (url, title, cursor, layout)
   | { type: 'browser-removed'; id: string }
+  | { type: 'item'; item: BoardItem } // added or updated
+  | { type: 'item-removed'; id: string }
+  | { type: 'workspaces'; workspaces: Workspace[]; activeWorkspaceId: string } // any tab change
   | { type: 'browser-frame'; id: string; data: string; width: number; height: number } // base64 JPEG
   | { type: 'usage'; usage: UsageBroadcast } // every ~15 s when token counts changed
   | { type: 'settings'; settings: PublicSettings } // after PATCH/reset, so every tab updates
   | { type: 'preview-offer'; offer: PreviewOffer } // settings previewMode 'ask': "Open preview?"
   | { type: 'preview-offer-removed'; id: string }
   | { type: 'accounts'; accounts: AccountsState } // accounts added / changed / limited
-  | { type: 'account-switch'; event: AccountSwitchEvent }; // a console moved to another account
+  | { type: 'account-switch'; event: AccountSwitchEvent } // a console moved to another account
+  | { type: 'loop'; loop: Loop } // added or updated (runs, enabled, retired)
+  | { type: 'loop-removed'; id: string }
+  | { type: 'drawings'; upsert: Shape[]; remove: string[]; origin?: string }; // see src/shared/drawings.ts
+
+// ---------- Pause all / Resume all, team messages (src/server/pause.ts) ----------
+// POST   /api/pause          { projectId? } -> PauseResponse  (Esc to every 'working' console, marks it paused)
+// POST   /api/resume-paused  { projectId? } -> PauseResponse  (types RESUME_PROMPT into the paused ones)
+// POST   /api/projects/:id/send { text }    -> TeamSendResponse (to every running console of the project)
+
+export const RESUME_PROMPT = 'Continue where you left off.';
+
+export interface PauseResponse {
+  count: number; // consoles paused / resumed
+  names: string[];
+}
+
+export interface TeamSendResponse {
+  sent: number;
+  names: string[];
+  skipped: string[]; // waiting on you, starting or not running
+}
+
+// ---------- Composer (src/server/composer.ts): launch up to 12 consoles in one step ----------
+// POST   /api/compose        ComposeRequest -> LaunchTemplateResponse (one project, consoles in a grid)
+// POST   /api/templates/custom  SaveTemplateRequest -> Template (custom: true; also listed by GET /api/templates)
+// DELETE /api/templates/custom/:id         -> { ok: true }
+// POST   /api/templates/:id/launch on a custom template launches its rows like /api/compose
+
+export const MAX_COMPOSER_ROWS = 12;
+export const COMPOSER_ROLES = ['Frontend', 'Backend', 'Tests', 'Reviewer', 'Docs', 'Security', 'Research', 'General'] as const;
+
+export interface ComposerRow {
+  name?: string; // '' = auto (Ada, Bex, ...)
+  role?: string;
+  prompt?: string; // first message typed once the console is ready; {name} {team} {role} are filled in
+  accountId?: string; // 'auto' or an account id
+  worktree?: boolean; // isolated branch (git worktree)
+  agent?: AgentKind; // CLI for this console (no 'custom': rows have no command); missing = 'claude'
+}
+
+export interface ComposeRequest {
+  cwd: string;
+  projectName?: string;
+  rows: ComposerRow[]; // 1..MAX_COMPOSER_ROWS
+  origin?: { x: number; y: number };
+}
+
+export interface SaveTemplateRequest {
+  name: string;
+  description?: string;
+  rows: ComposerRow[];
+}
+
+// ---------- Loops (src/server/loops.ts): re-send a prompt on a schedule, on idle, or on output ----------
+// GET    /api/loops                 -> Loop[]
+// POST   /api/loops  LoopInput      -> Loop
+// PATCH  /api/loops/:id Partial<LoopInput> & { enabled? } -> Loop
+// DELETE /api/loops/:id             -> { ok: true }
+// POST   /api/loops/:id/run         -> Loop   (run now, ignores the trigger)
+// Loops only type into consoles that are idle or resting: working ones are skipped, needs_you never.
+
+export type LoopTarget =
+  | { kind: 'consoles'; ids: string[] }
+  | { kind: 'project'; id: string }
+  | { kind: 'all' };
+
+export type LoopTrigger =
+  | { kind: 'schedule'; everyMinutes: number } // 5..120
+  | { kind: 'idle'; afterSeconds: number } // a target has been idle/resting this long
+  | { kind: 'output'; match: string }; // plain text (case-insensitive) or /regex/flags, ANSI-stripped output
+
+export type LoopGoal =
+  | { kind: 'command'; command: string; cwd?: string; description?: string } // exit 0 = goal met (OS shell, 2 min timeout)
+  | { kind: 'agent'; description?: string }; // the agent ends its reply with GOAL MET / GOAL NOT MET
+
+export interface LoopStop {
+  afterRuns?: number;
+  afterMinutes?: number;
+  whenGoal?: LoopGoal;
+}
+
+export interface LoopRunEntry {
+  at: number;
+  sentTo: string[]; // console names
+  skipped: string[]; // busy / waiting on you / not running
+  note?: string; // goal check result, "no target was ready", ...
+}
+
+export interface Loop {
+  id: string;
+  name: string;
+  prompt: string;
+  target: LoopTarget;
+  trigger: LoopTrigger;
+  stop: LoopStop;
+  enabled: boolean;
+  runs: number;
+  lastRunAt: number | null;
+  createdAt: number;
+  startedAt: number; // when it was (re-)enabled; afterMinutes counts from here
+  retiredAt?: number; // set when a stop condition ended it (enabled is false then)
+  retiredReason?: string; // 'goal met', 'after 5 runs', 'after 60 min'
+  lastGoal?: { at: number; met: boolean; detail: string }; // last goal check (exit code / agent verdict)
+  history?: LoopRunEntry[]; // newest last, capped server-side
+}
+
+export interface LoopInput {
+  name: string;
+  prompt: string;
+  target: LoopTarget;
+  trigger: LoopTrigger;
+  stop?: LoopStop;
+  enabled?: boolean;
+  confirmCommand?: boolean; // must be true when stop.whenGoal is a command (the UI asks first)
+}
 
 // ---------- Auto dev previews (src/server/previews) ----------
 // When a console's output shows a local dev-server URL whose port accepts connections, its linked
@@ -587,4 +836,75 @@ export interface AccountSwitchEvent {
   toName: string;
   resetsAt?: number; // when the old account's limit resets
   at: number;
+}
+
+// ---------- Handoffs (src/server/handoffs.ts) ----------
+// One agent's work handed to another: a brief built from the source's transcript (quick, no tokens)
+// or summarized by `claude -p --model haiku` (smart), previewed and edited, then typed into the target.
+// Recorded as a Job (kind 'handoff') so the board draws a line from the source to the target.
+// POST   /api/handoffs       HandoffRequest     -> HandoffPreview
+// POST   /api/handoffs/send  HandoffSendRequest -> HandoffSendResponse
+
+export type HandoffMode = 'quick' | 'smart';
+
+export interface HandoffNewAgent {
+  cwd: string;
+  name?: string;
+}
+
+export interface HandoffRequest {
+  fromId: string;
+  toId?: string;
+  newAgent?: HandoffNewAgent; // instead of toId: launch a new agent and hand the work to it
+  mode?: HandoffMode; // default: settings.handoffMode
+  note?: string; // extra instructions from the user, put at the top of the brief
+}
+
+export interface HandoffPreview {
+  brief: string;
+  mode: HandoffMode; // the mode actually used (smart falls back to quick on failure)
+  warning?: string; // e.g. why smart mode fell back
+}
+
+export interface HandoffSendRequest {
+  fromId: string;
+  toId?: string;
+  newAgent?: HandoffNewAgent;
+  brief: string;
+}
+
+export interface HandoffSendResponse {
+  job: Job;
+  console: ConsoleInfo; // the target (new or existing)
+}
+
+// ---------- Project memory (src/server/memory.ts) ----------
+// Markdown notes pushed into agents on demand. Global: <AGENTARMY_HOME>/memory/global.md.
+// Per folder: <AGENTARMY_HOME>/memory/<sha1 of the folder, 16 hex>.md (folder path in a header line).
+// A console's folder is its repo root when it works in a worktree, else its cwd.
+// GET    /api/memory?scope=global|folder&path=  -> MemoryDoc
+// PUT    /api/memory?scope=global|folder&path=  { content?, autoPush? } -> MemoryDoc
+// GET    /api/memory/folders                    -> MemoryDoc[] (every folder memory on disk)
+// POST   /api/memory/push  MemoryPushRequest     -> MemoryPushResponse
+// Agents use the agentarmy MCP tools read_memory and append_memory.
+
+export type MemoryScope = 'global' | 'folder';
+
+export interface MemoryDoc {
+  scope: MemoryScope;
+  path?: string; // folder (scope 'folder' only)
+  content: string;
+  autoPush: boolean; // typed into new agents in this folder (any folder for global) after their first idle
+  updatedAt: number | null; // null = never saved
+}
+
+export interface MemoryPushRequest {
+  scope: MemoryScope;
+  path?: string;
+  consoleIds: string[];
+}
+
+export interface MemoryPushResponse {
+  sent: string[]; // console ids typed into
+  skipped: { id: string; reason: string }[];
 }
