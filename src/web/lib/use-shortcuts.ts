@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
-import { arrangeBoard, askKill, clearSelection, fitAll, flyTo, selectAll } from './board-actions';
+import { arrangeBoard, askKill, clearSelection, fitAll, flyTo, selectAll, switchWorkspace } from './board-actions';
+import { createBoardItem } from './item-actions';
+import { useItems } from './items';
 import { useBoardUi } from './board-ui';
 import { spatialOrder, useBoard } from './store';
+import { pauseAll } from './loops';
 
 function isTypingTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -27,6 +30,19 @@ function cycle(direction: 1 | -1, onlyNeedsYou = false): void {
   }
 }
 
+// Workspace tabs: by position (0-based) or relative to the active one
+function goToWorkspace(index: number): void {
+  const ws = useItems.getState().workspaces[index];
+  if (ws) void switchWorkspace(ws.id);
+}
+
+function cycleWorkspace(direction: 1 | -1): void {
+  const { workspaces, activeWorkspaceId } = useItems.getState();
+  if (workspaces.length < 2) return;
+  const at = workspaces.findIndex((w) => w.id === activeWorkspaceId);
+  goToWorkspace((at + direction + workspaces.length) % workspaces.length);
+}
+
 export function useShortcuts(): void {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -45,7 +61,27 @@ export function useShortcuts(): void {
         }
       }
 
+      // Alt+1..9 switches workspace everywhere (terminals keep Ctrl+digits)
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && !modalOpen && /^Digit[1-9]$/.test(e.code)) {
+        e.preventDefault();
+        e.stopPropagation();
+        goToWorkspace(Number(e.code.slice(5)) - 1);
+        return;
+      }
+
       if (modalOpen || isTypingTarget(e.target)) return;
+
+      // Ctrl+Tab / Ctrl+Shift+Tab and Ctrl+1..9: workspaces (in the app window; browsers may keep them)
+      if (e.ctrlKey && !e.altKey && !e.metaKey && e.key === 'Tab') {
+        e.preventDefault();
+        cycleWorkspace(e.shiftKey ? -1 : 1);
+        return;
+      }
+      if (e.ctrlKey && !e.altKey && !e.metaKey && !e.shiftKey && /^Digit[1-9]$/.test(e.code)) {
+        e.preventDefault();
+        goToWorkspace(Number(e.code.slice(5)) - 1);
+        return;
+      }
 
       const commandKey = (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'k';
       if (commandKey || (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey)) {
@@ -75,7 +111,10 @@ export function useShortcuts(): void {
         return;
       }
 
-      if (e.key === 'A' && e.shiftKey) {
+      if (e.key === 'P' && e.shiftKey) {
+        e.preventDefault();
+        void pauseAll();
+      } else if (e.key === 'A' && e.shiftKey) {
         e.preventDefault();
         arrangeBoard('grid');
       } else if ((e.key === 'g' || e.key === 'G') && !e.shiftKey) {
@@ -83,6 +122,9 @@ export function useShortcuts(): void {
           e.preventDefault();
           useBoardUi.getState().setGroupPromptOpen(true);
         }
+      } else if (e.key === 'N' && e.shiftKey) {
+        e.preventDefault();
+        void createBoardItem('note');
       } else if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
         state.setNewAgentOpen(true);

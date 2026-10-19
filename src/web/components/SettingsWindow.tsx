@@ -56,6 +56,7 @@ const SUBTITLES: Record<string, string> = {
   browser: 'Browser tiles and automatic dev-server previews.',
   usage: 'Token budgets and what happens when one runs out.',
   integrations: 'Send alerts and recaps to Slack, Discord or your phone.',
+  voice: 'Dictate into the command bar: engine, language and keys.',
   advanced: 'Server details, access token and reset.',
 };
 

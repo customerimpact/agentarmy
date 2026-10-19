@@ -508,6 +508,7 @@ export class BrowserServiceImpl {
       layout: { ...placed, ...req.layout },
       linkedConsoleId: linked ? linked.id : null,
       cursor: null,
+      workspaceId: linked?.workspaceId ?? this.manager.activeWorkspaceId, // next to its console, else the open tab
     };
     this.tiles.push(tile);
     this.changed(tile);

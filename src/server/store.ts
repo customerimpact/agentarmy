@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { STATE_VERSION, type BoardState } from '../shared/protocol.js';
+import { DEFAULT_WORKSPACE_ID, STATE_VERSION, type BoardState, type Workspace } from '../shared/protocol.js';
 
 const SAVE_DEBOUNCE_MS = 300;
 
@@ -10,7 +10,11 @@ export function agentArmyHome(): string {
 }
 
 export function emptyState(): BoardState {
-  return { version: STATE_VERSION, consoles: [], jobs: [], actions: [], projects: [], browsers: [] };
+  return { version: STATE_VERSION, consoles: [], jobs: [], actions: [], projects: [], browsers: [], items: [], loops: [], workspaces: [defaultWorkspace()] };
+}
+
+export function defaultWorkspace(): Workspace {
+  return { id: DEFAULT_WORKSPACE_ID, name: 'Main', createdAt: 0, order: 0 };
 }
 
 export class StateStore {
@@ -28,8 +32,8 @@ export class StateStore {
     }
     try {
       const parsed = JSON.parse(raw) as Partial<Omit<BoardState, 'version'>> & { version?: number };
-      // v1 had only consoles + viewport; v2 adds jobs, actions, projects and browser tiles
-      if ((parsed.version !== 1 && parsed.version !== STATE_VERSION) || !Array.isArray(parsed.consoles)) {
+      // v1 had only consoles + viewport; v2 adds jobs, actions, projects and browser tiles; v3 items + workspaces
+      if (![1, 2, STATE_VERSION].includes(parsed.version ?? 0) || !Array.isArray(parsed.consoles)) {
         throw new Error(`unsupported state version ${String(parsed.version)}`);
       }
       const list = <T>(value: T[] | undefined): T[] => (Array.isArray(value) ? value : []);
@@ -40,6 +44,11 @@ export class StateStore {
         actions: list(parsed.actions),
         projects: list(parsed.projects),
         browsers: list(parsed.browsers),
+        items: list(parsed.items),
+        drawings: list(parsed.drawings),
+        loops: list(parsed.loops), // missing before loops existed
+        workspaces: list(parsed.workspaces).length ? list(parsed.workspaces) : [defaultWorkspace()],
+        ...(typeof parsed.activeWorkspaceId === 'string' ? { activeWorkspaceId: parsed.activeWorkspaceId } : {}),
         viewport: parsed.viewport,
       };
     } catch (err) {

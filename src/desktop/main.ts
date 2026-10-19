@@ -432,14 +432,17 @@ async function requestQuit(): Promise<void> {
 // ---------- start ----------
 
 function lockDownPermissions(): void {
-  // Only our own pages get notifications / clipboard; nothing else is ever granted
-  session.defaultSession.setPermissionRequestHandler((contents, permission, callback) => {
-    const allowed = ['notifications', 'clipboard-read', 'clipboard-sanitized-write', 'fullscreen'];
-    callback(isAppUrl(contents.getURL()) && allowed.includes(permission));
+  // Only our own pages get notifications / clipboard / the microphone (voice dictation, audio only);
+  // nothing else is ever granted
+  session.defaultSession.setPermissionRequestHandler((contents, permission, callback, details) => {
+    const allowed = ['notifications', 'clipboard-read', 'clipboard-sanitized-write', 'fullscreen', 'media'];
+    const audioOnly = permission !== 'media' || ((details as { mediaTypes?: string[] }).mediaTypes ?? []).every((t) => t === 'audio');
+    callback(isAppUrl(contents.getURL()) && allowed.includes(permission) && audioOnly);
   });
-  session.defaultSession.setPermissionCheckHandler((_contents, permission, origin) => {
-    const allowed = ['notifications', 'clipboard-read', 'clipboard-sanitized-write', 'fullscreen'];
-    return isAppUrl(origin) && allowed.includes(permission);
+  session.defaultSession.setPermissionCheckHandler((_contents, permission, origin, details) => {
+    const allowed = ['notifications', 'clipboard-read', 'clipboard-sanitized-write', 'fullscreen', 'media'];
+    const audioOnly = permission !== 'media' || (details as { mediaType?: string }).mediaType !== 'video';
+    return isAppUrl(origin) && allowed.includes(permission) && audioOnly;
   });
 }
 

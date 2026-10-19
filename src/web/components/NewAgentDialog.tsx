@@ -8,6 +8,9 @@ import { FolderPicker, joinPath, repoNameFromUrl } from './FolderPicker';
 import { Modal } from './Modal';
 import { WorktreeToggle } from './WorktreeToggle';
 import { AccountPicker } from './settings/AccountsSettings';
+import { AgentPicker, useAgentReady } from './AgentPicker';
+import { AGENT_META, type AgentKind } from '../../shared/agents';
+import { useServerSettings } from '../lib/settings';
 
 type Mode = 'folder' | 'clone';
 
@@ -55,6 +58,19 @@ export function NewAgentDialog() {
   const [name, setName] = useState('');
   const [isolated, setIsolated] = useState(false);
   const [accountId, setAccountId] = useState('auto');
+  // Settings > Agents > Default agent preselects; the user can switch per console
+  const [agent, setAgent] = useState<AgentKind>(() => useServerSettings.getState().data?.settings.defaultAgent ?? 'claude');
+  const [command, setCommand] = useState('');
+  useEffect(() => {
+    const settings = useServerSettings.getState();
+    if (settings.data) return;
+    void settings.load().then(() => {
+      const preferred = useServerSettings.getState().data?.settings.defaultAgent;
+      if (preferred) setAgent((current) => (current === 'claude' ? preferred : current));
+    });
+  }, []);
+  const agentReady = useAgentReady(agent, command);
+  const agentLabel = AGENT_META[agent].label;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [startFolder] = useState(() => getRecentFolders()[0]);
@@ -65,12 +81,13 @@ export function NewAgentDialog() {
   const clonePath = cloneParent && repoName ? joinPath(cloneParent, repoName) : null;
 
   const launchIn = async (cwd: string, worktree = false) => {
-    if (count > 1) await createAgentGrid(cwd, 2, 2, { worktree, accountId });
-    else await createAgent(cwd, name, { worktree, accountId });
+    const options = { worktree, accountId, agent, command };
+    if (count > 1) await createAgentGrid(cwd, 2, 2, options);
+    else await createAgent(cwd, name, options);
   };
 
   const create = async () => {
-    if (!target || busy) return;
+    if (!target || busy || !agentReady.ready) return;
     setBusy(true);
     setError(null);
     try {
@@ -84,7 +101,7 @@ export function NewAgentDialog() {
   };
 
   const cloneAndOpen = async () => {
-    if (!cloneParent || !validRepo(repo) || busy) return;
+    if (!cloneParent || !validRepo(repo) || busy || !agentReady.ready) return;
     setBusy(true);
     setError(null);
     try {
@@ -130,10 +147,12 @@ export function NewAgentDialog() {
           <h2 className="text-[15px] font-semibold text-fg">{title}</h2>
           <p className="mt-0.5 text-fg-muted">
             {mode === 'clone'
-              ? 'Clone a git repository and open Claude Code in it.'
+              ? `Clone a git repository and open ${agentLabel} in it.`
               : count > 1
                 ? `Pick a folder. ${count} consoles start there in a grid.`
-                : 'Pick the folder Claude Code should work in.'}
+                : agent === 'custom'
+                  ? 'Pick the folder the command runs in.'
+                  : `Pick the folder ${agentLabel} should work in.`}
           </p>
         </div>
         <div role="tablist" aria-label="Source" className="flex shrink-0 gap-1 rounded-full border border-line bg-surface p-0.5">
@@ -161,6 +180,14 @@ export function NewAgentDialog() {
           </button>
         </div>
       </div>
+
+      <AgentPicker
+        value={agent}
+        onChange={setAgent}
+        command={command}
+        onCommandChange={setCommand}
+        onSubmit={() => void (mode === 'clone' ? cloneAndOpen() : create())}
+      />
 
       {mode === 'folder' ? (
         <FolderPicker
@@ -240,7 +267,12 @@ export function NewAgentDialog() {
           {mode === 'folder' && (
             <WorktreeToggle path={target} checked={isolated} onChange={setIsolated} />
           )}
-          <AccountPicker value={accountId} onChange={setAccountId} />
+          {agent === 'claude' && <AccountPicker value={accountId} onChange={setAccountId} />}
+          {!agentReady.ready && agentReady.reason && (
+            <div data-testid="agent-not-ready" className="mt-1 text-[11.5px] text-fg-subtle">
+              {agentReady.reason}
+            </div>
+          )}
         </div>
         <button
           type="button"
@@ -254,7 +286,7 @@ export function NewAgentDialog() {
           <button
             type="button"
             data-testid="clone-submit"
-            disabled={!cloneParent || !validRepo(repo) || busy}
+            disabled={!cloneParent || !validRepo(repo) || busy || !agentReady.ready}
             onClick={() => void cloneAndOpen()}
             className="aa-btn-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50"
           >
@@ -265,7 +297,7 @@ export function NewAgentDialog() {
           <button
             type="button"
             data-testid="folder-picker-use"
-            disabled={!target || busy}
+            disabled={!target || busy || !agentReady.ready}
             onClick={() => void create()}
             className="aa-btn-primary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-semibold disabled:opacity-50"
           >

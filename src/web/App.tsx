@@ -7,6 +7,7 @@ import { startDesktopBoard } from './lib/desktop';
 import { useServerSettings } from './lib/settings';
 import { socket } from './lib/socket';
 import { useBoard } from './lib/store';
+import { useItems } from './lib/items';
 import { useShortcuts } from './lib/use-shortcuts';
 import { startPopoutPresence, startPopoutTracking, syncPrefsAcrossWindows } from './lib/popout';
 import { parseView } from './lib/views';
@@ -23,9 +24,14 @@ import { SettingsHost, SettingsPage } from './components/SettingsWindow';
 import { ResumeAllToast } from './components/ResumeAllToast';
 import { PreviewOfferToasts } from './components/PreviewOfferToast';
 import { ReviewHost } from './components/ReviewPanel';
+import { GitPanelHost } from './components/GitPanel';
+import { CodeViewerHost } from './components/CodeViewer';
+import './components/items/FileItem'; // registers the 'file' board item (pinned code card)
+import { HandoffMemoryHost } from './components/HandoffMemoryHost';
 import { ReconnectBanner, Toasts } from './components/StatusBanners';
 import { JobsPausedBanner } from './components/UsageSection';
 import { TemplatesDialog } from './components/TemplatesDialog';
+import { LoopsHost } from './components/LoopsDialog';
 import { Toolbar } from './components/Toolbar';
 
 // ?view=console|project|focus opens a pop-out window instead of the full board (see lib/views.ts)
@@ -60,7 +66,11 @@ function Shell() {
       {newAgentOpen && <NewAgentDialog />}
       {loaded && missionMapOpen && <MissionMap />}
       {templatesOpen && <TemplatesDialog />}
+      {loaded && <LoopsHost />}
       {loaded && <ReviewHost />}
+      {loaded && <GitPanelHost />}
+      {loaded && <CodeViewerHost />}
+      {loaded && <HandoffMemoryHost />}
       <SettingsHost />
       <ConfirmDialog />
     </div>
@@ -80,6 +90,7 @@ export function App() {
         const state = await api.getState();
         if (cancelled) return;
         useBoard.getState().loadState(state);
+        useItems.getState().load(state);
         socket.start();
         void useServerSettings.getState().load();
         syncPrefsAcrossWindows();

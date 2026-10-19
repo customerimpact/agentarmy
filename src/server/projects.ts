@@ -53,6 +53,7 @@ export class ProjectService {
       consoleIds: [],
       open: true,
       createdAt: Date.now(),
+      workspaceId: this.manager.get(ids[0])?.workspaceId ?? this.manager.activeWorkspaceId,
     };
     this.manager.projects.push(project);
     this.adopt(project, ids);
@@ -140,6 +141,12 @@ export class ProjectService {
       }
       project.consoleIds.push(consoleId);
       this.setConsoleProject(consoleId, project.id);
+      // A project lives on one workspace: its consoles follow it there
+      const info = this.manager.get(consoleId);
+      if (info && project.workspaceId && info.workspaceId !== project.workspaceId) {
+        info.workspaceId = project.workspaceId;
+        this.manager.touch(consoleId);
+      }
     }
   }
 

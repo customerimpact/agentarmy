@@ -16,6 +16,7 @@ import {
   TEAMS_PER_ROW,
   TEMPLATE_GAP,
 } from '../shared/templates.js';
+import type { AgentKind } from '../shared/agents.js';
 import { NotFoundError, type ConsoleManager } from './consoles.js';
 import { DEFAULT_SIZE } from './placement.js';
 import type { ProjectService } from './projects.js';
@@ -192,7 +193,8 @@ export class TemplateService {
     }
     template.teams.forEach((team, i) => {
       const name = projectName(team.name);
-      const members = layout.teams[i].consoles.map((l) => this.spawn(req.cwd, l, team.role, req.accountId));
+      const agent = req.teamAgents?.[i];
+      const members = layout.teams[i].consoles.map((l) => this.spawn(req.cwd, l, team.role, req.accountId, agent));
       consoles.push(...members);
       projects.push(this.projects.create({ name, consoleIds: members.map((c) => c.id) }));
       roster.push(`${name} (${members.map((c) => c.name).join(', ')})`);
@@ -213,9 +215,11 @@ export class TemplateService {
     return { projects, consoles: consoles.map((c) => this.manager.get(c.id) ?? c) };
   }
 
-  private spawn(cwd: string, layout: ConsoleLayout, role: string, accountId?: string): ConsoleInfo {
+  private spawn(cwd: string, layout: ConsoleLayout, role: string, accountId?: string, agent?: AgentKind): ConsoleInfo {
     const key = String(++this.spawnSeq);
-    const info = this.manager.create({ cwd: this.hooks?.cwdFor(role, key) ?? cwd, layout, accountId });
+    // Custom commands need a command line, which a team has none of, so they fall back to Claude Code
+    const cli = agent && agent !== 'custom' && agent !== 'claude' ? { agent } : {};
+    const info = this.manager.create({ cwd: this.hooks?.cwdFor(role, key) ?? cwd, layout, accountId, ...cli });
     this.hooks?.onSpawn(info, key);
     info.role = role;
     this.manager.touch(info.id);

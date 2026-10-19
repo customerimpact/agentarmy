@@ -15,7 +15,7 @@ import {
   type NodeTypes,
   type Viewport,
 } from '@xyflow/react';
-import type { BrowserTile, ConsoleInfo, Job, Project } from '../../shared/protocol';
+import type { BoardItem, BrowserTile, ConsoleInfo, Job, Project } from '../../shared/protocol';
 import { FRAME_PAD, FRAME_TITLE } from '../lib/arrange';
 import {
   MAX_ZOOM,
@@ -34,15 +34,22 @@ import { STATUS_META } from '../lib/status';
 import { scopeToProject } from '../lib/views';
 import { consoleList, isLayoutLocked, lockLayout, unlockLayout, useBoard, useClock } from '../lib/store';
 import { AlignmentGuides } from './AlignmentGuides';
+import { DrawingLayer } from './drawing/LazyDrawingLayer';
 import { BrowserNode } from './BrowserNode';
 import { FlowLines, type FlowLine, type FlowStatus } from './FlowEdge';
 import { ProjectFrame } from './ProjectFrame';
 import { SelectionBar } from './SelectionBar';
 import { TerminalNode } from './TerminalNode';
+import { ItemNode } from './items/ItemNode';
+import { AddHerePopover } from './items/AddItemMenu';
+import { projectColor as itemColor } from '../lib/board-ui';
+import { scopeToWorkspace, useItems } from '../lib/items';
 
 type BoardNode = Node<Record<string, unknown>>;
 
-const nodeTypes: NodeTypes = { terminal: TerminalNode, browser: BrowserNode, frame: ProjectFrame };
+const nodeTypes: NodeTypes = { terminal: TerminalNode, browser: BrowserNode, frame: ProjectFrame, item: ItemNode };
+// Notes and checklists can be much smaller than terminals
+const ITEM_MIN_SIZE = { width: 140, height: 90 };
 
 const FRAME_PREFIX = 'frame:';
 // Flow lines are drawn by FlowLines, not as React Flow edges (those need <Handle>s)
@@ -125,18 +132,19 @@ interface BuildInput {
   consoles: Record<string, ConsoleInfo>;
   browsers: Record<string, BrowserTile>;
   projects: Record<string, Project>;
+  items: Record<string, BoardItem>;
   selectedIds: string[];
   selectedId: string | null;
   animating: boolean;
 }
 
 function buildNodes(prev: BoardNode[], input: BuildInput): BoardNode[] {
-  const { consoles, browsers, projects, selectedIds, selectedId, animating } = input;
+  const { consoles, browsers, projects, items: boardItems, selectedIds, selectedId, animating } = input;
   const prevById = new Map(prev.map((n) => [n.id, n]));
   const selected = new Set(selectedIds);
   const style = animating ? { transition: ARRANGE_TRANSITION } : undefined;
 
-  const make = (id: string, type: 'terminal' | 'browser', layout: Rect): BoardNode => {
+  const make = (id: string, type: 'terminal' | 'browser' | 'item', layout: Rect): BoardNode => {
     const existing = prevById.get(id);
     const zIndex = id === selectedId ? 10 : 0;
     const isSelected = selected.has(id);
@@ -178,6 +186,7 @@ function buildNodes(prev: BoardNode[], input: BuildInput): BoardNode[] {
     if (!isHiddenConsole(c, projects)) items.push(make(c.id, 'terminal', c.layout));
   }
   for (const b of Object.values(browsers)) items.push(make(b.id, 'browser', b.layout));
+  for (const i of Object.values(boardItems).sort((a, b) => a.createdAt - b.createdAt)) items.push(make(i.id, 'item', i.layout));
   return withFrames([...prev.filter(isFrame), ...items], projects, animating);
 }
 
@@ -259,10 +268,18 @@ export function Board({ projectId }: { projectId?: string } = {}) {
   const allConsoles = useBoard((s) => s.consoles);
   const allBrowsers = useBoard((s) => s.browsers);
   const allProjects = useBoard((s) => s.projects);
-  const { consoles, browsers, projects } = useMemo(
-    () => scopeToProject(projectId, allConsoles, allBrowsers, allProjects),
-    [projectId, allConsoles, allBrowsers, allProjects],
+  const allItems = useItems((s) => s.items);
+  const workspaces = useItems((s) => s.workspaces);
+  const activeWorkspaceId = useItems((s) => s.activeWorkspaceId);
+  // Pop-out project boards show one project; the main board shows the active workspace
+  const { consoles, browsers, projects, items } = useMemo(
+    () =>
+      projectId
+        ? { ...scopeToProject(projectId, allConsoles, allBrowsers, allProjects), items: {} as Record<string, BoardItem> }
+        : scopeToWorkspace(activeWorkspaceId, workspaces, allConsoles, allBrowsers, allProjects, allItems),
+    [projectId, allConsoles, allBrowsers, allProjects, allItems, workspaces, activeWorkspaceId],
   );
+  const [addHere, setAddHere] = useState<{ screen: { x: number; y: number }; at: { x: number; y: number } } | null>(null);
   const jobs = useBoard((s) => s.jobs);
   const selectedIds = useBoard((s) => s.selectedIds);
   const selectedId = useBoard((s) => s.selectedId);
@@ -279,7 +296,12 @@ export function Board({ projectId }: { projectId?: string } = {}) {
   const resizes = useRef(new Map<string, ResizeSession>());
   const edgeCache = useRef(new Map<string, { sig: string; edge: FlowLine }>());
   // Captured once: after mount the canvas owns the viewport and only reports it back
-  const initialViewport = useRef(projectId ? null : useBoard.getState().viewport);
+  const initialViewport = useRef(
+    projectId
+      ? null
+      : (useItems.getState().workspaces.find((w) => w.id === useItems.getState().activeWorkspaceId)?.viewport ??
+          useBoard.getState().viewport),
+  );
 
   useEffect(() => {
     setFlowInstance(flow);
@@ -289,9 +311,9 @@ export function Board({ projectId }: { projectId?: string } = {}) {
   // Mirror the store into React Flow nodes, keeping node objects stable when nothing changed
   useEffect(() => {
     setNodes((prev) =>
-      buildNodes(prev, { consoles, browsers, projects, selectedIds, selectedId, animating }),
+      buildNodes(prev, { consoles, browsers, projects, items, selectedIds, selectedId, animating }),
     );
-  }, [consoles, browsers, projects, selectedIds, selectedId, animating]);
+  }, [consoles, browsers, projects, items, selectedIds, selectedId, animating]);
 
   const edges = useMemo(() => {
     const next = buildEdges(jobs, consoles, projects, Date.now());
@@ -395,8 +417,8 @@ export function Board({ projectId }: { projectId?: string } = {}) {
             ? snapResize(raw, session.others, {
                 zoom: zoom(),
                 grid: getPrefs().gridSize,
-                minWidth: MIN_SIZE.width,
-                minHeight: MIN_SIZE.height,
+                minWidth: node.type === 'item' ? ITEM_MIN_SIZE.width : MIN_SIZE.width,
+                minHeight: node.type === 'item' ? ITEM_MIN_SIZE.height : MIN_SIZE.height,
                 fromLeft,
                 fromTop,
               })
@@ -560,7 +582,7 @@ export function Board({ projectId }: { projectId?: string } = {}) {
       onNodeClick={onNodeClick}
       onNodeDoubleClick={(event, node) => {
         // Double-click inside live terminal text keeps selecting words; anywhere else zooms in
-        if (node.type === 'frame' || (event.target as Element).closest('.xterm, input, textarea, button')) return;
+        if (node.type === 'frame' || node.type === 'item' || (event.target as Element).closest('.xterm, input, textarea, button')) return;
         void flyTo(node.id);
       }}
       onSelectionEnd={onSelectionEnd}
@@ -571,6 +593,14 @@ export function Board({ projectId }: { projectId?: string } = {}) {
         (document.activeElement as HTMLElement | null)?.blur?.();
       }}
       onMoveEnd={onMoveEnd}
+      onDoubleClick={(event) => {
+        // Double-click on the empty board: "add here" (note, checklist, kanban, agent)
+        if (projectId || !(event.target as Element).classList?.contains('react-flow__pane')) return;
+        setAddHere({
+          screen: { x: event.clientX, y: event.clientY },
+          at: flow.screenToFlowPosition({ x: event.clientX, y: event.clientY }),
+        });
+      }}
       defaultViewport={initialViewport.current ?? { x: 0, y: 0, zoom: 1 }}
       fitView={!initialViewport.current}
       fitViewOptions={FIT_VIEW_OPTIONS}
@@ -595,6 +625,8 @@ export function Board({ projectId }: { projectId?: string } = {}) {
       <Background variant={BackgroundVariant.Dots} gap={24} size={1.4} color="var(--aa-dots)" />
       <FlowLines lines={edges} rects={lineSpace.rects} obstacles={lineSpace.obstacles} />
       <AlignmentGuides />
+      {/* Drawings / annotations: own layer, tool rail and draw mode (see drawing/DrawingLayer.tsx) */}
+      <DrawingLayer />
       <Panel position="top-center">
         <SelectionBar />
       </Panel>
@@ -606,6 +638,10 @@ export function Board({ projectId }: { projectId?: string } = {}) {
           nodeColor={(node) => {
             if (node.type === 'frame') return 'transparent';
             if (node.type === 'browser') return 'var(--aa-line-strong)';
+            if (node.type === 'item') {
+              const item = items[node.id];
+              return item?.color || item?.kind === 'note' ? itemColor(item?.color ?? 'amber') : 'var(--aa-fg-subtle)';
+            }
             const status = consoles[node.id]?.status;
             return status ? STATUS_META[status].cssVar : 'var(--aa-idle)';
           }}
@@ -618,6 +654,7 @@ export function Board({ projectId }: { projectId?: string } = {}) {
         />
       )}
       <Controls position="top-left" showInteractive={false} />
+      {addHere && <AddHerePopover screen={addHere.screen} at={addHere.at} onClose={() => setAddHere(null)} />}
     </ReactFlow>
   );
 }

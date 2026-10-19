@@ -29,7 +29,7 @@ export function fakeManager(consoles: ConsoleInfo[]): {
   const manager = new ConsoleManager({ port: 1, token: 't', onChange: () => {} });
   // restore() registers them as suspended; then set the wanted status back
   manager.restore(
-    { version: STATE_VERSION, consoles: consoles.map((c) => ({ ...c })), jobs: [], actions: [], projects: [], browsers: [] },
+    { version: STATE_VERSION, consoles: consoles.map((c) => ({ ...c })), jobs: [], actions: [], projects: [], browsers: [], items: [], workspaces: [] },
     { resumeAll: false },
   );
   for (const c of consoles) manager.get(c.id)!.status = c.status;

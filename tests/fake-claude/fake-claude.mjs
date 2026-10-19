@@ -150,6 +150,12 @@ function fireHook(event, extra = {}) {
     ...extra,
   };
   logPayload(payload);
+  // Real transcripts also get the assistant side: tool calls and the final text (handoff briefs read them)
+  if (event === 'PreToolUse' && extra.tool_name) {
+    appendTranscript({ type: 'assistant', message: { role: 'assistant', model: 'claude-sonnet-5-5', content: [{ type: 'tool_use', id: `toolu_${crypto.randomUUID()}`, name: extra.tool_name, input: extra.tool_input ?? {} }] } });
+  } else if (event === 'Stop' && extra.last_assistant_message) {
+    appendTranscript({ type: 'assistant', message: { role: 'assistant', model: 'claude-sonnet-5-5', content: [{ type: 'text', text: extra.last_assistant_message }] } });
+  }
   const body = JSON.stringify(payload);
   const matchers = Array.isArray(hooks[event]) ? hooks[event] : [];
   hookChain = hookChain.then(async () => {
@@ -411,6 +417,15 @@ function onInput(chunk) {
 }
 
 async function main() {
+  // -p / --print: read the prompt from stdin and print a canned reply (smart handoff briefs)
+  if (args.rest.includes('-p') || args.rest.includes('--print')) {
+    let input = '';
+    process.stdin.setEncoding('utf8');
+    for await (const chunk of process.stdin) input += chunk;
+    const facts = input.split(/\r?\n/).filter((l) => l.startsWith('- ')).length;
+    process.stdout.write(['Goal: fake smart brief', `Done: ${facts} facts read`, `Args: ${args.rest.join(' ')}`, ''].join('\n'));
+    process.exit(0);
+  }
   if (args.resume && realTranscripts && !fs.existsSync(transcriptPath)) {
     line(`No conversation found with session ID: ${args.resume}`);
     process.exit(1);

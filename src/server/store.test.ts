@@ -34,6 +34,10 @@ const sample: BoardState = {
   actions: [],
   projects: [],
   browsers: [],
+  items: [],
+  loops: [],
+  drawings: [],
+  workspaces: [{ id: 'main', name: 'Main', createdAt: 0, order: 0 }],
 };
 
 describe('StateStore', () => {

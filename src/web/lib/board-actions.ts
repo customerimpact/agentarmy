@@ -1,4 +1,5 @@
 import type { ReactFlowInstance } from '@xyflow/react';
+import type { AgentKind } from '../../shared/agents';
 import type { ConsoleInfo, ConsoleLayout, Project } from '../../shared/protocol';
 import { api } from './api';
 import {
@@ -16,6 +17,7 @@ import { useBoard, type Viewport } from './store';
 import { focusTerminal } from './terminals';
 import { rememberRecentFolder } from './recent-folders';
 import { getPrefs } from './prefs';
+import { isOnActiveWorkspace, itemsApi, useItems, workspaceOf, workspacesApi } from './items';
 
 export const DEFAULT_SIZE = { width: 760, height: 460 };
 export const MIN_SIZE = { width: 360, height: 220 };
@@ -28,6 +30,10 @@ let flow: ReactFlowInstance | null = null;
 
 export function setFlowInstance(instance: ReactFlowInstance | null): void {
   flow = instance;
+}
+
+export function getFlowInstance(): ReactFlowInstance | null {
+  return flow;
 }
 
 function boardRect(): DOMRect | null {
@@ -49,11 +55,55 @@ function itemRect(id: string): ConsoleLayout | null {
     if (width && height) return { ...node.internals.positionAbsolute, width, height };
   }
   const { consoles, browsers } = useBoard.getState();
-  return consoles[id]?.layout ?? browsers[id]?.layout ?? null;
+  return consoles[id]?.layout ?? browsers[id]?.layout ?? useItems.getState().items[id]?.layout ?? null;
+}
+
+// The workspace a console, browser tile or item is on (undefined = unknown id)
+function workspaceOfId(id: string): string | undefined {
+  const { consoles, browsers } = useBoard.getState();
+  const thing = consoles[id] ?? browsers[id] ?? useItems.getState().items[id];
+  return thing ? workspaceOf(thing) : undefined;
+}
+
+// ---------- workspaces (board tabs) ----------
+
+// Show another workspace: remember this one's viewport, restore (or fit) the other's.
+// Consoles keep running everywhere; only the view changes.
+export async function switchWorkspace(id: string, options: { fit?: boolean } = {}): Promise<void> {
+  const ws = useItems.getState();
+  if (id === ws.activeWorkspaceId || !ws.workspaces.some((w) => w.id === id)) return;
+  if (flow) saveWorkspaceViewport(ws.activeWorkspaceId, flow.getViewport());
+  const target = useItems.getState().workspaces.find((w) => w.id === id)!;
+  useItems.getState().setActiveLocal(id);
+  const board = useBoard.getState();
+  board.setSelectedIds([]);
+  board.select(null);
+  workspacesApi.setActive(id).catch(() => undefined);
+  const view = target.viewport;
+  if (view) {
+    void flow?.setViewport(view);
+    board.setViewport(view);
+  } else if (!options.fit) {
+    // Never visited: fit what is there once the nodes are rendered
+    window.setTimeout(() => void flow?.fitView({ duration: 0, padding: 0.1, maxZoom: 1 }), 30);
+  }
+}
+
+function saveWorkspaceViewport(id: string, viewport: Viewport): void {
+  const ws = useItems.getState();
+  const list = ws.workspaces.map((w) => (w.id === id ? { ...w, viewport } : w));
+  ws.setWorkspaces(list, ws.activeWorkspaceId);
+  workspacesApi.update(id, { viewport }).catch(() => undefined);
 }
 
 export async function flyTo(id: string, options: { focus?: boolean } = {}): Promise<void> {
   const { focus = true } = options;
+  const home = workspaceOfId(id);
+  if (home && home !== useItems.getState().activeWorkspaceId) {
+    await switchWorkspace(home, { fit: true });
+    // Let the other workspace's nodes mount and measure first
+    await new Promise((resolve) => window.setTimeout(resolve, 80));
+  }
   useBoard.getState().select(id);
   const rect = itemRect(id);
   if (!flow || !rect) return;
@@ -116,8 +166,10 @@ let viewportTimer: number | undefined;
 export function persistViewport(viewport: Viewport): void {
   useBoard.getState().setViewport(viewport);
   window.clearTimeout(viewportTimer);
+  const workspaceId = useItems.getState().activeWorkspaceId;
   viewportTimer = window.setTimeout(() => {
     api.putViewport(viewport).catch(() => undefined);
+    saveWorkspaceViewport(workspaceId, viewport);
   }, 500);
 }
 
@@ -171,12 +223,18 @@ function findFreeSpot(
   return { ...origin, width, height };
 }
 
+// Claude Code stays implicit (older servers and tests see the same request as before)
+function agentFields(options: { agent?: AgentKind; command?: string }): { agent?: AgentKind; command?: string } {
+  if (!options.agent || options.agent === 'claude') return {};
+  return options.agent === 'custom' ? { agent: 'custom', command: options.command?.trim() } : { agent: options.agent };
+}
+
 export async function createAgent(
   cwd: string,
   name?: string,
-  options: { worktree?: boolean; accountId?: string } = {},
+  options: { worktree?: boolean; accountId?: string; agent?: AgentKind; command?: string } = {},
 ): Promise<void> {
-  const existing = Object.values(useBoard.getState().consoles).map((c) => c.layout);
+  const existing = boardItems().map((i) => i.rect);
   // Settings > Board > New console size (M keeps the classic default)
   const preset = getPrefs().defaultSize;
   const spot = findFreeSpot(existing, preset === 'M' ? DEFAULT_SIZE : SIZE_PRESETS[preset]);
@@ -190,8 +248,9 @@ export async function createAgent(
     cwd,
     name: name?.trim() || undefined,
     layout,
+    workspaceId: useItems.getState().activeWorkspaceId,
     ...(options.worktree ? { worktree: true } : {}),
-    ...(options.accountId && options.accountId !== 'auto' ? { accountId: options.accountId } : {}),
+    ...(options.accountId && options.accountId !== 'auto' ? { accountId: options.accountId } : {}), ...agentFields(options),
   });
   useBoard.getState().upsertConsole(created);
   rememberRecentFolder(cwd);
@@ -204,10 +263,10 @@ export async function createAgentGrid(
   cwd: string,
   columns = 2,
   rows = 2,
-  options: { worktree?: boolean; accountId?: string } = {},
+  options: { worktree?: boolean; accountId?: string; agent?: AgentKind; command?: string } = {},
 ): Promise<void> {
   const { width, height } = DEFAULT_SIZE;
-  const existing = Object.values(useBoard.getState().consoles).map((c) => c.layout);
+  const existing = boardItems().map((i) => i.rect);
   const block = findFreeSpot(existing, {
     width: columns * width + (columns - 1) * GRID_GAP,
     height: rows * height + (rows - 1) * GRID_GAP,
@@ -229,8 +288,9 @@ export async function createAgentGrid(
     const c = await api.createConsole({
       cwd,
       layout,
+      workspaceId: useItems.getState().activeWorkspaceId,
       ...(options.worktree ? { worktree: true } : {}),
-      ...(options.accountId && options.accountId !== 'auto' ? { accountId: options.accountId } : {}),
+      ...(options.accountId && options.accountId !== 'auto' ? { accountId: options.accountId } : {}), ...agentFields(options),
     });
     useBoard.getState().upsertConsole(c);
     created.push(c);
@@ -303,11 +363,39 @@ export function persistBrowserLayout(id: string, layout: Partial<ConsoleLayout>)
   );
 }
 
-// Persist a layout for any board item (console or browser tile)
+// Persist a layout for any board item (console, browser tile, note/checklist/kanban/file)
 export function persistItemLayout(id: string, layout: Partial<ConsoleLayout>): void {
   const { consoles, browsers } = useBoard.getState();
   if (consoles[id]) persistLayout(id, layout);
   else if (browsers[id]) persistBrowserLayout(id, layout);
+  else if (useItems.getState().items[id]) persistBoardItemLayout(id, layout);
+}
+
+const pendingItemLayouts = new Map<string, Partial<ConsoleLayout>>();
+const itemTimers = new Map<string, number>();
+
+function persistBoardItemLayout(id: string, layout: Partial<ConsoleLayout>): void {
+  const rounded = Object.fromEntries(
+    Object.entries(layout).map(([key, value]) => [key, Math.round(value as number)]),
+  ) as Partial<ConsoleLayout>;
+  const store = useItems.getState();
+  const prev = store.items[id];
+  if (!prev) return;
+  store.upsertItem({ ...prev, layout: { ...prev.layout, ...rounded } });
+  pendingItemLayouts.set(id, { ...pendingItemLayouts.get(id), ...rounded });
+  window.clearTimeout(itemTimers.get(id));
+  itemTimers.set(
+    id,
+    window.setTimeout(() => {
+      const pending = pendingItemLayouts.get(id);
+      pendingItemLayouts.delete(id);
+      itemTimers.delete(id);
+      if (!pending || !useItems.getState().items[id]) return;
+      itemsApi.update(id, { layout: pending }).catch(() => {
+        useBoard.getState().toast('Could not save the layout. Is the server still running?');
+      });
+    }, 300),
+  );
 }
 
 // ---------- visibility and selection ----------
@@ -318,14 +406,17 @@ export function isHiddenConsole(c: ConsoleInfo, projects: Record<string, Project
   return !!project && !project.open;
 }
 
-// Every console and browser tile currently on the board, as rects
+// Every console, browser tile and item on the visible workspace, as rects
 export function boardItems(): ArrangeItem[] {
   const { consoles, browsers, projects } = useBoard.getState();
   const items: ArrangeItem[] = [];
   for (const c of Object.values(consoles)) {
-    if (!isHiddenConsole(c, projects)) items.push({ id: c.id, rect: { ...c.layout } });
+    if (!isHiddenConsole(c, projects) && isOnActiveWorkspace(c)) items.push({ id: c.id, rect: { ...c.layout } });
   }
-  for (const b of Object.values(browsers)) items.push({ id: b.id, rect: { ...b.layout } });
+  for (const b of Object.values(browsers)) if (isOnActiveWorkspace(b)) items.push({ id: b.id, rect: { ...b.layout } });
+  for (const i of Object.values(useItems.getState().items)) {
+    if (isOnActiveWorkspace(i)) items.push({ id: i.id, rect: { ...i.layout } });
+  }
   return items;
 }
 
@@ -459,12 +550,14 @@ export async function groupSelection(name: string): Promise<boolean> {
 // ---------- kill (stop and remove consoles / browser tiles) ----------
 
 // The multi-selection, or else the focused console/tile
-export function killTargets(): { consoles: string[]; browsers: string[] } {
+export function killTargets(): { consoles: string[]; browsers: string[]; items: string[] } {
   const { selectedIds, selectedId, consoles, browsers } = useBoard.getState();
   const ids = selectedIds.length ? selectedIds : selectedId ? [selectedId] : [];
+  const items = useItems.getState().items;
   return {
     consoles: ids.filter((id) => consoles[id]),
     browsers: ids.filter((id) => browsers[id]),
+    items: ids.filter((id) => items[id]),
   };
 }
 
@@ -472,8 +565,10 @@ const plural = (n: number, word: string): string => `${n} ${word}${n === 1 ? '' 
 
 export function askKill(): void {
   const targets = killTargets();
-  const total = targets.consoles.length + targets.browsers.length;
+  const total = targets.consoles.length + targets.browsers.length + targets.items.length;
   if (!total) return;
+  // Only notes/checklists/kanban/files: a plain delete, no processes involved
+  const onlyItems = targets.items.length === total;
   const parts: string[] = [];
   if (targets.consoles.length) {
     parts.push(
@@ -489,13 +584,23 @@ export function askKill(): void {
   if (targets.browsers.length) {
     parts.push(`Closes ${plural(targets.browsers.length, 'browser tile')}.`);
   }
+  if (targets.items.length) {
+    parts.push(`Deletes ${plural(targets.items.length, 'board item')} (notes, checklists, boards).`);
+  }
+  const verb = onlyItems ? 'Delete' : 'Kill';
   useBoard.getState().askConfirm({
-    title: total === 1 ? 'Kill this item?' : `Kill ${total} items?`,
+    title: total === 1 ? `${verb} this item?` : `${verb} ${total} items?`,
     message: parts.join(' '),
-    confirmLabel: total === 1 ? 'Kill' : `Kill ${total}`,
+    confirmLabel: total === 1 ? verb : `${verb} ${total}`,
     danger: true,
     onConfirm: async () => {
       await Promise.all([
+        ...targets.items.map((id) =>
+          itemsApi
+            .remove(id)
+            .then(() => useItems.getState().removeItem(id))
+            .catch((error: Error) => useBoard.getState().toast(`Delete failed: ${error.message}`)),
+        ),
         ...targets.consoles.map((id) => closeConsole(id)),
         ...targets.browsers.map((id) =>
           api

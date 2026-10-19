@@ -4,9 +4,14 @@ import { fitAll } from '../lib/board-actions';
 import { useBoard } from '../lib/store';
 import { ArrangeMenu } from './ArrangeMenu';
 import { KillButton } from './KillButton';
+import { AddItemButton } from './items/AddItemMenu';
+import { WorkspaceTabs } from './WorkspaceTabs';
 
 const SHORTCUTS: { keys: string[]; label: string; note?: string }[] = [
   { keys: ['N'], label: 'New agent' },
+  { keys: ['Shift', 'N'], label: 'New note', note: 'double-click the empty board to add anything there' },
+  { keys: ['Ctrl', 'Tab'], label: 'Next workspace', note: 'Ctrl+Shift+Tab: previous' },
+  { keys: ['Ctrl', '1-9'], label: 'Go to workspace 1-9', note: 'Alt+1-9 while a terminal has focus' },
   { keys: ['F'], label: 'Fit all consoles' },
   { keys: ['/'], label: 'Focus the command bar', note: 'or Ctrl+K' },
   {
@@ -25,7 +30,10 @@ const SHORTCUTS: { keys: string[]; label: string; note?: string }[] = [
   { keys: ['G'], label: 'Group the selection as a project' },
   { keys: ['Del'], label: 'Kill the selection', note: 'asks first; conversations stay resumable' },
   { keys: ['Shift', 'A'], label: 'Arrange in a grid', note: 'the selection, or everything' },
+  { keys: ['Shift', 'P'], label: 'Pause all working agents', note: 'Resume all in the command bar' },
   { keys: ['Alt', 'Drag'], label: 'Move without snapping' },
+  { keys: ['D'], label: 'Draw and annotate', note: 'tools: V P L A R O T E · Ctrl+Z undo · Esc leaves' },
+  { keys: ['Alt', 'V'], label: 'Dictate into the command bar', note: 'or hold Space in the empty command bar' },
   { keys: ['?'], label: 'Show this help' },
 ];
 
@@ -100,7 +108,12 @@ export function Toolbar() {
                        hover:bg-hover hover:text-fg`;
 
   return (
-    <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+    // Workspace tabs on the left, actions on the right; the gap between them stays click-through
+    <div className="pointer-events-none absolute top-3 right-3 left-14 z-10 flex items-center gap-3">
+      <div className="pointer-events-auto min-w-0 flex-1">
+        <WorkspaceTabs />
+      </div>
+      <div className="pointer-events-auto flex shrink-0 items-center gap-2">
       <button
         type="button"
         data-testid="new-agent-button"
@@ -111,6 +124,7 @@ export function Toolbar() {
         <Plus size={15} />
         New agent
       </button>
+      <AddItemButton />
       <ArrangeMenu />
       {!multiSelect && <KillButton />}
       <button
@@ -135,6 +149,7 @@ export function Toolbar() {
           <CircleQuestionMark size={15} />
         </button>
         {helpOpen && <HelpPopover />}
+      </div>
       </div>
     </div>
   );

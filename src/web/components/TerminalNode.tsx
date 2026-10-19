@@ -1,7 +1,9 @@
 import { memo, useEffect, useRef, type PointerEvent, type ReactNode } from 'react';
 import { NodeResizer, useStore, type Node, type NodeProps } from '@xyflow/react';
-import { Asterisk, Play, RotateCcw, X } from 'lucide-react';
+import { ArrowRightLeft, Play, RotateCcw, X } from 'lucide-react';
 import type { ConsoleStatus } from '../../shared/protocol';
+import { AGENT_META, type AgentKind } from '../../shared/agents';
+import { AGENT_ICONS } from './AgentIcon';
 import {
   COMPACT_ZOOM,
   MIN_SIZE,
@@ -27,6 +29,11 @@ import { TerminalView } from './TerminalView';
 import { UsageChip } from './UsageChip';
 import { ConsoleAccountChip } from './AccountChip';
 import { BranchChip } from './ReviewPanel';
+import { GitChip } from './GitPanel';
+import { FilesButton } from './CodeViewer';
+import { openHandoff } from '../lib/handoff-memory';
+import { MoveToWorkspaceButton } from './WorkspaceTabs';
+import { PausedPill } from './TeamControls';
 
 export type TerminalFlowNode = Node<Record<string, never>, 'terminal'>;
 
@@ -65,11 +72,14 @@ export function AgentAvatar({
   status,
   color,
   size = 22,
+  agent,
 }: {
   status: ConsoleStatus;
   color?: string | null;
   size?: number;
+  agent?: AgentKind; // missing = Claude Code
 }) {
+  const Mark = AGENT_ICONS[agent ?? 'claude'];
   const tint = projectColorVar(color);
   const live = status === 'working';
   return (
@@ -83,8 +93,8 @@ export function AgentAvatar({
         color: tint,
       }}
     >
-      <Asterisk
-        size={Math.round(size * 0.72)}
+      <Mark
+        size={Math.round(size * (agent && agent !== 'claude' ? 0.6 : 0.72))}
         strokeWidth={2.75}
         className={live ? 'animate-spin [animation-duration:3s] motion-reduce:animate-none' : ''}
       />
@@ -157,7 +167,11 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
     useBoard.getState().askConfirm({
       title: `Restart ${c.name}?`,
       message:
-        'The running process is stopped and relaunched with claude --resume in the same folder.',
+        !c.agent || c.agent === 'claude'
+          ? 'The running process is stopped and relaunched with claude --resume in the same folder.'
+          : c.agent === 'custom'
+            ? `The command is stopped and run again: ${c.command ?? ''}`
+            : `The running process is stopped and ${AGENT_META[c.agent].label} is relaunched, continuing its last session in the same folder.`,
       confirmLabel: 'Restart',
       onConfirm: () => restartConsole(id),
     });
@@ -220,8 +234,24 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
                         ${needsYou ? 'bg-needs/10' : working ? 'bg-[linear-gradient(90deg,color-mix(in_srgb,var(--aa-working)_12%,var(--aa-surface-2)),var(--aa-surface-2)_55%)]' : 'bg-surface-2'}`}
             style={{ height: HEADER_HEIGHT }}
           >
-            <AgentAvatar status={c.status} color={projectColor} />
+            <AgentAvatar status={c.status} color={projectColor} agent={c.agent} />
             <span className="truncate text-[13px] font-semibold text-fg">{c.name}</span>
+            {c.agent && c.agent !== 'claude' && (
+              <span
+                data-testid="console-agent"
+                data-agent={c.agent}
+                className="aa-label inline-flex min-w-0 shrink items-center gap-1 rounded-md bg-surface px-1.5 py-[2px] text-fg-muted ring-1 ring-line"
+                title={c.agent === 'custom' ? `Runs: ${c.command ?? ''}` : AGENT_META[c.agent].label}
+              >
+                {c.agent === 'custom' ? (
+                  <code data-testid="console-command" className="truncate font-mono text-[10.5px] normal-case tracking-normal text-fg">
+                    {c.command}
+                  </code>
+                ) : (
+                  AGENT_META[c.agent].short
+                )}
+              </span>
+            )}
             {c.role && (
               <span
                 className="aa-label shrink-0 rounded-md px-1.5 py-[2px]"
@@ -246,6 +276,9 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
             <ConsoleAccountChip console={c} />
             <UsageChip id={id} />
             {c.git && <BranchChip console={c} />}
+            <GitChip console={c} />
+            <FilesButton id={id} />
+            {c.paused && <PausedPill />}
             <span
               data-testid="console-status"
               className={`aa-label relative inline-flex h-5 shrink-0 items-center gap-1.5 overflow-hidden rounded-full px-2 ${meta.pill}`}
@@ -276,6 +309,10 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
                 <RotateCcw size={13} />
               </IconButton>
             )}
+            <IconButton testId="console-handoff" label="Hand off to…" onClick={() => openHandoff(id)}>
+              <ArrowRightLeft size={13} />
+            </IconButton>
+            <MoveToWorkspaceButton consoleId={id} />
             <PopOutButton view={consoleView(id)} testId="console-popout" />
             <IconButton testId="console-close" label="Close console" onClick={askClose} danger>
               <X size={15} />

@@ -6,6 +6,7 @@ import * as pty from 'node-pty';
 import type {
   ActionItem,
   AppSettings,
+  BoardItem,
   BoardState,
   BrowserTile,
   ConsoleInfo,
@@ -13,14 +14,18 @@ import type {
   ConsoleStatus,
   CreateConsoleRequest,
   Job,
+  Loop,
   Project,
   UpdateConsoleRequest,
+  Workspace,
 } from '../shared/protocol.js';
-import { STATE_VERSION } from '../shared/protocol.js';
-import { buildSpawnCommand, resolveClaudeExecutable } from './claude-path.js';
-import { claudeLaunchArgs } from './settings.js';
-import { removeSettingsFile, writeSettingsFile } from './hook-settings.js';
-import { writeMcpConfigFile } from './mcp-bridge.js';
+import { DEFAULT_WORKSPACE_ID, STATE_VERSION } from '../shared/protocol.js';
+import type { Shape } from '../shared/drawings.js';
+import { adapterFor, outputTrackerFor } from './agents/index.js';
+import type { OutputStatusTracker } from './agents/output-status.js';
+import { validateCommand } from './agents/custom.js';
+import { isAgentKind } from '../shared/agents.js';
+import { removeSettingsFile } from './hook-settings.js';
 import { statusFromHook, type HookPayload } from './hook-status.js';
 import { pickConsoleName } from './console-names.js';
 import { findFreeSlot, DEFAULT_SIZE } from './placement.js';
@@ -31,6 +36,7 @@ const DEFAULT_COLS = 120;
 const DEFAULT_ROWS = 32;
 const OUTPUT_BATCH_MS = 8;
 const PROMPT_DEBOUNCE_MS = 400;
+const HEURISTIC_TICK_MS = 500;
 const PROMPT_CHECK_STATUSES = new Set<ConsoleStatus>(['starting', 'idle', 'resting']);
 // Submitting typed text: Claude Code treats input that arrives right after a paste as part of the
 // paste, so Enter is only pressed once the PTY output has gone quiet (the paste was rendered).
@@ -90,6 +96,7 @@ interface LiveConsole {
   sendQueue: Promise<void>; // sendText calls to one console run one after another
   submitCheck: NodeJS.Timeout | null; // pending "did Enter submit?" check
   outputTail: string; // last bit of plain-text output, to spot "Set model to ..."
+  heuristic: OutputStatusTracker | null; // CLIs without hooks: status from PTY output (agents/output-status.ts)
 }
 
 export interface ConsoleManagerOptions {
@@ -116,6 +123,11 @@ export interface ConsoleManagerEvents {
   'project-removed': [string];
   browser: [BrowserTile];
   'browser-removed': [string];
+  loop: [Loop];
+  'loop-removed': [string];
+  item: [BoardItem];
+  'item-removed': [string];
+  workspaces: []; // list, order, names or the active tab changed (see workspaces.ts)
 }
 
 export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
@@ -127,8 +139,12 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   readonly actions: ActionItem[] = [];
   readonly projects: Project[] = [];
   readonly browsers: BrowserTile[] = [];
+  readonly items: BoardItem[] = []; // board-items.ts
+  readonly drawings: Shape[] = []; // drawings.ts (annotation layer)
+  readonly loops: Loop[] = []; // loops.ts
+  readonly workspaces: Workspace[] = [{ id: DEFAULT_WORKSPACE_ID, name: 'Main', createdAt: 0, order: 0 }]; // workspaces.ts
+  activeWorkspaceId = DEFAULT_WORKSPACE_ID;
   private shuttingDown = false;
-  private claudePath: { override: string; path: string } | null = null;
   // Set by accounts (account-routes.ts): resolves accountId 'auto' and returns CLAUDE_CONFIG_DIR for the console
   accountEnv: ((info: ConsoleInfo, mode: 'new' | 'resume') => Record<string, string>) | null = null;
 
@@ -146,6 +162,11 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       actions: this.actions,
       projects: this.projects,
       browsers: this.browsers,
+      items: this.items,
+      drawings: this.drawings,
+      loops: this.loops,
+      workspaces: this.workspaces,
+      activeWorkspaceId: this.activeWorkspaceId,
       ...(this.viewport ? { viewport: this.viewport } : {}),
     };
   }
@@ -201,6 +222,9 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     });
     if (live.pty !== proc) return;
     proc.write('\r');
+    live.heuristic?.noteInput('\r');
+    // No UserPromptSubmit hook from other CLIs would cancel the check, so never press Enter twice there
+    if (live.heuristic) return;
     // Slash commands (e.g. /model) do not fire UserPromptSubmit; a second Enter could pick a menu item
     if (text.trimStart().startsWith('/')) return;
     if (live.submitCheck) clearTimeout(live.submitCheck);
@@ -246,6 +270,15 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     this.actions.push(...state.actions);
     this.projects.push(...state.projects);
     this.browsers.push(...state.browsers);
+    this.items.push(...(state.items ?? []));
+    this.drawings.push(...(state.drawings ?? []));
+    this.loops.push(...(state.loops ?? []));
+    if (state.workspaces?.length) this.workspaces.splice(0, this.workspaces.length, ...state.workspaces);
+    const wsIds = new Set(this.workspaces.map((w) => w.id));
+    const wsOf = (id: string | undefined): string => (id && wsIds.has(id) ? id : this.workspaces[0].id);
+    for (const x of [...state.consoles, ...this.projects, ...this.browsers, ...this.items]) x.workspaceId = wsOf(x.workspaceId);
+    for (const d of this.drawings) d.workspaceId = wsOf(d.workspaceId);
+    this.activeWorkspaceId = wsOf(state.activeWorkspaceId);
     const closedProjects = new Set(state.projects.filter((p) => !p.open).map((p) => p.id));
     for (const info of state.consoles) {
       const live = this.register({ ...info });
@@ -284,6 +317,9 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     if (!fs.existsSync(cwd) || !fs.statSync(cwd).isDirectory()) {
       throw new Error(`Not a directory: ${cwd}`);
     }
+    if (req.agent !== undefined && !isAgentKind(req.agent)) throw new Error(`Unknown agent: ${String(req.agent)}`);
+    const agent = req.agent && req.agent !== 'claude' ? req.agent : undefined;
+    const command = agent === 'custom' ? validateCommand(req.command) : undefined;
     const now = Date.now();
     const info: ConsoleInfo = {
       id: crypto.randomUUID(),
@@ -293,9 +329,13 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       sessionId: crypto.randomUUID(),
       status: 'starting',
       statusChangedAt: now,
-      layout: this.initialLayout(req.layout),
+      layout: this.initialLayout(req.layout, this.workspaceFor(req.workspaceId)),
       createdAt: now,
-      ...(req.accountId || this.accountEnv ? { accountId: req.accountId || 'auto' } : {}),
+      workspaceId: this.workspaceFor(req.workspaceId),
+      // Accounts are Claude Code config dirs; other CLIs keep their own login
+      ...(!agent && (req.accountId || this.accountEnv) ? { accountId: req.accountId || 'auto' } : {}),
+      ...(agent ? { agent } : {}),
+      ...(command ? { command } : {}),
     };
     const live = this.register(info);
     this.launch(live, 'new');
@@ -328,6 +368,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     this.consoles.delete(id);
     this.lastDialog.delete(id);
     removeSettingsFile(id);
+    adapterFor(live.info.agent).removeConsoleFiles?.(id);
     this.emit('removed', id);
     this.options.onChange();
   }
@@ -392,6 +433,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     const live = this.consoles.get(id);
     if (!live?.pty) return;
     live.pty.write(data);
+    live.heuristic?.noteInput(data);
     if (isDismissInput(data)) {
       // The dialog is answered; only a fresh redraw of it should count from now on
       live.detector.reset();
@@ -417,6 +459,12 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     const live = this.consoles.get(id);
     // The prompt went through, so no second Enter is needed
     if (live && payload.hook_event_name === 'UserPromptSubmit') this.clearSubmitCheck(live);
+    // Other CLIs' relays (e.g. Codex notify) carry that CLI's own session id, used to resume it
+    const agentSession = payload.agent_session_id;
+    if (live && live.info.agent && typeof agentSession === 'string' && agentSession && agentSession !== live.info.agentSessionId) {
+      live.info.agentSessionId = agentSession;
+      this.changed(live);
+    }
     this.applyHookStatus(id, payload);
     if (this.consoles.has(id)) this.emit('hook', id, payload);
   }
@@ -469,6 +517,8 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
   private checkPrompt(live: LiveConsole): void {
     if (!this.consoles.has(live.info.id) || !live.pty) return;
     this.refreshDialog(live);
+    // Claude Code dialogs only; other CLIs get needs_you from their output tracker
+    if (live.heuristic) return;
     const detail = live.detector.detect();
     const { info } = live;
     if (live.promptPrevStatus) {
@@ -498,7 +548,12 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     }
   }
 
-  private initialLayout(requested: Partial<ConsoleLayout> = {}): ConsoleLayout {
+  // A known workspace id, or the active one
+  workspaceFor(requested: string | undefined): string {
+    return requested && this.workspaces.some((w) => w.id === requested) ? requested : this.activeWorkspaceId;
+  }
+
+  private initialLayout(requested: Partial<ConsoleLayout> = {}, workspaceId?: string): ConsoleLayout {
     const size = {
       width: requested.width ?? DEFAULT_SIZE.width,
       height: requested.height ?? DEFAULT_SIZE.height,
@@ -507,7 +562,9 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       return { x: requested.x, y: requested.y, ...size };
     }
     return findFreeSlot(
-      [...this.consoles.values()].map((c) => c.info.layout),
+      [...this.consoles.values()]
+        .filter((c) => !workspaceId || (c.info.workspaceId ?? DEFAULT_WORKSPACE_ID) === workspaceId)
+        .map((c) => c.info.layout),
       size,
     );
   }
@@ -529,6 +586,7 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       sendQueue: Promise.resolve(),
       submitCheck: null,
       outputTail: '',
+      heuristic: null,
     };
     this.consoles.set(info.id, live);
     return live;
@@ -553,36 +611,28 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     delete info.exitCode;
     live.detector.reset();
     live.promptPrevStatus = null;
+    // Claude Code, Codex, Gemini CLI, OpenCode or a custom command (see src/server/agents)
+    const adapter = adapterFor(info.agent);
+    const tracker = outputTrackerFor(adapter);
+    live.heuristic = tracker;
 
     let proc: pty.IPty;
     try {
       const settings = this.options.settings?.();
-      const override = settings?.claudePath ?? '';
-      if (this.claudePath?.override !== override) {
-        const env = override ? { ...process.env, AGENTARMY_CLAUDE_PATH: override } : process.env;
-        this.claudePath = { override, path: resolveClaudeExecutable({ env }) };
-      }
-      if (!fs.existsSync(info.cwd)) throw new Error(`Folder no longer exists: ${info.cwd}`);
-      const settingsFile = writeSettingsFile(info.id, this.options.port, this.options.token);
-      const mcpFile = writeMcpConfigFile(info.id, this.options.port, this.options.token);
-      const sessionFlag = mode === 'new' ? '--session-id' : '--resume';
-      const command = buildSpawnCommand(this.claudePath.path, [
-        sessionFlag,
-        info.sessionId,
-        '--settings',
-        settingsFile,
-        // Adds the agentarmy MCP tools; no --strict-mcp-config, so the user's own servers still load
-        '--mcp-config',
-        mcpFile,
-        // Settings tab: --model, --permission-mode and the user's extra flags
-        ...(settings ? claudeLaunchArgs(settings) : []),
-      ]);
+      const command = adapter.buildLaunch(info, mode, {
+        port: this.options.port,
+        token: this.options.token,
+        settings,
+        // API keys are only withheld from Claude Code (they would bill API credits instead of the plan)
+        baseEnv: adapter.id === 'claude' ? this.childEnv(settings) : childEnv(process.env, { enableTasks: settings?.enableTasks ?? true, useApiKey: true }),
+        ...(adapter.id === 'claude' && this.accountEnv ? { accountEnv: () => this.accountEnv?.(info, mode) ?? {} } : {}),
+      });
       proc = pty.spawn(command.file, command.args, {
         name: 'xterm-256color',
         cols: live.cols,
         rows: live.rows,
         cwd: info.cwd,
-        env: { ...this.childEnv(settings), ...this.accountEnv?.(info, mode) },
+        env: command.env,
       });
     } catch (err) {
       info.status = 'exited';
@@ -611,9 +661,21 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     }, 1000);
     startWatch.unref?.();
 
+    if (tracker) {
+      const heuristicWatch = setInterval(() => {
+        if (live.pty !== proc) {
+          clearInterval(heuristicWatch);
+          return;
+        }
+        this.applyHeuristic(live, tracker);
+      }, HEURISTIC_TICK_MS);
+      heuristicWatch.unref?.();
+    }
+
     proc.onData((data) => {
       if (live.pty !== proc) return;
       live.lastOutputAt = Date.now();
+      tracker?.feed(data, live.lastOutputAt);
       this.watchModelSwitch(live, data);
       if (this.listenerCount('output')) this.emit('output', live.info.id, data);
       live.scrollback.append(data);
@@ -630,8 +692,9 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       live.pty = null;
       this.flushOutput(live);
       const quickFailure = Date.now() - startedAt < RESUME_FAILURE_WINDOW_MS && exitCode !== 0;
-      if (mode === 'resume' && quickFailure && this.consoles.has(info.id)) {
-        info.sessionId = crypto.randomUUID();
+      if (mode === 'resume' && quickFailure && adapter.supportsResume && this.consoles.has(info.id)) {
+        if (adapter.id === 'claude') info.sessionId = crypto.randomUUID();
+        else delete info.agentSessionId;
         this.launch(live, 'new', 'Could not resume the previous conversation; started a new one');
         return;
       }
@@ -640,6 +703,20 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       info.statusChangedAt = Date.now();
       this.changed(live);
     });
+  }
+
+  // Status for CLIs without hooks, from their PTY output (see agents/output-status.ts)
+  private applyHeuristic(live: LiveConsole, tracker: OutputStatusTracker): void {
+    const { info } = live;
+    const next = tracker.evaluate(info.status);
+    if (!next) return;
+    // A note from a failed resume stays until the first real turn, like with Claude Code
+    const detail = next.detail ?? (next.status === 'idle' ? info.statusDetail : undefined);
+    if (next.status === info.status && detail === info.statusDetail) return;
+    if (next.status !== info.status) info.statusChangedAt = Date.now();
+    info.status = next.status;
+    info.statusDetail = detail;
+    this.changed(live);
   }
 
   // "/model haiku" leaves no hook behind; its confirmation on screen is the cue to re-read the model
