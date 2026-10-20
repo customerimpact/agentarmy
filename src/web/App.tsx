@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { ApiError, api } from './lib/api';
 import { clearToken, getToken } from './lib/auth';
 import { startNotifications } from './lib/notify';
@@ -162,6 +163,7 @@ export function App() {
       ) : (
         <PopoutShell view={VIEW} />
       )}
+      <SpeedInsights />
     </ReactFlowProvider>
   );
 }
