@@ -162,8 +162,9 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 - [ ] Optional free account - GitHub or email sign-in on the website; the app keeps working fully without it (DEC-005) `M`
 - [ ] Secure relay - The desktop app connects out to a relay with end-to-end encryption; the relay never sees terminal content or code `L`
 - [ ] Phone app (PWA first) - Fleet list, live terminal view, needs-you approvals, push notifications `L`
-- [ ] Launch from your phone - Pick a project or team recipe on the phone; agents start on your computer and you monitor them there `M`
-- [ ] Desktop ⇄ phone handoff, both ways - Move a running session to the phone and back (same session id, resumed in place), not one-way like Claude Code's remote control `L`
+- [x] Phone on this Wi-Fi (step before the relay) - Off by default; QR pairing with single-use codes, per-phone revocable tokens, allow-listed API on 0.0.0.0:4318. Fleet, live terminal, answer prompts, send messages `M`
+- [x] Launch from your phone - Pick a project or team recipe on the phone; agents start on your computer and you monitor them there `M`
+- [ ] Desktop ⇄ phone handoff, both ways (done on the same Wi-Fi; needs the relay to work from anywhere) - Move a running session to the phone and back (same session id, resumed in place), not one-way like Claude Code's remote control `L`
 
 ### Should-Have Features
 

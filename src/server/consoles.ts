@@ -384,6 +384,12 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     return live.scrollback.read();
   }
 
+  // Terminal size the board last set (a phone mirrors it instead of resizing the PTY)
+  size(id: string): { cols: number; rows: number } | null {
+    const live = this.consoles.get(id);
+    return live ? { cols: live.cols, rows: live.rows } : null;
+  }
+
   detach(id: string, listener: OutputListener): void {
     this.consoles.get(id)?.listeners.delete(listener);
   }

@@ -34,6 +34,7 @@ import { TemplatesDialog } from './components/TemplatesDialog';
 import { LoopsHost } from './components/LoopsDialog';
 import { Toolbar } from './components/Toolbar';
 import { openPendingRecipe } from './lib/recipe-link';
+import { usePhoneAccess } from './lib/phone-access';
 
 // ?view=console|project|focus opens a pop-out window instead of the full board (see lib/views.ts)
 const VIEW = parseView(window.location.search);
@@ -103,6 +104,7 @@ export function App() {
           startPopoutTracking();
           startDesktopBoard();
           openPendingRecipe();
+          void usePhoneAccess.getState().load();
         } else {
           startPopoutPresence(VIEW);
         }

@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, type PointerEvent, type ReactNode } from 'react';
 import { NodeResizer, useStore, type Node, type NodeProps } from '@xyflow/react';
-import { ArrowRightLeft, Play, Repeat2, RotateCcw, X } from 'lucide-react';
+import { ArrowRightLeft, Play, Repeat2, RotateCcw, Smartphone, X } from 'lucide-react';
 import type { ConsoleStatus } from '../../shared/protocol';
 import { AGENT_META, type AgentKind } from '../../shared/agents';
 import { AGENT_ICONS, AgentIcon } from './AgentIcon';
@@ -35,6 +35,7 @@ import { FilesButton } from './CodeViewer';
 import { openHandoff } from '../lib/handoff-memory';
 import { MoveToWorkspaceButton } from './WorkspaceTabs';
 import { PausedPill } from './TeamControls';
+import { continueOnPhone, phonesOnline, usePhoneAccess } from '../lib/phone-access';
 
 export type TerminalFlowNode = Node<Record<string, never>, 'terminal'>;
 
@@ -108,6 +109,7 @@ export function AgentAvatar({
 
 function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
   const c = useBoard((s) => s.consoles[id]);
+  const phoneOnline = usePhoneAccess((s) => phonesOnline(s.status) > 0);
   const focused = useBoard((s) => s.selectedId === id);
   const inSelection = useBoard((s) => s.selectedIds.includes(id));
   const projectColor = useBoard((s) => {
@@ -326,6 +328,11 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
             {c.agent !== 'custom' && (
               <IconButton testId="console-switch-agent" label="Switch agent…" onClick={() => openSwitchAgent(id)}>
                 <Repeat2 size={13} />
+              </IconButton>
+            )}
+            {phoneOnline && (
+              <IconButton testId="console-to-phone" label="Continue on phone" onClick={() => void continueOnPhone(id)}>
+                <Smartphone size={13} />
               </IconButton>
             )}
             <MoveToWorkspaceButton consoleId={id} />

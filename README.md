@@ -25,6 +25,7 @@ MVP (v0.1) scope:
 - **Mission list** - a sidebar of all consoles and their status; click one to fly to it.
 - **Needs-you notifications** - browser notification plus a tab title badge when an agent is waiting on you; click to focus that console.
 - **Restore and resume** - the board is saved; after a restart each console relaunches with `claude --resume` in the same place.
+- **Phone on this Wi-Fi** - Settings → Integrations → Phone: turn it on and scan the QR code. From the phone you see every agent, read its terminal, answer "needs you" prompts, type messages and launch new agents or teams on your computer. "On computer" (phone) and the phone icon on a console (computer) pass a session back and forth; the agent keeps running on your computer. Off by default; only paired phones get in, each can be removed. Traffic on the network is not encrypted yet, so use it on your own Wi-Fi (or a VPN such as Tailscale).
 - **Recipes** - share a team (roles, agents, models, first prompts) as a `gridhive.dev/r#…` link or a "Run in GridHive" README badge. Templates → share icon on a card; Templates → **Import link** to add one. Opening a recipe saves it as a template and shows every prompt first; nothing launches until you press Launch. Your accounts and folders are never in the link, and the recipe sits after `#`, so it never reaches a server.
 
 ## Requirements

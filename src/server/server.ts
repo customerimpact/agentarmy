@@ -6,7 +6,6 @@ import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import type { WebSocket } from 'ws';
 import type {
-  ClientMessage,
   CreateConsoleRequest,
   ServerMessage,
   UpdateConsoleRequest,
@@ -38,7 +37,9 @@ import { registerMemoryRoutes } from './memory.js';
 import { registerPauseRoutes } from './pause.js';
 import { CustomTemplates, registerComposerRoutes } from './composer.js';
 import { registerLoopRoutes } from './loops.js';
+import { registerPhoneRoutes } from './phone/phone-routes.js';
 import type { HookPayload } from './hook-status.js';
+import { parseClientMessage } from './client-message.js';
 import {
   isAllowedHost,
   isAllowedOrigin,
@@ -52,6 +53,8 @@ import {
 export interface ServerOptions extends SecurityConfig {
   manager: ConsoleManager;
   settings?: SettingsStore; // defaults to an in-memory store (tests)
+  phonePort?: number; // phone access listener; tests pass 0 (any free port)
+  phoneHost?: string; // tests pass 127.0.0.1
 }
 
 const PROTECTED_PREFIXES = ['/api/', '/ws', '/hook/', '/bridge/'];
@@ -92,31 +95,6 @@ function parseJson(raw: unknown): unknown {
     return JSON.parse(String(raw));
   } catch {
     return null;
-  }
-}
-
-function parseClientMessage(raw: unknown): ClientMessage | null {
-  let msg: unknown;
-  try {
-    msg = JSON.parse(String(raw));
-  } catch {
-    return null;
-  }
-  if (!msg || typeof msg !== 'object') return null;
-  const m = msg as Record<string, unknown>;
-  if (typeof m.id !== 'string') return null;
-  switch (m.type) {
-    case 'attach':
-    case 'detach':
-      return { type: m.type, id: m.id };
-    case 'input':
-      return typeof m.data === 'string' ? { type: 'input', id: m.id, data: m.data } : null;
-    case 'resize':
-      return isFiniteNumber(m.cols) && isFiniteNumber(m.rows)
-        ? { type: 'resize', id: m.id, cols: m.cols, rows: m.rows }
-        : null;
-    default:
-      return null;
   }
 }
 
@@ -289,6 +267,17 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
     onRun: (loop, consoles) => {
       for (const c of consoles) recap.record('loop', c.id, { id: loop.id, text: loop.name });
     },
+  });
+
+  registerPhoneRoutes(app, {
+    manager,
+    port: options.port,
+    token: options.token,
+    broadcast,
+    dataDir: settings.filePath ? path.dirname(settings.filePath) : null,
+    webRoot: options.dev ? null : findWebRoot(),
+    phonePort: options.phonePort ?? (process.env.AGENTARMY_PHONE_PORT ? Number(process.env.AGENTARMY_PHONE_PORT) : undefined),
+    phoneHost: options.phoneHost ?? process.env.AGENTARMY_PHONE_HOST,
   });
 
   app.post('/api/consoles', async (request, reply) => {

@@ -214,3 +214,28 @@ The product is called GridHive. Website gridhive.dev, npm package and command `g
 **Negative:**
 - Internal identifiers keep the old name so existing installs keep working: the data folder `~/.agentarmy`, `AGENTARMY_*` environment variables, the Windows app id `com.agentarmy.app`, the `agentarmy` MCP server and `agentarmy/*` worktree branches. The desktop app keeps a pre-rename profile folder (`AgentArmy`) when it exists.
 - The GitHub repo is still customerimpact/agentarmy until it is renamed (GitHub redirects the old URL)
+
+## 2026-10-20: Phone Access on the Local Network First
+
+**ID:** DEC-008
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Product Owner
+
+### Decision
+
+Ship phone control before the account and relay: an opt-in second listener (0.0.0.0, default port 4318) serves a phone page and an allow-list of the board API. Phones pair by scanning a QR code with a single-use, 10-minute code and get their own revocable token (stored hashed in `phone.json`). The board server itself stays on 127.0.0.1.
+
+### Context
+
+The owner wants to launch and follow agents from the phone and hand sessions both ways. The relay (Phase 6) needs a hosted service and an account provider that are not chosen yet; the same screens work on home Wi-Fi without either.
+
+### Consequences
+
+**Positive:**
+- Usable today, no server costs; the phone UI and the handoff protocol carry over to the relay
+
+**Negative:**
+- Plain HTTP on the local network (no TLS yet): the UI tells users to use it on trusted Wi-Fi only or over a VPN
+- No lock-screen push from the page itself (needs HTTPS); ntfy covers alerts until the relay ships
+- Windows Firewall asks once to allow the app on private networks

@@ -74,6 +74,7 @@ const LAYOUT: Record<string, { category?: string; group?: string; badge?: Settin
   'long-turn-minutes': { group: 'Stuck agents' },
   slack: { category: 'integrations', group: 'Chat webhooks' },
   discord: { category: 'integrations', group: 'Chat webhooks' },
+  'phone-access': { category: 'integrations', group: 'Phone' },
   ntfy: { category: 'integrations', group: 'Phone' },
   'recap-send': { category: 'integrations', group: 'Daily recap' },
   snap: { group: 'Snapping' },

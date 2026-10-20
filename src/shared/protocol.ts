@@ -587,7 +587,7 @@ export type BrowserInputEvent =
   | { kind: 'viewport'; width: number; height: number };
 
 export type ServerMessage =
-  | { type: 'replay'; id: string; data: string } // buffered scrollback so a reload restores the screen
+  | { type: 'replay'; id: string; data: string; cols?: number; rows?: number } // buffered scrollback so a reload restores the screen; size only for phones
   | { type: 'output'; id: string; data: string }
   | { type: 'console'; console: ConsoleInfo } // added or updated (status, name, layout, sessionId)
   | { type: 'removed'; id: string }
@@ -612,7 +612,47 @@ export type ServerMessage =
   | { type: 'provider-event'; event: ProviderEvent } // an agent CLI install or login finished (src/shared/providers.ts)
   | { type: 'loop'; loop: Loop } // added or updated (runs, enabled, retired)
   | { type: 'loop-removed'; id: string }
-  | { type: 'drawings'; upsert: Shape[]; remove: string[]; origin?: string }; // see src/shared/drawings.ts
+  | { type: 'drawings'; upsert: Shape[]; remove: string[]; origin?: string } // see src/shared/drawings.ts
+  | { type: 'device-handoff'; consoleId: string; to: DeviceTarget } // "Continue on computer / on phone"
+  | { type: 'phone'; phone: PhoneStatus }; // phone access switched, paired or a phone came online
+
+// ---------- Phone on Wi-Fi (src/server/phone) ----------
+// A second, opt-in listener (0.0.0.0:<port>, default 4318) serves the phone page and an allow-listed
+// part of /api under /m/api, for paired phones only (device cookie). The agents keep running here.
+// GET    /api/phone                    -> PhoneStatus
+// PUT    /api/phone        { enabled } -> PhoneStatus (starts or stops the listener)
+// POST   /api/phone/pair               -> PhonePairInfo (new single-use code, 10 minutes)
+// DELETE /api/phone/devices/:id        -> PhoneStatus
+// POST   /api/device-handoff DeviceHandoffRequest -> { ok: true } (also allowed from a phone)
+
+export type DeviceTarget = 'desktop' | 'phone';
+
+export interface DeviceHandoffRequest {
+  consoleId: string;
+  to: DeviceTarget;
+}
+
+export interface PhoneDevice {
+  id: string;
+  name: string;
+  createdAt: number;
+  lastSeenAt: number;
+}
+
+export interface PhoneStatus {
+  enabled: boolean;
+  port: number;
+  listening: boolean;
+  error?: string; // why the listener could not start (port taken, firewall...)
+  addresses: string[]; // this computer's IPv4 addresses, local network first
+  devices: (PhoneDevice & { online: boolean })[];
+}
+
+export interface PhonePairInfo {
+  url: string; // http://<ip>:<port>/#pair=<code>, also encoded in the QR code
+  qrSvg: string;
+  expiresAt: number;
+}
 
 // ---------- Pause all / Resume all, team messages (src/server/pause.ts) ----------
 // POST   /api/pause          { projectId? } -> PauseResponse  (Esc to every 'working' console, marks it paused)
