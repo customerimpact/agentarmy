@@ -5,17 +5,17 @@ import { isElectron, nodeScriptCommand } from './node-runtime.js';
 
 // The agentarmy MCP server that runs inside every console. Claude Code starts it over stdio
 // (newline-delimited JSON-RPC 2.0). It is a thin, dependency-free proxy: tools are listed from
-// and called on the AgentArmy server's /bridge routes, so all logic stays in the server.
+// and called on the GridHive server's /bridge routes, so all logic stays in the server.
 // stdout carries JSON-RPC only; anything else would corrupt the protocol.
 export const MCP_SCRIPT_SOURCE = `'use strict';
 const [baseUrl, consoleId, token] = process.argv.slice(2);
 const DEFAULT_PROTOCOL = '2025-06-18';
 const INSTRUCTIONS = [
-  'You are one of several Claude Code agents on an AgentArmy board: each agent runs in its own terminal,',
+  'You are one of several Claude Code agents on an GridHive board: each agent runs in its own terminal,',
   'and the user watches all of them on a shared canvas.',
   'Use list_agents to see the other agents (nearest first) and send_job to hand one of them a task;',
   'the board draws a line from you to that agent. Results come back to you as a typed message.',
-  'When a message starts with "[AgentArmy job ...]", do the job, then call report_job with its job_id and a short result.',
+  'When a message starts with "[GridHive job ...]", do the job, then call report_job with its job_id and a short result.',
   'Use request_user_action when you need the human (an approval, a credential, a decision) so it shows in their inbox.',
 ].join(' ');
 
@@ -48,14 +48,14 @@ async function request(method, suffix, body) {
   try { data = JSON.parse(text); } catch { data = null; }
   if (!res.ok) {
     const reason = data && (data.error || (data.content && data.content[0] && data.content[0].text));
-    throw new Error(reason || ('AgentArmy answered HTTP ' + res.status));
+    throw new Error(reason || ('GridHive answered HTTP ' + res.status));
   }
   return data;
 }
 
 function errorText(err) {
   const msg = err && err.message ? err.message : String(err);
-  return 'AgentArmy bridge error: ' + msg;
+  return 'GridHive bridge error: ' + msg;
 }
 
 async function handle(msg) {

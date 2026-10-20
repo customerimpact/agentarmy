@@ -3,7 +3,7 @@
 export const UPDATE_REPO = 'customerimpact/agentarmy';
 export const DESKTOP_TAG_PREFIX = 'desktop-v';
 // macOS builds are not signed by Apple yet, so they cannot replace themselves: the update opens this page
-export const DOWNLOAD_PAGE = 'https://agentarmy-site.vercel.app/#install';
+export const DOWNLOAD_PAGE = 'https://gridhive.dev/#install';
 
 export interface GitHubRelease {
   tag_name: string;
@@ -28,13 +28,4 @@ export function pickDesktopRelease(releases: GitHubRelease[], platform: NodeJS.P
   return match ? match.tag_name : null;
 }
 
-// "0.0.10" > "0.0.9"; prerelease suffixes are ignored
-export function isNewerVersion(candidate: string, current: string): boolean {
-  const parts = (v: string) => v.replace(/^v/, '').split('-')[0].split('.').map((n) => Number(n) || 0);
-  const a = parts(candidate);
-  const b = parts(current);
-  for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    if ((a[i] ?? 0) !== (b[i] ?? 0)) return (a[i] ?? 0) > (b[i] ?? 0);
-  }
-  return false;
-}
+export { isNewerVersion } from '../shared/version';

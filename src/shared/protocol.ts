@@ -526,7 +526,7 @@ export interface AppSettings {
 
 export type LimitFallbackMode = 'ask' | 'switch' | 'wait';
 
-// Provider API keys AgentArmy stores for the user (settings.json, never sent back; masked like webhooks)
+// Provider API keys GridHive stores for the user (settings.json, never sent back; masked like webhooks)
 export type ProviderKeyId = 'grok';
 export const PROVIDER_KEY_IDS: ProviderKeyId[] = ['grok'];
 
@@ -552,7 +552,7 @@ export interface PublicSettings {
   discord: WebhookInfo;
   ntfy: NtfyInfo;
   providerKeys: Record<ProviderKeyId, WebhookInfo>; // { set, hint: last 4 } only
-  version: string; // AgentArmy package version
+  version: string; // GridHive package version
   dataDir: string; // AGENTARMY_HOME
   port: number;
 }

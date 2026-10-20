@@ -99,7 +99,7 @@ describe('buildQuickBrief', () => {
       ],
       git: { branch: 'feature/checkout', files: 3, added: 40, removed: 2 },
     });
-    expect(brief.split('\n')[0]).toBe('[AgentArmy handoff from Ada]');
+    expect(brief.split('\n')[0]).toBe('[GridHive handoff from Ada]');
     expect(brief).toContain('Ada (Frontend) is handing its work');
     expect(brief).toContain('## Note from the user\nUse the test keys');
     expect(brief).toContain('- Add a checkout page with Stripe\n- Also keep the coupon field');

@@ -5,7 +5,7 @@
 
 ## Pitch
 
-AgentArmy (working name) is the free, open-source control room for terminal coding agents: Claude Code, Codex, Gemini CLI, Grok and OpenCode run side by side in real terminals on one board, on the subscriptions developers already pay for, and you can launch, watch and approve them from your computer or your phone.
+GridHive (gridhive.dev) is the free, open-source control room for terminal coding agents: Claude Code, Codex, Gemini CLI, Grok and OpenCode run side by side in real terminals on one board, on the subscriptions developers already pay for, and you can launch, watch and approve them from your computer or your phone.
 
 ## Users
 

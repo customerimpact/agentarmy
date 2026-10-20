@@ -76,7 +76,7 @@ test('console view renders one live terminal with its header and command input',
   await expect(view).toContainText('Ada');
   await expect(page.getByTestId('console-kill')).toBeVisible();
   await expect(page.getByTestId('console-restart')).toBeVisible();
-  await expect(page).toHaveTitle('Ada · AgentArmy');
+  await expect(page).toHaveTitle('Ada · GridHive');
 
   // The main board marks it as living in another window (BroadcastChannel)
   await expect(consoleNode(board, ada.id).getByTestId('console-popped-out')).toBeVisible();
@@ -91,7 +91,7 @@ test('console view renders one live terminal with its header and command input',
   // A needs-you prompt raised elsewhere shows up here and in the title
   await server.api('POST', `/api/consoles/${ada.id}/send`, { text: 'ask' });
   await expect(view).toHaveAttribute('data-status', 'needs_you', { timeout: 15_000 });
-  await expect(page).toHaveTitle('(1) Ada · AgentArmy');
+  await expect(page).toHaveTitle('(1) Ada · GridHive');
   await expect(page.getByTestId('console-status-detail')).toContainText('Fake needs permission');
   await page.screenshot({ path: testInfo.outputPath('console-view.png') });
   await board.screenshot({ path: testInfo.outputPath('board-popped-out.png') });
@@ -138,12 +138,12 @@ test('project view shows only that project and updates live', async ({}, testInf
   await expect(page.getByTestId('console-node')).toHaveCount(2);
   await expect(consoleNode(page, loner.id)).toHaveCount(0);
   await expect(page.getByTestId('project-frame')).toHaveCount(1);
-  await expect(page).toHaveTitle('Shop · AgentArmy');
+  await expect(page).toHaveTitle('Shop · GridHive');
 
   await server.api('POST', `/api/consoles/${bex.id}/send`, { text: 'ask' });
   await expect(consoleNode(page, bex.id)).toHaveAttribute('data-status', 'needs_you', { timeout: 15_000 });
   await expect(page.getByTestId('popout-project-summary')).toContainText('1 needs you');
-  await expect(page).toHaveTitle('(1) Shop · AgentArmy');
+  await expect(page).toHaveTitle('(1) Shop · GridHive');
 
   // The board dims both members and tags the frame
   await expect(consoleNode(board, ada.id).getByTestId('console-popped-out')).toBeVisible();
@@ -167,7 +167,7 @@ test('focus wall shows consoles that need you or are working', async ({}, testIn
   await expect(tile).toBeVisible();
   await expect(tile).toHaveAttribute('data-status', 'needs_you');
   await expect(page.locator(`[data-testid="wall-tile"][data-console-id="${ada.id}"]`)).toHaveCount(0);
-  await expect(page).toHaveTitle(/^\(1\) Focus wall · AgentArmy$/);
+  await expect(page).toHaveTitle(/^\(1\) Focus wall · GridHive$/);
   await expect(tile.locator('.xterm-rows')).toContainText('Allow', { timeout: 10_000 });
   await page.screenshot({ path: testInfo.outputPath('focus-wall.png') });
 
@@ -214,7 +214,7 @@ test('phone notifications: generate a topic, show the QR, send a test and push o
     await row.getByTestId('test-ntfy').click();
     await expect.poll(() => received.length).toBe(1);
     expect(received[0].url).toBe(`/${topic}`);
-    expect(received[0].headers.title).toBe('AgentArmy test');
+    expect(received[0].headers.title).toBe('GridHive test');
 
     // A console that starts waiting on you pushes with high priority and a deep link
     await server.api('POST', `/api/consoles/${ada.id}/send`, { text: 'ask' });

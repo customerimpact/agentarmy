@@ -48,7 +48,7 @@ async function pickPort(preferred: number): Promise<number> {
   return port;
 }
 
-// Another AgentArmy (a terminal or the desktop app) already owns this home folder
+// Another GridHive (a terminal or the desktop app) already owns this home folder
 export class AlreadyRunningError extends Error {
   constructor(
     readonly port: number,
@@ -58,7 +58,7 @@ export class AlreadyRunningError extends Error {
   }
 }
 
-// Shared by the CLI (`npx agentarmy`) and the desktop app's main process
+// Shared by the CLI (`npx gridhive`) and the desktop app's main process
 export async function startAgentArmy(options: StartOptions = {}): Promise<AgentArmyHandle> {
   const log = options.log ?? ((message: string) => console.log(message));
   // Every store reads agentArmyHome(), so the home override has to be in place before they are built
@@ -71,7 +71,7 @@ export async function startAgentArmy(options: StartOptions = {}): Promise<AgentA
   if ('heldBy' in lock) {
     throw new AlreadyRunningError(
       lock.heldBy.port,
-      `AgentArmy is already running (pid ${lock.heldBy.pid}, port ${lock.heldBy.port}). ` +
+      `GridHive is already running (pid ${lock.heldBy.pid}, port ${lock.heldBy.port}). ` +
         `Stop it first, or delete ${path.join(agentArmyHome(), 'server.lock')} if it is stale.`,
     );
   }

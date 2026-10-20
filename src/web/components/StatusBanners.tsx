@@ -18,7 +18,7 @@ export function ReconnectBanner() {
         <WifiOff size={13} />
         {everConnected
           ? 'Connection lost. Reconnecting…'
-          : 'Cannot reach the AgentArmy server. Retrying…'}
+          : 'Cannot reach the GridHive server. Retrying…'}
       </div>
     </div>
   );

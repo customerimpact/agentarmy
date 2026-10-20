@@ -82,14 +82,14 @@ test('fake Claude console switches to fake Codex in the same spot: brief typed i
   expect(res.console).toMatchObject({ name: 'Ada', agent: 'codex', cwd: before.cwd });
   expect(res.console.layout).toMatchObject({ x: before.layout.x, y: before.layout.y, width: before.layout.width, height: before.layout.height });
   expect(res.job).toMatchObject({ fromId: ada.id, toId: res.console.id, kind: 'handoff', title: 'Switch: Ada Claude → Codex' });
-  expect(res.brief).toMatch(/^\[AgentArmy handoff from Ada\]/);
+  expect(res.brief).toMatch(/^\[GridHive handoff from Ada\]/);
   expect(res.brief).toContain('- plan');
 
   // The header shows the new CLI; the fake Codex submits the pasted brief as one prompt
   const next = res.console.id;
   await expect(consoleNode(page, next).getByTestId('console-agent')).toHaveAttribute('data-agent', 'codex');
   await flyToConsole(page, next);
-  await expectTerminalToContain(page, next, 'Done: [AgentArmy handoff from Ada]', 30_000);
+  await expectTerminalToContain(page, next, 'Done: [GridHive handoff from Ada]', 30_000);
 
   await waitFor(async () => !(await state()).consoles.some((c) => c.id === ada.id), { message: 'the old console to be removed', timeout: 15_000 });
   await expect(consoleNode(page, ada.id)).toHaveCount(0);

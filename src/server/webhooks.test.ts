@@ -22,16 +22,16 @@ function action(over: Partial<ActionItem> = {}): ActionItem {
 describe('formatActionMessage', () => {
   it('names the project, console and detail, with a link to the board', () => {
     const text = formatActionMessage(action(), { console: { name: 'Ada' }, projectName: 'Shop', port: 4317 });
-    expect(text).toBe('AgentArmy · Shop · Ada needs you: Allow Bash(npm test)?\nhttp://127.0.0.1:4317/');
+    expect(text).toBe('GridHive · Shop · Ada needs you: Allow Bash(npm test)?\nhttp://127.0.0.1:4317/');
   });
 
   it('handles errors, requests and missing consoles', () => {
     expect(formatActionMessage(action({ kind: 'error', detail: undefined }), { console: { name: 'Bex' }, port: 1 })).toBe(
-      'AgentArmy · Bex hit an error\nhttp://127.0.0.1:1/',
+      'GridHive · Bex hit an error\nhttp://127.0.0.1:1/',
     );
     expect(
       formatActionMessage(action({ kind: 'request', title: 'Add API key', detail: 'for Stripe' }), { port: 1 }),
-    ).toBe('AgentArmy · An agent asks for something: Add API key — for Stripe\nhttp://127.0.0.1:1/');
+    ).toBe('GridHive · An agent asks for something: Add API key — for Stripe\nhttp://127.0.0.1:1/');
   });
 
   it('uses each service payload shape', () => {

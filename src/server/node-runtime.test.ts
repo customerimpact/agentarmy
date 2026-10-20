@@ -8,15 +8,15 @@ describe('nodeScriptCommand', () => {
   });
 
   it('sets ELECTRON_RUN_AS_NODE for the desktop app only on that child', () => {
-    expect(nodeScriptCommand('s.cjs', ['a'], 'AgentArmy.exe', true)).toEqual({
-      command: 'AgentArmy.exe',
+    expect(nodeScriptCommand('s.cjs', ['a'], 'GridHive.exe', true)).toEqual({
+      command: 'GridHive.exe',
       args: ['s.cjs', 'a'],
       env: { ELECTRON_RUN_AS_NODE: '1' },
     });
   });
 
   it('carries the env into the MCP config', () => {
-    const config = buildMcpConfig('AgentArmy.exe', 'mcp.cjs', 'http://127.0.0.1:1', 'c', 't', true);
+    const config = buildMcpConfig('GridHive.exe', 'mcp.cjs', 'http://127.0.0.1:1', 'c', 't', true);
     expect(config.mcpServers.agentarmy.env).toEqual({ ELECTRON_RUN_AS_NODE: '1' });
     expect(buildMcpConfig('node', 'mcp.cjs', 'http://x', 'c', 't', false).mcpServers.agentarmy.env).toBeUndefined();
   });

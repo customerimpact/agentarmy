@@ -60,7 +60,7 @@ function useSource(action: ActionItem): string {
   const consoles = useBoard((s) => s.consoles);
   const projects = useBoard((s) => s.projects);
   const c = action.consoleId ? consoles[action.consoleId] : undefined;
-  if (!c) return action.consoleId ? 'Closed console' : 'AgentArmy';
+  if (!c) return action.consoleId ? 'Closed console' : 'GridHive';
   const project = projectOf(c, projects);
   return project ? `${c.name} · ${project.name}` : c.name;
 }

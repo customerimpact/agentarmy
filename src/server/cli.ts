@@ -1,6 +1,7 @@
 import { DEFAULT_PORT } from '../shared/protocol.js';
 import open from 'open';
 import { AlreadyRunningError, startAgentArmy } from './app.js';
+import { npmUpdateNotice, ownVersion } from './npm-update.js';
 import { loadOrCreateToken } from './token-file.js';
 
 interface CliArgs {
@@ -33,7 +34,7 @@ function parseArgs(argv: string[]): CliArgs {
       }
       args.port = port;
     } else if (arg === '--help' || arg === '-h') {
-      console.log('Usage: agentarmy [--port <n>] [--no-open] [--resume-all] [--new-token] [--dev]');
+      console.log('Usage: gridhive [--port <n>] [--no-open] [--resume-all] [--new-token] [--dev]');
       process.exit(0);
     } else {
       throw new Error(`Unknown argument: ${arg}`);
@@ -45,7 +46,11 @@ function parseArgs(argv: string[]): CliArgs {
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
   const handle = await startAgentArmy(args);
-  console.log(`AgentArmy is running: ${handle.url}`);
+  console.log(`GridHive is running: ${handle.url}`);
+  const version = ownVersion();
+  if (version && !args.dev && process.env.AGENTARMY_DISABLE_UPDATES !== '1') {
+    void npmUpdateNotice(version).then((notice) => notice && console.log(notice));
+  }
 
   let stopping = false;
   const shutdown = (signal: string): void => {
@@ -62,12 +67,12 @@ async function main(): Promise<void> {
 }
 
 main().catch(async (err: unknown) => {
-  // A second `npx agentarmy` should simply open the board that is already running
+  // A second `npx gridhive` should simply open the board that is already running
   if (err instanceof AlreadyRunningError && err.port) {
     const args = parseArgs(process.argv.slice(2));
     const token = process.env.AGENTARMY_TOKEN || loadOrCreateToken({ rotate: false });
     const url = `http://127.0.0.1:${err.port}/?token=${token}`;
-    console.log(`AgentArmy is already running (desktop app or another terminal): ${url}`);
+    console.log(`GridHive is already running (desktop app or another terminal): ${url}`);
     if (args.open) await open(url).catch(() => undefined);
     process.exit(0);
   }

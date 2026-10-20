@@ -6,7 +6,7 @@ import { claudeLaunchArgs } from '../settings.js';
 import type { AgentAdapter } from './types.js';
 import { readVersion } from './resolve.js';
 
-// Claude Code: the CLI AgentArmy was built around. We pick the session id up front (--session-id),
+// Claude Code: the CLI GridHive was built around. We pick the session id up front (--session-id),
 // resume with --resume, get status from HTTP hooks (--settings) and add the agentarmy MCP tools.
 // Resolved once per setting value (and AGENTARMY_CLAUDE_PATH), not at every launch
 let cached: { key: string; path: string } | null = null;

@@ -336,7 +336,7 @@ function agentLines(a: RecapAgent): string[] {
 
 export function recapMarkdown(recap: Recap): string {
   const t = recap.totals;
-  const out: string[] = [`# AgentArmy recap · ${prettyDate(recap.date)}`, ''];
+  const out: string[] = [`# GridHive recap · ${prettyDate(recap.date)}`, ''];
   if (!recap.projects.length && !recap.openActions.length) {
     out.push('No agent activity was recorded on this day.');
     return out.join('\n');

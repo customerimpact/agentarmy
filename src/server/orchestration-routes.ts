@@ -72,7 +72,7 @@ function registerTools(manager: ConsoleManager, jobs: JobService, inbox: ActionI
   registerBridgeTool({
     name: 'list_agents',
     description:
-      'List the other Claude Code agents on the AgentArmy board, nearest to you first. ' +
+      'List the other Claude Code agents on the GridHive board, nearest to you first. ' +
       'Each entry has the name to use with send_job, its status (idle/resting = free, working = busy, ' +
       'needs_you = waiting on the user, starting/suspended/exited = cannot take jobs), role, project folder, model, ' +
       'and the distance in board pixels. When the user says "the agents closest to you", use this order.',
@@ -130,7 +130,7 @@ function registerTools(manager: ConsoleManager, jobs: JobService, inbox: ActionI
   registerBridgeTool({
     name: 'report_job',
     description:
-      'Report the result of a job another agent sent you (a prompt that started with "[AgentArmy job ...]"). ' +
+      'Report the result of a job another agent sent you (a prompt that started with "[GridHive job ...]"). ' +
       'Call it once when you are finished, with the job_id from that prompt and a short summary of what you did ' +
       'or found. The result is typed back to the agent that sent the job.',
     inputSchema: {
@@ -167,7 +167,7 @@ function registerTools(manager: ConsoleManager, jobs: JobService, inbox: ActionI
   registerBridgeTool({
     name: 'request_user_action',
     description:
-      'Put an item in the user\'s AgentArmy action inbox when you need a human: an approval, a credential or ' +
+      'Put an item in the user\'s GridHive action inbox when you need a human: an approval, a credential or ' +
       'secret, a decision between options, or something only they can do (log in, pay, review). ' +
       'Say exactly what you need in the title. Do not use it for routine progress updates.',
     inputSchema: {

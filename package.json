@@ -1,5 +1,5 @@
 {
-  "name": "agentarmy",
+  "name": "gridhive",
   "version": "0.0.3",
   "description": "Free, open-source board for running many Claude Code agents in parallel, in your browser.",
   "license": "MIT",
@@ -13,7 +13,7 @@
   },
   "type": "module",
   "bin": {
-    "agentarmy": "dist/cli.js"
+    "gridhive": "dist/cli.js"
   },
   "files": [
     "dist",

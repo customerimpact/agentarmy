@@ -88,7 +88,7 @@ describe('formatting', () => {
     expect(err.priority).toBe('default');
     expect(err.tags).toEqual(['warning']);
     expect(err.title).toBe('Bex hit an error');
-    expect(err.body).toMatch(/Open AgentArmy/);
+    expect(err.body).toMatch(/Open GridHive/);
     expect(err.click).toBe('http://127.0.0.1:1/?view=console&id=c%202');
     const req = formatNtfyMessage(action({ kind: 'request', consoleId: null, title: 'Add API key', detail: 'for Stripe' }), { port: 1 });
     expect(req.title).toBe('An agent asks for something');
@@ -172,6 +172,6 @@ describe('NtfyNotifier', () => {
     await expect(notifier.sendTest()).rejects.toThrow(/No ntfy topic/);
     settings.patch({ ntfyTopic: TOPIC });
     await notifier.sendTest();
-    expect(fetchMock.mock.calls[0][1].headers.Title).toBe('AgentArmy test');
+    expect(fetchMock.mock.calls[0][1].headers.Title).toBe('GridHive test');
   });
 });

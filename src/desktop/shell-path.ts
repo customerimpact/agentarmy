@@ -54,7 +54,7 @@ export function loadShellPath(env: NodeJS.ProcessEnv = process.env): void {
     });
     fromShell = parseShellPath(output);
   } catch (err) {
-    console.warn(`[agentarmy] could not read PATH from ${shell}: ${(err as Error).message}`);
+    console.warn(`[gridhive] could not read PATH from ${shell}: ${(err as Error).message}`);
   }
   env.PATH = mergePath(fromShell, env.PATH, commonBinDirs(env.HOME || os.homedir()).join(':'));
 }

@@ -92,7 +92,7 @@ export class AgentArmyServer {
         reject(new Error(`Server did not print its URL within 30s. Output:\n${this.output}`));
       }, 30_000);
       const check = () => {
-        const match = /AgentArmy is running: (http:\/\/[^\s]+)/.exec(this.output);
+        const match = /GridHive is running: (http:\/\/[^\s]+)/.exec(this.output);
         if (!match) return;
         clearTimeout(timer);
         proc.stdout!.off('data', check);

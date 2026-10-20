@@ -732,7 +732,7 @@ function PortControl() {
 }
 
 function TokenBelow() {
-  return <CopyValue value="npx agentarmy --new-token" />;
+  return <CopyValue value="npx gridhive --new-token" />;
 }
 
 function resetEverything(): void {
@@ -788,7 +788,7 @@ function AboutControl() {
 
 const SETTINGS: SettingDef[] = [
   { id: 'theme', section: 'appearance', label: 'Theme', description: 'Colors for the board, panels and terminals.', keywords: 'appearance color colour dark light ember midnight aurora paper look', Below: ThemeCards },
-  { id: 'startup', section: 'general', label: 'On startup', description: 'What to do with saved conversations when AgentArmy starts.', keywords: 'resume restore relaunch reopen launch boot', Control: StartupControl },
+  { id: 'startup', section: 'general', label: 'On startup', description: 'What to do with saved conversations when GridHive starts.', keywords: 'resume restore relaunch reopen launch boot', Control: StartupControl },
   { id: 'sidebar-tab', section: 'general', label: 'Sidebar opens on', description: 'The tab shown when the app loads.', keywords: 'default tab panel start', Control: SidebarTabControl },
 
   { id: 'account-auto-switch', section: 'agents', group: 'Claude: when an account hits its limit', label: 'Auto-switch accounts', description: 'Move an agent that hits its plan limit to another account you own and resume its conversation there. Only use accounts you are entitled to, and check Anthropic’s terms: using extra accounts to get around usage limits may not be allowed.', keywords: 'limit rate usage switch fallback failover weekly session 5-hour', Control: AutoSwitchControl, Below: AutoSwitchBelow },

@@ -7,7 +7,7 @@ import type { AgentAdapter } from './types.js';
 // github.com/xai-org/grok-build, Apache-2.0). Not installed on the dev machine, so nothing here was run;
 // flags come from docs.x.ai/build (headless-scripting, settings/reference, mcp-servers, hooks), 2026-10:
 // - Auth: browser sign-in on first run (SuperGrok / X Premium+ subscription), or XAI_API_KEY
-//   ("API key when not using browser/session login"). AgentArmy only sets XAI_API_KEY when the user
+//   ("API key when not using browser/session login"). GridHive only sets XAI_API_KEY when the user
 //   saved a key in Settings (providerKeys.grok); otherwise the CLI's own login (or an XAI_API_KEY the
 //   user already exports) is used.
 // - `-m, --model <MODEL>` picks the model; `-c, --continue` continues the most recent session in the
@@ -15,7 +15,7 @@ import type { AgentAdapter } from './types.js';
 //   learn the session id from the TUI.
 // - MCP servers and hooks are only read from config files (~/.grok/config.toml [mcp_servers.*],
 //   .grok/config.toml, ~/.grok/hooks/*.json, plus Claude/Cursor compat files). There is no per-run flag
-//   or env var to add one, and AgentArmy never writes the user's or the project's config, so Grok
+//   or env var to add one, and GridHive never writes the user's or the project's config, so Grok
 //   consoles get no agentarmy MCP tools and status comes from terminal output heuristics.
 //   (GROK_HOME would relocate config but also the login, sessions and skills.)
 // - The community `grok-dev` / @vibe-kit/grok-cli (superagent-ai) also installs a `grok` binary; it

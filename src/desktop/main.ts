@@ -1,4 +1,4 @@
-// AgentArmy desktop app (Electron main process). It runs the same Fastify server as `npx agentarmy`
+// GridHive desktop app (Electron main process). It runs the same Fastify server as `npx gridhive`
 // in-process (or attaches to a CLI server that is already running) and shows its UI in a window.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -49,10 +49,14 @@ const SHORTCUT_LABEL = IS_MAC ? 'Cmd+Option+A' : 'Ctrl+Alt+A';
 // Started from the Finder or the Dock, the app would not find claude, codex, node or git
 if (process.platform !== 'win32') loadShellPath();
 
-app.setName('AgentArmy');
+app.setName('GridHive');
 // A custom AGENTARMY_HOME (tests, second profiles) also gets its own Chromium profile and instance lock
 if (process.env.AGENTARMY_HOME) {
   app.setPath('userData', path.join(process.env.AGENTARMY_HOME, 'desktop-profile'));
+} else {
+  // Installs from before the rename keep their profile (window size, login item, single-instance lock)
+  const legacy = path.join(app.getPath('appData'), 'AgentArmy');
+  if (fs.existsSync(legacy)) app.setPath('userData', legacy);
 }
 
 interface Backend {
@@ -113,20 +117,20 @@ async function answers(origin: string, token: string): Promise<boolean> {
 }
 
 async function connectBackend(): Promise<Backend> {
-  // `npx agentarmy` already runs on this data folder: show its board instead of fighting over state.json
+  // `npx gridhive` already runs on this data folder: show its board instead of fighting over state.json
   const lock = readLiveInstanceLock();
   if (lock) {
     const origin = `http://127.0.0.1:${lock.port}`;
     const token = readToken();
     if (token && (await answers(origin, token))) {
-      console.log(`[agentarmy] attached to the running server (pid ${lock.pid}) at ${origin}`);
+      console.log(`[gridhive] attached to the running server (pid ${lock.pid}) at ${origin}`);
       return { url: `${origin}/?token=${token}`, origin, owned: null };
     }
     const { response } = await dialog.showMessageBox({
       type: 'warning',
-      title: 'AgentArmy',
-      message: 'Another AgentArmy server seems to be running, but it does not answer.',
-      detail: `Process ${lock.pid} holds ${lockFilePath()}. Start a new server anyway? Only do this if that process is not AgentArmy.`,
+      title: 'GridHive',
+      message: 'Another GridHive server seems to be running, but it does not answer.',
+      detail: `Process ${lock.pid} holds ${lockFilePath()}. Start a new server anyway? Only do this if that process is not GridHive.`,
       buttons: ['Start a new server', 'Quit'],
       defaultId: 1,
       cancelId: 1,
@@ -136,7 +140,7 @@ async function connectBackend(): Promise<Backend> {
   }
   const port = Number(process.env.AGENTARMY_PORT) || DEFAULT_PORT;
   const handle = await startAgentArmy({ port, open: false, resumeAll: process.argv.includes('--resume-all') });
-  console.log(`AgentArmy is running: ${handle.url}`);
+  console.log(`GridHive is running: ${handle.url}`);
   return { url: handle.url, origin: new URL(handle.url).origin, owned: handle };
 }
 
@@ -212,7 +216,7 @@ function wireContents(contents: WebContents): void {
   });
   contents.on('render-process-gone', (_event, details) => {
     if (details.reason === 'clean-exit') return;
-    console.warn(`[agentarmy] renderer gone (${details.reason}), reloading`);
+    console.warn(`[gridhive] renderer gone (${details.reason}), reloading`);
     setTimeout(() => {
       if (!contents.isDestroyed()) contents.reload();
     }, 1000);
@@ -256,7 +260,7 @@ function createMainWindow(url: string): BrowserWindow {
     minWidth: 720,
     minHeight: 480,
     show: false,
-    title: 'AgentArmy',
+    title: 'GridHive',
   });
   wireContents(win.webContents);
   win.once('ready-to-show', () => {
@@ -294,8 +298,8 @@ function showCloseNoticeOnce(): void {
   desktopState.update({ closeNoticeShown: true }, { now: true });
   if (!Notification.isSupported()) return;
   new Notification({
-    title: 'AgentArmy is still running',
-    body: `Your agents keep working in the background. Open AgentArmy from the ${IS_MAC ? 'menu bar icon or the Dock' : 'tray icon'} or press ${SHORTCUT_LABEL}.`,
+    title: 'GridHive is still running',
+    body: `Your agents keep working in the background. Open GridHive from the ${IS_MAC ? 'menu bar icon or the Dock' : 'tray icon'} or press ${SHORTCUT_LABEL}.`,
     icon: path.join(ICON_DIR, 'icon.png'),
   }).show();
 }
@@ -395,7 +399,7 @@ function setUpdateState(update: UpdateState): void {
   tray?.update({ update });
   if (update.kind === 'ready' && Notification.isSupported()) {
     new Notification({
-      title: `AgentArmy ${update.version} is ready`,
+      title: `GridHive ${update.version} is ready`,
       body: 'Choose "Restart to update" in the tray menu, or it installs when you quit.',
       icon: path.join(ICON_DIR, 'icon.png'),
     }).show();
@@ -423,8 +427,8 @@ async function requestQuit(): Promise<void> {
     if (mainWindow && !mainWindow.isVisible()) showWindow(mainWindow);
     const options = {
       type: 'question' as const,
-      title: 'Quit AgentArmy',
-      message: `Quit AgentArmy? ${running} ${running === 1 ? 'agent is' : 'agents are'} running.`,
+      title: 'Quit GridHive',
+      message: `Quit GridHive? ${running} ${running === 1 ? 'agent is' : 'agents are'} running.`,
       detail: 'Agents stop and can be resumed next time.',
       buttons: ['Quit', 'Cancel'],
       defaultId: 0,
@@ -472,7 +476,7 @@ async function boot(): Promise<void> {
     backend = await connectBackend();
   } catch (err) {
     if ((err as Error).message !== 'cancelled') {
-      dialog.showErrorBox('AgentArmy could not start', `${(err as Error).message}\n\nData folder: ${agentArmyHome()}`);
+      dialog.showErrorBox('GridHive could not start', `${(err as Error).message}\n\nData folder: ${agentArmyHome()}`);
     }
     quitting = true;
     app.exit(1);
@@ -484,7 +488,7 @@ async function boot(): Promise<void> {
   mainWindow = createMainWindow(backend.url);
   createTray();
   if (!globalShortcut.register('CommandOrControl+Alt+A', toggleMainWindow)) {
-    console.warn(`[agentarmy] ${SHORTCUT_LABEL} is taken by another app; the show/hide shortcut is off`);
+    console.warn(`[gridhive] ${SHORTCUT_LABEL} is taken by another app; the show/hide shortcut is off`);
   }
   updater = startUpdater({
     onState: setUpdateState,
@@ -495,7 +499,7 @@ async function boot(): Promise<void> {
   });
 }
 
-process.on('uncaughtException', (err) => console.error('[agentarmy] uncaught exception', err));
+process.on('uncaughtException', (err) => console.error('[gridhive] uncaught exception', err));
 
 // Read-only peek for the Playwright smoke test (tests/desktop): tray state and the tray's fly-to action
 (globalThis as { __agentarmyDesktop?: unknown }).__agentarmyDesktop = {

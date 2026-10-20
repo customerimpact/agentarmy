@@ -265,7 +265,7 @@ export class ProviderFallback {
       this.fileAction(
         res.console.id,
         `${info.name} continued on ${short(agent)}: ${why}`,
-        `AgentArmy moved ${info.name} to ${AGENT_META[agent].label} with a handoff brief. You will be offered to switch back once ${short(source)} is available again.`,
+        `GridHive moved ${info.name} to ${AGENT_META[agent].label} with a handoff brief. You will be offered to switch back once ${short(source)} is available again.`,
         [{ key: 'dismiss', label: 'OK' }],
       );
       return res.console;

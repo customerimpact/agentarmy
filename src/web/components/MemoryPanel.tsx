@@ -96,7 +96,7 @@ function PushPicker({
   return (
     <div data-testid="memory-push-picker" className="flex flex-col gap-2 rounded-lg border border-line bg-surface p-3">
       <p className="text-[12px] text-fg-muted">
-        Types <span className="font-mono text-fg">Project memory (from AgentArmy):</span> and this memory into each agent you pick.
+        Types <span className="font-mono text-fg">Project memory (from GridHive):</span> and this memory into each agent you pick.
       </p>
       <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
         {ordered.map((c) => {

@@ -129,7 +129,7 @@ export function App() {
     return (
       <div className="grid h-full place-items-center p-6 text-center">
         <div>
-          <p className="text-[15px] font-semibold text-fg">Could not reach the AgentArmy server</p>
+          <p className="text-[15px] font-semibold text-fg">Could not reach the GridHive server</p>
           <p className="mt-1 text-fg-muted">{error}</p>
           <button
             type="button"

@@ -36,7 +36,7 @@ function oneLine(text: string): string {
 
 export function jobPrompt(job: Job, senderName: string): string {
   return [
-    `[AgentArmy job ${shortJobId(job.id)} from ${senderName}] ${job.title}`,
+    `[GridHive job ${shortJobId(job.id)} from ${senderName}] ${job.title}`,
     job.message,
     '',
     `When finished, call the agentarmy report_job tool with job_id "${job.id}" and a short result.`,
@@ -156,7 +156,7 @@ export class JobService {
     const verb = status === 'done' ? 'finished' : 'could not finish';
     this.notifySender(
       job,
-      `[AgentArmy] ${worker} ${verb} "${job.title}" (job ${shortJobId(job.id)}): ${clip(oneLine(result) || '(no result given)', MAX_NOTE_RESULT)}`,
+      `[GridHive] ${worker} ${verb} "${job.title}" (job ${shortJobId(job.id)}): ${clip(oneLine(result) || '(no result given)', MAX_NOTE_RESULT)}`,
     );
     return job;
   }
@@ -178,7 +178,7 @@ export class JobService {
         const prompt = typeof payload.prompt === 'string' ? payload.prompt : '';
         // Prefer the job whose header is in the prompt; fall back to the oldest one sent
         const job =
-          waiting.find((j) => prompt.includes(`[AgentArmy job ${shortJobId(j.id)}`)) ?? waiting[0];
+          waiting.find((j) => prompt.includes(`[GridHive job ${shortJobId(j.id)}`)) ?? waiting[0];
         this.update(job, { status: 'working' });
         return;
       }
@@ -191,7 +191,7 @@ export class JobService {
           const worker = this.manager.get(consoleId)?.name ?? 'An agent';
           this.notifySender(
             job,
-            `[AgentArmy] ${worker} ended its turn on "${job.title}" (job ${shortJobId(job.id)}) without calling report_job.${last ? ` Its last message: ${clip(oneLine(last), MAX_NOTE_RESULT)}` : ''}`,
+            `[GridHive] ${worker} ended its turn on "${job.title}" (job ${shortJobId(job.id)}) without calling report_job.${last ? ` Its last message: ${clip(oneLine(last), MAX_NOTE_RESULT)}` : ''}`,
           );
         }
         return;

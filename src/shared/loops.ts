@@ -45,7 +45,7 @@ export function parseGoalVerdict(text: string | undefined | null): boolean | nul
 export function goalInstruction(loopName: string, goal: Extract<LoopGoal, { kind: 'agent' }>): string {
   const what = goal.description?.trim() || 'the goal of this loop is reached';
   return (
-    `[AgentArmy loop "${loopName}"] When you finish, end your reply with the exact words ` +
+    `[GridHive loop "${loopName}"] When you finish, end your reply with the exact words ` +
     `"GOAL MET" if ${what}, otherwise end it with "GOAL NOT MET".`
   );
 }

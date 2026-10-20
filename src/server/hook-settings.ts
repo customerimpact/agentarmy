@@ -81,7 +81,7 @@ export function writeSettingsFile(consoleId: string, port: number, token: string
   fs.mkdirSync(dir, { recursive: true });
   const script = ensureForwarder(dir);
   const file = path.join(dir, `${consoleId}.settings.json`);
-  // Desktop app on Windows: AgentArmy.exe is not node, so PowerShell relays the payload instead
+  // Desktop app on Windows: GridHive.exe is not node, so PowerShell relays the payload instead
   const powershell =
     isElectron() && process.platform === 'win32'
       ? ensureScript(path.join(dir, 'forward-hook.ps1'), POWERSHELL_FORWARDER_SOURCE)

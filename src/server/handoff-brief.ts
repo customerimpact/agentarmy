@@ -232,7 +232,7 @@ function relPath(file: string, cwd: string): string {
 const TODO_MARK: Record<TodoStatus, string> = { completed: '[x]', in_progress: '[~]', pending: '[ ]' };
 
 export function handoffHeader(fromName: string): string {
-  return `[AgentArmy handoff from ${fromName}]`;
+  return `[GridHive handoff from ${fromName}]`;
 }
 
 export function buildQuickBrief(input: QuickBriefInput): string {

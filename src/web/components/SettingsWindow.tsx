@@ -51,8 +51,8 @@ const aliased = (key: string | null): string | null => (key ? (ALIASES[key] ?? k
 const SUBTITLES: Record<string, string> = {
   general: 'Startup behaviour and the sidebar.',
   agents: 'Agent CLIs, their logins and accounts.',
-  appearance: 'How AgentArmy looks in this browser.',
-  notifications: 'How AgentArmy tells you an agent needs you or is stuck.',
+  appearance: 'How GridHive looks in this browser.',
+  notifications: 'How GridHive tells you an agent needs you or is stuck.',
   board: 'Snapping, layout and motion on the canvas.',
   terminals: 'Text and scrollback of every console.',
   claude: 'Defaults for the claude command each console runs.',
@@ -264,7 +264,7 @@ function Profile() {
         <img src="/icon.svg" alt="" className="size-5" />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-[13px] leading-[18px] font-semibold text-fg">AgentArmy</span>
+        <span className="block truncate text-[13px] leading-[18px] font-semibold text-fg">GridHive</span>
         <span className="block truncate text-[11.5px] leading-4 text-fg-subtle" data-testid="settings-profile">
           {billing}
           {data ? ` · v${data.version}` : ''}
@@ -649,7 +649,7 @@ export function SettingsHost() {
 // /?view=settings: the same view as a full page (pop-out window or a browser tab)
 export function SettingsPage() {
   useEffect(() => {
-    document.title = 'Settings · AgentArmy';
+    document.title = 'Settings · GridHive';
   }, []);
   return (
     <div className="h-full bg-surface" data-testid="settings-page">

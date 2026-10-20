@@ -60,7 +60,7 @@ export class StateStore {
         // ignore: worst case it gets overwritten on the next save
       }
       console.warn(
-        `[agentarmy] Could not read ${this.filePath} (${String(err)}); saved as ${backup}`,
+        `[gridhive] Could not read ${this.filePath} (${String(err)}); saved as ${backup}`,
       );
       return emptyState();
     }

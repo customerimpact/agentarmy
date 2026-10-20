@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 // Desktop app smoke test (Electron). Runs dist/desktop/main.js with the repo's Electron, or a packaged
-// build when DESKTOP_EXE points at AgentArmy.exe (e.g. release/win-unpacked/AgentArmy.exe).
+// build when DESKTOP_EXE points at GridHive.exe (e.g. release/win-unpacked/GridHive.exe).
 // Uses a temp AGENTARMY_HOME, a free port and the fake Claude CLI: never the real board or claude.
 export default defineConfig({
   testDir: 'tests/desktop',

@@ -148,7 +148,7 @@ export function Sidebar() {
     >
       <div className="flex h-12 shrink-0 items-center gap-2 border-b border-line pr-2 pl-4">
         <img src="/icon.svg" alt="" className="size-5" />
-        <span className="font-semibold tracking-tight text-fg">AgentArmy</span>
+        <span className="font-semibold tracking-tight text-fg">GridHive</span>
         <span className="ml-auto" />
         <AccountSwitcherChip />
         <button

@@ -56,7 +56,7 @@ describe('SwitchAgentService', () => {
     expect(manager.get('ada')!.layout.x).toBe(100 + 600 + 40);
     expect(manager.get('ada')!.status).toBe('suspended');
     expect(res.job).toMatchObject({ fromId: 'ada', toId: target.id, kind: 'handoff', status: 'sent', title: 'Switch: Ada Claude → Codex' });
-    expect(res.brief).toContain('[AgentArmy handoff from Ada]');
+    expect(res.brief).toContain('[GridHive handoff from Ada]');
     expect(res.brief).toContain('continuing this work in Codex CLI (switched from Claude Code)');
     expect(res.brief.endsWith('Continue the task.')).toBe(true);
     expect(typed).toEqual([]); // not ready yet

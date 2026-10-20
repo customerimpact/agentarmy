@@ -191,7 +191,7 @@ describe('worktree lifecycle', () => {
   it('discard refuses branches it did not make and the main checkout', async () => {
     await expect(
       discardWorktree({ repoRoot: repo, branch: 'main', baseRef: 'main', worktree: path.join(tmp, 'x') }),
-    ).rejects.toThrow(/not made by AgentArmy/);
+    ).rejects.toThrow(/not made by GridHive/);
     await expect(
       discardWorktree({ repoRoot: repo, branch: 'agentarmy/x', baseRef: 'main', worktree: repo }),
     ).rejects.toThrow(/main checkout/);
