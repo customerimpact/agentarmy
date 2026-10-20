@@ -71,3 +71,15 @@ describe('CloudLink', () => {
     expect((await offline.start()).error).toMatch(/Could not reach site.test/);
   });
 });
+
+describe('CloudLink with a provider', () => {
+  it('opens GitHub sign-in that returns to the link page with the code', async () => {
+    const opened: string[] = [];
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify({ deviceCode: 'dc', userCode: 'ABCD-EFGH', verifyUrl: 'https://site.test/link?code=ABCD-EFGH', interval: 3, expiresIn: 600 }))) as typeof fetch;
+    const cloud = new CloudLink({ filePath: null, baseUrl: 'https://site.test', fetchImpl, openUrl: (u) => opened.push(u) });
+    await cloud.start('PC', 'github');
+    cloud.cancel(false);
+    expect(opened).toEqual(['https://site.test/api/auth/signin/github?next=%2Flink%3Fcode%3DABCD-EFGH']);
+  });
+});

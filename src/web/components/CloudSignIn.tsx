@@ -4,6 +4,7 @@ import type { CloudStatus } from '../../shared/protocol';
 import { cloudApi, promptSkipped, skipPrompt, useCloud } from '../lib/cloud';
 import { useBoard } from '../lib/store';
 import { Modal } from './Modal';
+import { SignInButtons } from './SignInButtons';
 
 const toast = (message: string) => useBoard.getState().toast(message);
 
@@ -20,7 +21,7 @@ function PendingStep({ status }: { status: CloudStatus }) {
   if (!status.pending) return null;
   return (
     <div className="space-y-3 text-center" data-testid="cloud-pending">
-      <p className="text-fg-muted">We opened gridhive.dev in your browser. Sign in there and check that the code matches:</p>
+      <p className="text-fg-muted">Your browser is open. Sign in there, then check that the code matches and click Link this computer:</p>
       <p className="font-mono text-[26px] font-semibold tracking-[0.15em] text-fg" data-testid="cloud-code">
         {status.pending.userCode}
       </p>
@@ -85,14 +86,7 @@ export function CloudSignInPrompt() {
           <PendingStep status={status} />
         ) : (
           <div className="space-y-2">
-            <button
-              type="button"
-              data-testid="cloud-signin"
-              onClick={() => void run(cloudApi.link)}
-              className="aa-btn-primary flex w-full items-center justify-center gap-2 rounded-xl py-2.5 font-semibold"
-            >
-              Sign in with GitHub or Google
-            </button>
+            <SignInButtons />
             {status.error && <p className="text-center text-[12.5px] text-error">{status.error}</p>}
           </div>
         )}
@@ -138,13 +132,7 @@ export function CloudAccountBelow() {
   }
   return (
     <div className="space-y-1.5">
-      <button
-        type="button"
-        onClick={() => void run(cloudApi.link)}
-        className="rounded-lg border border-line-strong px-3 py-1.5 text-[12.5px] font-medium text-fg hover:border-accent/60 hover:text-accent"
-      >
-        Sign in with GitHub or Google
-      </button>
+      <SignInButtons compact />
       {status.error && <p className="text-[12px] text-error">{status.error}</p>}
     </div>
   );

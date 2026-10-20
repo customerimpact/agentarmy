@@ -15,6 +15,7 @@ import type { ShareConsole, ShareCursor } from '../../shared/share-crypto';
 import type { ConsoleStatus } from '../../shared/protocol';
 import { FRAME_PADDING, FRAME_TITLE_HEIGHT } from '../../shared/templates';
 import { BrandIcon, type BrandAgent } from '../components/brand-icons';
+import { GitHubMark, GoogleMark } from '../components/provider-marks';
 import { STATUS_META, projectColorVar } from '../lib/status';
 import { terminalTheme } from '../lib/theme';
 import { shareId, takeKey, useViewer, viewerLink } from './viewer-link';
@@ -63,8 +64,12 @@ export function ViewerApp() {
           <h1 className="text-[20px] font-semibold text-fg">{owner ? `${owner} shared a board with you` : 'A shared GridHive board'}</h1>
           <p className="text-fg-muted">Sign in to watch it live. You only need a free GridHive account; nothing to install.</p>
           <div className="grid gap-2 pt-2">
-            <a className="aa-btn-primary rounded-xl py-2.5 font-semibold" href={`/api/auth/signin/github?next=${next}`}>Continue with GitHub</a>
-            <a className="rounded-xl border border-line-strong py-2.5 font-semibold text-fg" href={`/api/auth/signin/google?next=${next}`}>Continue with Google</a>
+            <a className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#24292f] py-2.5 font-semibold text-white ring-1 ring-white/10 hover:bg-[#32383f]" href={`/api/auth/signin/github?next=${next}`}>
+              <GitHubMark /> Continue with GitHub
+            </a>
+            <a className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#dadce0] bg-white py-2.5 font-medium text-[#1f1f1f] hover:bg-[#f8f9fa]" href={`/api/auth/signin/google?next=${next}`}>
+              <GoogleMark /> Continue with Google
+            </a>
           </div>
         </>
       )}

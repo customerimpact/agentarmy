@@ -71,7 +71,8 @@ export class CloudLink extends EventEmitter {
     return this.file ? { deviceId: this.file.deviceId, deviceSecret: this.file.deviceSecret } : null;
   }
 
-  async start(name = os.hostname()): Promise<CloudStatus> {
+  // provider: open GitHub or Google sign-in straight away; it returns to the link page with the code
+  async start(name = os.hostname(), provider?: 'github' | 'google'): Promise<CloudStatus> {
     this.cancel(false);
     this.error = undefined;
     try {
@@ -90,7 +91,8 @@ export class CloudLink extends EventEmitter {
         expiresAt: this.now() + data.expiresIn * 1000,
         timer: null,
       };
-      this.openUrl(data.verifyUrl);
+      const linkPath = new URL(data.verifyUrl).pathname + new URL(data.verifyUrl).search;
+      this.openUrl(provider ? `${this.baseUrl}/api/auth/signin/${provider}?next=${encodeURIComponent(linkPath)}` : data.verifyUrl);
       this.schedule(Math.max(1, data.interval) * 1000);
     } catch (err) {
       this.error = `Could not reach ${new URL(this.baseUrl).host}: ${(err as Error).message}`;
@@ -195,7 +197,10 @@ export function registerCloudRoutes(
   app.addHook('onClose', async () => cloud.cancel(false));
 
   app.get('/api/cloud', async () => cloud.status());
-  app.post('/api/cloud/link', async () => cloud.start());
+  app.post('/api/cloud/link', async (request) => {
+    const provider = (request.body as { provider?: unknown } | undefined)?.provider;
+    return cloud.start(undefined, provider === 'github' || provider === 'google' ? provider : undefined);
+  });
   app.post('/api/cloud/cancel', async () => {
     cloud.cancel();
     return cloud.status();

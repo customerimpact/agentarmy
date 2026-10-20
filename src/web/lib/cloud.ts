@@ -8,7 +8,7 @@ const SKIP_KEY = 'gridhive.signinPrompt';
 
 export const cloudApi = {
   status: () => request<CloudStatus>('GET', '/api/cloud'),
-  link: () => request<CloudStatus>('POST', '/api/cloud/link'),
+  link: (provider?: 'github' | 'google') => request<CloudStatus>('POST', '/api/cloud/link', provider ? { provider } : {}),
   cancel: () => request<CloudStatus>('POST', '/api/cloud/cancel'),
   unlink: () => request<CloudStatus>('POST', '/api/cloud/unlink'),
 };

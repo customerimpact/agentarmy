@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Check, Copy, Eye, Link2, LoaderCircle, Share2, X } from 'lucide-react';
 import { useViewport } from '@xyflow/react';
-import { cloudApi, useCloud } from '../lib/cloud';
+import { useCloud } from '../lib/cloud';
 import { guestsOnline, shareApi, useShare } from '../lib/share';
 import { useBoard } from '../lib/store';
 import { Modal } from './Modal';
+import { SignInButtons } from './SignInButtons';
 
 const EXPIRY = [
   { label: '1 hour', hours: 1 },
@@ -93,13 +94,7 @@ export function ShareDialog() {
               Confirm code <span className="font-mono font-semibold">{cloud.pending.userCode}</span> in your browser…
             </p>
           ) : (
-            <button
-              type="button"
-              onClick={() => void cloudApi.link().then((s) => useCloud.getState().receive(s))}
-              className="aa-btn-primary rounded-lg px-3 py-1.5 font-semibold"
-            >
-              Sign in with GitHub or Google
-            </button>
+            <SignInButtons compact />
           )}
         </div>
       ) : (

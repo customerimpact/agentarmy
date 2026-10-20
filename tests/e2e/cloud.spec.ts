@@ -11,6 +11,9 @@ test('first start asks to sign in, Skip hides it for good, and sign-in errors ar
     await page.goto(server.url);
     const prompt = page.getByTestId('cloud-prompt');
     await expect(prompt).toBeVisible();
+    await expect(prompt.getByTestId('cloud-signin')).toContainText('Continue with GitHub');
+    await expect(prompt.getByTestId('cloud-signin-google')).toContainText('Continue with Google');
+    if (process.env.CLOUD_SHOT) await page.screenshot({ path: process.env.CLOUD_SHOT });
     await prompt.getByTestId('cloud-signin').click();
     await expect(prompt).toContainText('Could not reach 127.0.0.1:9');
     await prompt.getByTestId('cloud-skip').click();
