@@ -66,6 +66,9 @@ export class AgentArmyServer {
       ...(process.env as Record<string, string>),
       AGENTARMY_CLAUDE_PATH: FAKE_CLAUDE_SHIM,
       AGENTARMY_HOME: path.join(options.home, '.agentarmy'),
+      // No first-start sign-in prompt, and never talk to the real gridhive.dev
+      AGENTARMY_NO_SIGNIN_PROMPT: '1',
+      GRIDHIVE_CLOUD_URL: 'http://127.0.0.1:9',
       HOME: options.home,
       USERPROFILE: options.home,
       FAKE_CLAUDE_DELAY_MS: '1500',

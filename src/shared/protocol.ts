@@ -614,7 +614,21 @@ export type ServerMessage =
   | { type: 'loop-removed'; id: string }
   | { type: 'drawings'; upsert: Shape[]; remove: string[]; origin?: string } // see src/shared/drawings.ts
   | { type: 'device-handoff'; consoleId: string; to: DeviceTarget } // "Continue on computer / on phone"
-  | { type: 'phone'; phone: PhoneStatus }; // phone access switched, paired or a phone came online
+  | { type: 'phone'; phone: PhoneStatus } // phone access switched, paired or a phone came online
+  | { type: 'cloud'; cloud: CloudStatus }; // account link started, confirmed, expired or removed
+
+// ---------- GridHive account (src/server/cloud.ts) ----------
+// GET /api/cloud -> CloudStatus; POST /api/cloud/link | /api/cloud/cancel | /api/cloud/unlink -> CloudStatus
+
+export interface CloudStatus {
+  linked: boolean;
+  user?: { email: string; name: string | null };
+  linkedAt?: number;
+  pending?: { userCode: string; verifyUrl: string; expiresAt: number }; // waiting for the browser
+  error?: string;
+  promptDisabled: boolean; // tests: no first-start sign-in prompt
+  site: string; // https://gridhive.dev
+}
 
 // ---------- Phone on Wi-Fi (src/server/phone) ----------
 // A second, opt-in listener (0.0.0.0:<port>, default 4318) serves the phone page and an allow-listed

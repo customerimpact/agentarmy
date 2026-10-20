@@ -38,6 +38,7 @@ import { registerPauseRoutes } from './pause.js';
 import { CustomTemplates, registerComposerRoutes } from './composer.js';
 import { registerLoopRoutes } from './loops.js';
 import { registerPhoneRoutes } from './phone/phone-routes.js';
+import { registerCloudRoutes } from './cloud.js';
 import type { HookPayload } from './hook-status.js';
 import { parseClientMessage } from './client-message.js';
 import {
@@ -268,6 +269,8 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
       for (const c of consoles) recap.record('loop', c.id, { id: loop.id, text: loop.name });
     },
   });
+
+  registerCloudRoutes(app, { dataDir: settings.filePath ? path.dirname(settings.filePath) : null, broadcast });
 
   registerPhoneRoutes(app, {
     manager,

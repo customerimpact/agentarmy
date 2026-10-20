@@ -51,6 +51,8 @@ test.beforeAll(async () => {
   env = {
     ...(process.env as Record<string, string>),
     AGENTARMY_HOME: dataDir,
+    AGENTARMY_NO_SIGNIN_PROMPT: '1',
+    GRIDHIVE_CLOUD_URL: 'http://127.0.0.1:9',
     AGENTARMY_PORT: String(port),
     AGENTARMY_CLAUDE_PATH: FAKE_CLAUDE_SHIM,
     AGENTARMY_DISABLE_UPDATES: '1',

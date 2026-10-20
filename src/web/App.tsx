@@ -35,6 +35,8 @@ import { LoopsHost } from './components/LoopsDialog';
 import { Toolbar } from './components/Toolbar';
 import { openPendingRecipe } from './lib/recipe-link';
 import { usePhoneAccess } from './lib/phone-access';
+import { useCloud } from './lib/cloud';
+import { CloudSignInPrompt } from './components/CloudSignIn';
 
 // ?view=console|project|focus opens a pop-out window instead of the full board (see lib/views.ts)
 const VIEW = parseView(window.location.search);
@@ -75,6 +77,7 @@ function Shell() {
       {loaded && <HandoffMemoryHost />}
       <SettingsHost />
       <ConfirmDialog />
+      {loaded && !SETTINGS_PAGE && <CloudSignInPrompt />}
     </div>
   );
 }
@@ -105,6 +108,7 @@ export function App() {
           startDesktopBoard();
           openPendingRecipe();
           void usePhoneAccess.getState().load();
+          void useCloud.getState().load();
         } else {
           startPopoutPresence(VIEW);
         }

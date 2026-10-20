@@ -28,6 +28,7 @@ import { useBoard } from '../lib/store';
 import { DEFAULT_THEME, THEMES, setTheme, useTheme } from '../lib/theme';
 import { NtfyBelow } from './settings/NtfySetting';
 import { PhoneAccessBelow, PhoneAccessControl } from './settings/PhoneSetting';
+import { CloudAccountBelow } from './CloudSignIn';
 import { AutoSwitchBelow, AutoSwitchControl, NewAgentAccountControl, PriorityBelow } from './settings/AccountsSettings';
 import { ProvidersHubBelow } from './settings/ProvidersSettings';
 import { UsersRound } from 'lucide-react';
@@ -805,6 +806,7 @@ const SETTINGS: SettingDef[] = [
   { id: 'long-turn-minutes', section: 'notifications', label: 'Long turn after', description: 'One turn running longer than this.', keywords: 'stuck slow duration timeout minutes', Control: minutesStepper('longTurnMinutes', 'Long turn after', 5, 480, 5) },
   { id: 'discord', section: 'notifications', label: 'Discord', description: 'Post to a Discord channel when an agent needs you (channel webhook, max one per agent every 30 s).', keywords: 'webhook chat message phone remote', Below: () => <WebhookBelow kind="discord" /> },
   { id: 'recap-send', section: 'notifications', label: 'Daily recap', description: 'Post the end-of-day recap (Progress › Recap) to Slack / Discord at a set time.', keywords: 'summary report digest end of day schedule webhook', Control: RecapSendControl, Below: RecapSendBelow },
+  { id: 'cloud-account', section: 'general', label: 'GridHive account', description: 'Link this computer to your free gridhive.dev account (GitHub or Google). Needed for your phone from anywhere; everything else works without it.', keywords: 'account sign in login signin link github google cloud', Below: CloudAccountBelow },
   { id: 'phone-access', section: 'notifications', label: 'Phone on this Wi-Fi', description: 'Follow, answer and launch agents from your phone on the same network, and pass a session between phone and computer. Agents keep running here.', keywords: 'phone mobile remote wifi lan qr pair handoff launch iphone android', Control: PhoneAccessControl, Below: PhoneAccessBelow },
   { id: 'ntfy', section: 'notifications', label: 'Phone (ntfy)', description: 'Push to your phone with the free ntfy app, no account needed (max one per agent every 30 s).', keywords: 'phone mobile push ntfy android ios iphone remote qr', Below: NtfyBelow },
 
