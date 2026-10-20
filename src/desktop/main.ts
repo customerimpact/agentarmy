@@ -31,6 +31,7 @@ import {
   type TitleBarColors,
 } from '../shared/desktop-api';
 import { DesktopTray, needsYouText, type UpdateState } from './tray';
+import { loadShellPath } from './shell-path';
 import { startUpdater, type Updater } from './updater';
 import { DesktopStateFile, restoreBounds } from './window-state';
 
@@ -42,6 +43,11 @@ const ICON_DIR = app.isPackaged ? path.join(process.resourcesPath, 'icons') : pa
 const VERSION = packageVersion();
 const PAUSE_MS = 60 * 60 * 1000;
 const DEFAULT_TITLE_BAR: TitleBarColors = { color: '#141110', symbolColor: '#e9e2da' };
+const IS_MAC = process.platform === 'darwin';
+const SHORTCUT_LABEL = IS_MAC ? 'Cmd+Option+A' : 'Ctrl+Alt+A';
+
+// Started from the Finder or the Dock, the app would not find claude, codex, node or git
+if (process.platform !== 'win32') loadShellPath();
 
 app.setName('AgentArmy');
 // A custom AGENTARMY_HOME (tests, second profiles) also gets its own Chromium profile and instance lock
@@ -158,7 +164,10 @@ function windowOptions(): BrowserWindowConstructorOptions {
   return {
     backgroundColor: titleBar.color,
     titleBarStyle: 'hidden',
-    titleBarOverlay: { ...titleBar, height: DESKTOP_TITLE_BAR_HEIGHT },
+    // macOS draws its traffic lights over the left end of our title strip, Windows its buttons on the right
+    ...(IS_MAC
+      ? { trafficLightPosition: { x: 12, y: (DESKTOP_TITLE_BAR_HEIGHT - 14) / 2 } }
+      : { titleBarOverlay: { ...titleBar, height: DESKTOP_TITLE_BAR_HEIGHT } }),
     icon: path.join(ICON_DIR, process.platform === 'win32' ? 'icon.ico' : 'icon.png'),
     autoHideMenuBar: true,
     webPreferences: {
@@ -193,7 +202,7 @@ function wireContents(contents: WebContents): void {
   contents.on('before-input-event', (event, input) => {
     if (input.type !== 'keyDown') return;
     const key = input.key.toLowerCase();
-    if (key === 'f12' || (input.control && input.shift && key === 'i')) {
+    if (key === 'f12' || (input.control && input.shift && key === 'i') || (input.meta && input.alt && key === 'i')) {
       contents.toggleDevTools();
       event.preventDefault();
     } else if (input.control && input.shift && key === 'r') {
@@ -286,7 +295,7 @@ function showCloseNoticeOnce(): void {
   if (!Notification.isSupported()) return;
   new Notification({
     title: 'AgentArmy is still running',
-    body: 'Your agents keep working in the background. Open AgentArmy from the tray icon or press Ctrl+Alt+A.',
+    body: `Your agents keep working in the background. Open AgentArmy from the ${IS_MAC ? 'menu bar icon or the Dock' : 'tray icon'} or press ${SHORTCUT_LABEL}.`,
     icon: path.join(ICON_DIR, 'icon.png'),
   }).show();
 }
@@ -326,7 +335,7 @@ function registerIpc(): void {
     if (!colors || !HEX_COLOR.test(colors.color) || !HEX_COLOR.test(colors.symbolColor)) return;
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win || win.isDestroyed()) return;
-    win.setTitleBarOverlay({ color: colors.color, symbolColor: colors.symbolColor, height: DESKTOP_TITLE_BAR_HEIGHT });
+    if (!IS_MAC) win.setTitleBarOverlay({ color: colors.color, symbolColor: colors.symbolColor, height: DESKTOP_TITLE_BAR_HEIGHT });
     win.setBackgroundColor(colors.color);
     if (win === mainWindow && (colors.color !== titleBar.color || colors.symbolColor !== titleBar.symbolColor)) {
       titleBar = { color: colors.color, symbolColor: colors.symbolColor };
@@ -347,6 +356,8 @@ function registerIpc(): void {
           ? nativeImage.createFromDataURL(payload.badge)
           : null;
       mainWindow.setOverlayIcon(badge, count > 0 ? needsYouText(count) : '');
+    } else if (IS_MAC) {
+      app.dock?.setBadge(count > 0 ? String(count) : '');
     }
     if (count > previous && !mainWindow.isFocused() && Date.now() >= pausedUntil) mainWindow.flashFrame(true);
     if (count === 0) mainWindow.flashFrame(false);
@@ -448,9 +459,12 @@ function lockDownPermissions(): void {
 
 async function boot(): Promise<void> {
   // Native toasts (web Notifications too) are grouped under this id; the installer's shortcuts carry it
-  app.setAppUserModelId(APP_ID);
-  // No menu bar: frees Alt+<key>, Ctrl+R, Ctrl+W... for the board's own shortcuts
-  Menu.setApplicationMenu(null);
+  if (process.platform === 'win32') app.setAppUserModelId(APP_ID);
+  // No menu bar: frees Alt+<key>, Ctrl+R, Ctrl+W... for the board's own shortcuts. macOS always has
+  // one, and Cmd+C / Cmd+V / Cmd+Q only work through its app and Edit menus.
+  Menu.setApplicationMenu(IS_MAC ? Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }, { role: 'windowMenu' }]) : null);
+  // Dock icon clicked while the window hides
+  app.on('activate', () => showWindow(mainWindow));
   desktopState = new DesktopStateFile(path.join(app.getPath('userData'), 'desktop-state.json'));
   titleBar = desktopState.get().titleBar ?? DEFAULT_TITLE_BAR;
 
@@ -470,7 +484,7 @@ async function boot(): Promise<void> {
   mainWindow = createMainWindow(backend.url);
   createTray();
   if (!globalShortcut.register('CommandOrControl+Alt+A', toggleMainWindow)) {
-    console.warn('[agentarmy] Ctrl+Alt+A is taken by another app; the show/hide shortcut is off');
+    console.warn(`[agentarmy] ${SHORTCUT_LABEL} is taken by another app; the show/hide shortcut is off`);
   }
   updater = startUpdater({
     onState: setUpdateState,

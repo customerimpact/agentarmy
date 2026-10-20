@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { pickDesktopRelease } from './release-feed';
+import { isNewerVersion, pickDesktopRelease } from './release-feed';
 import { MAX_TRAY_ITEMS, trayMenuTemplate, trayTooltip, type TrayActions, type TrayState } from './tray-menu';
 import { DEFAULT_BOUNDS, restoreBounds } from './window-state';
 
@@ -49,6 +49,16 @@ describe('tray', () => {
     );
     expect(idle.at(-1)?.label).toBe('Quit AgentArmy');
   });
+
+  it('says "Open at login" on macOS and offers a newer download there', () => {
+    const a = actions();
+    const menu = trayMenuTemplate({ ...base, update: { kind: 'available', version: '0.0.4' } }, a, Date.now(), 'darwin');
+    const labels = menu.map((m) => m.label);
+    expect(labels).toContain('Open at login');
+    expect(labels).not.toContain('Start with Windows');
+    menu.find((m) => m.label === 'Download v0.0.4…')!.click!({} as never, undefined, {} as never);
+    expect(a.restartToUpdate).toHaveBeenCalled();
+  });
 });
 
 describe('restoreBounds', () => {
@@ -86,5 +96,24 @@ describe('pickDesktopRelease', () => {
     ]);
     expect(tag).toBe('desktop-v0.2.1');
     expect(pickDesktopRelease([{ tag_name: 'v1.0.0', draft: false, prerelease: false }])).toBeNull();
+  });
+
+  it('on macOS takes the newest release that has a disk image', () => {
+    const releases = [
+      { tag_name: 'desktop-v0.0.3', draft: false, prerelease: false, assets: [{ name: 'latest.yml' }] },
+      { tag_name: 'desktop-v0.0.2', draft: false, prerelease: false, assets: [{ name: 'AgentArmy-0.0.2-arm64.dmg' }] },
+    ];
+    expect(pickDesktopRelease(releases, 'darwin')).toBe('desktop-v0.0.2');
+    expect(pickDesktopRelease(releases, 'win32')).toBe('desktop-v0.0.3');
+  });
+});
+
+describe('isNewerVersion', () => {
+  it('compares numerically', () => {
+    expect(isNewerVersion('0.0.10', '0.0.9')).toBe(true);
+    expect(isNewerVersion('0.1.0', '0.0.9')).toBe(true);
+    expect(isNewerVersion('0.0.3', '0.0.3')).toBe(false);
+    expect(isNewerVersion('0.0.2', '0.0.3')).toBe(false);
+    expect(isNewerVersion('v1.0.0-beta.1', '0.9.0')).toBe(true);
   });
 });

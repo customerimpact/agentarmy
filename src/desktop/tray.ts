@@ -34,7 +34,7 @@ export class DesktopTray {
     if (this.tray.isDestroyed()) return;
     this.tray.setImage(this.state.count > 0 && !this.attention.isEmpty() ? this.attention : this.normal);
     this.tray.setToolTip(trayTooltip(this.state.count));
-    this.tray.setContextMenu(Menu.buildFromTemplate(trayMenuTemplate(this.state, this.actions)));
+    this.tray.setContextMenu(Menu.buildFromTemplate(trayMenuTemplate(this.state, this.actions, Date.now(), process.platform)));
   }
 
   destroy(): void {

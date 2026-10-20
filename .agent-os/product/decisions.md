@@ -1,6 +1,6 @@
 # Product Decisions Log
 
-> Last Updated: 2026-10-18
+> Last Updated: 2026-10-20
 > Version: 1.0.0
 > Override Priority: Highest
 
@@ -120,3 +120,73 @@ Electron runs Node in the main process, so the existing server, node-pty (N-API 
 - Unsigned for now: SmartScreen warns until we buy a code-signing certificate (CSC_LINK / CSC_KEY_PASSWORD)
 - Inside the app, Node child scripts need care: AgentArmy.exe only acts as Node with ELECTRON_RUN_AS_NODE (set for the MCP bridge only); the SessionStart hook relay uses PowerShell on Windows
 - macOS needs an Apple Developer account (USD 99/year, notarization) and a Mac to test
+
+## 2026-10-20: Positioning as the Control Room for Terminal Agents
+
+**ID:** DEC-004
+**Status:** Accepted
+**Category:** Product
+**Stakeholders:** Product Owner
+
+### Decision
+
+AgentArmy is the vendor-neutral, local-first control room for terminal coding agents (Claude Code, Codex, Gemini CLI, Grok Build, OpenCode), on the subscriptions users already have. We do not build a code editor and do not resell model usage. Details: @.agent-os/product/vision.md.
+
+### Context
+
+Cursor, Anthropic and OpenAI each ship multi-agent surfaces for their own agent only. Terminal-first developers have no neutral home.
+
+### Consequences
+
+**Positive:**
+- A clear reason to pick us over Cursor: keep your agents and logins, get one board for all of them
+
+**Negative:**
+- We depend on CLIs we don't control; adapters must keep up with their changes
+
+## 2026-10-20: Optional Free Account
+
+**ID:** DEC-005
+**Status:** Accepted
+**Category:** Product
+**Stakeholders:** Product Owner
+
+### Decision
+
+Users can register for a free account (GitHub or email sign-in on the website). The app keeps working fully without one. The account unlocks phone control (launch, monitor, approve, two-way handoff), sync, share links and publishing recipes.
+
+### Context
+
+The owner wants people to register. A required account would break the "no account, no cloud" promise and drive terminal users away.
+
+### Consequences
+
+**Positive:**
+- A user list and a base for a paid Team plan, without blocking anyone
+
+**Negative:**
+- We must run a hosted service (auth + an end-to-end encrypted relay): hosting costs, uptime and a privacy policy update
+
+## 2026-10-20: Ship the Mac App Unsigned
+
+**ID:** DEC-006
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Product Owner
+
+### Decision
+
+Ship Apple Silicon and Intel .dmg builds, ad-hoc signed, from the Desktop workflow on macos-latest. First launch needs System Settings → Privacy & Security → Open Anyway. The Mac app does not replace itself; it shows "Download vX" and opens the website.
+
+### Context
+
+Signing and notarization need an Apple Developer ID (USD 99/year). Squirrel.Mac (electron-updater) refuses to update an app without a real signature.
+
+### Consequences
+
+**Positive:**
+- Mac users can download from the website now, at no cost
+
+**Negative:**
+- A Gatekeeper step on first launch and manual updates until we sign
+

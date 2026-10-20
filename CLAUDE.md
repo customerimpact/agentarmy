@@ -6,6 +6,7 @@
 - **Development Roadmap:** @.agent-os/product/roadmap.md
 - **Decision History:** @.agent-os/product/decisions.md
 - **Research:** @.agent-os/product/research.md
+- **Vision:** @.agent-os/product/vision.md
 
 ### Development Standards
 - **Code Style:** @~/.agent-os/standards/code-style.md
