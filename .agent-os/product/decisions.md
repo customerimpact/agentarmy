@@ -239,3 +239,27 @@ The owner wants to launch and follow agents from the phone and hand sessions bot
 - Plain HTTP on the local network (no TLS yet): the UI tells users to use it on trusted Wi-Fi only or over a VPN
 - No lock-screen push from the page itself (needs HTTPS); ntfy covers alerts until the relay ships
 - Windows Firewall asks once to allow the app on private networks
+
+## 2026-10-20: Cloud Stack for Accounts and the Relay
+
+**ID:** DEC-009
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Product Owner
+**Related Spec:** @.agent-os/specs/2026-10-20-accounts-and-relay/
+
+### Decision
+
+Vercel hosts gridhive.dev and the account API (Auth.js: GitHub, Google, email link via Resend). Neon Postgres stores the waitlist, users, sessions and linked devices. A Cloudflare Worker with one Durable Object per account is the end-to-end encrypted relay between a user's computers and phones. A waitlist goes live first.
+
+### Context
+
+The owner picked Vercel + Neon and Cloudflare for the relay (Vercel functions cannot hold WebSockets; live terminals need them).
+
+### Consequences
+
+**Positive:**
+- Free tiers to start; the relay never sees plaintext and needs no database calls per frame
+
+**Negative:**
+- Three providers to operate; a privacy notice update for account data and waitlist emails
