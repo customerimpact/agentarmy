@@ -122,6 +122,12 @@ jobs:
           DESKTOP_EXE: ${{ github.workspace }}/release/mac-arm64/AgentArmy.app/Contents/MacOS/AgentArmy
 
       - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: desktop-test-results-macos
+          path: test-results/desktop
+
+      - uses: actions/upload-artifact@v4
         with:
           name: AgentArmy-macos
           path: release/AgentArmy-*.dmg
