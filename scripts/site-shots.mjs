@@ -24,6 +24,9 @@ const VIEW = { width: 1600, height: 1000 };
 const VIEW_W = VIEW.width;
 const VIEW_H = VIEW.height;
 const SCALE = 1.5;
+// App theme for the main shots, closest to the site's night palette; the others get one shot each
+const BASE_THEME = 'midnight';
+const OTHER_THEMES = ['ember', 'aurora', 'paper'];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -52,7 +55,7 @@ async function waitFor(fn, what, timeout = 30_000) {
 
 async function startServer(home) {
   const port = await freePort();
-  if (port === 4317) throw new Error('Refusing to use port 4317 (the live board)');
+  if (port === 4317 || port === 4318) throw new Error(`Refusing to use port ${port} (the live board or its phone access)`);
   // Only node and the OS on PATH: no real claude/codex/gemini can be detected or started
   const env = {
     ...process.env,
@@ -195,14 +198,15 @@ async function main() {
   try {
     await stage(home, server.api);
     const context = await browser.newContext({ viewport: VIEW, deviceScaleFactor: SCALE });
-    await context.addInitScript(() => {
+    // Runs in the page: the theme comes in as an argument (Node variables are not visible there)
+    await context.addInitScript((theme) => {
       try {
         if (!sessionStorage.getItem('shots-init')) {
           sessionStorage.setItem('shots-init', '1');
-          localStorage.setItem('agentarmy.theme', 'ember');
+          localStorage.setItem('agentarmy.theme', theme);
         }
       } catch {}
-    });
+    }, BASE_THEME);
     const page = await context.newPage();
     await page.goto(server.url);
     await page.getByTestId('sidebar-tab-agents').waitFor();
@@ -326,7 +330,7 @@ async function main() {
     await flyToBrowser(1);
     files.preview = await shot('preview');
 
-    for (const theme of ['midnight', 'aurora', 'paper']) {
+    for (const theme of OTHER_THEMES) {
       await page.evaluate((t) => localStorage.setItem('agentarmy.theme', t), theme);
       await page.reload();
       await page.getByTestId('sidebar-tab-agents').waitFor();
@@ -349,28 +353,41 @@ async function main() {
   }
 }
 
+// npm run site:shots -- --og-only: redraw og.png from the current hero shot
+async function ogOnly() {
+  const browser = await chromium.launch();
+  try {
+    await renderOg(browser, path.join(SHOTS, 'hero-1600.webp'));
+  } finally {
+    await browser.close();
+  }
+}
+
 // ---------- og.png (1200x630) ----------
 
 async function renderOg(browser, heroWebp) {
-  const icon = fs.readFileSync(path.join(ROOT, 'src', 'web', 'public', 'icon.svg'), 'utf8');
+  const icon = fs.readFileSync(path.join(ROOT, 'site', 'assets', 'icon.svg'), 'utf8');
   const hero = `data:image/webp;base64,${fs.readFileSync(heroWebp).toString('base64')}`;
-  const html = `<!doctype html><meta charset="utf-8"><style>
+  const html = `<!doctype html><meta charset="utf-8">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap"><style>
   *{box-sizing:border-box}html,body{margin:0;width:1200px;height:630px;overflow:hidden}
-  body{font-family:Inter,"Segoe UI",system-ui,sans-serif;color:#f5efe9;
-    background:radial-gradient(900px 520px at 20% -10%,#5a2c14 0%,rgba(90,44,20,0) 70%),
-      radial-gradient(700px 500px at 80% 110%,#3a1a0c 0%,rgba(58,26,12,0) 70%),#120d0a;position:relative}
-  body::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px);background-size:22px 22px}
-  .brand{position:absolute;left:64px;top:64px;display:flex;align-items:center;gap:18px;font-size:28px;font-weight:700;letter-spacing:-.01em}
+  body{font-family:Geist,"Segoe UI",system-ui,sans-serif;color:#f3f1ff;background:#08061a;position:relative}
+  body::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:88px 88px;
+    -webkit-mask-image:radial-gradient(ellipse 80% 80% at 30% 30%,#000 30%,transparent 85%)}
+  .aurora{position:absolute;left:-10%;right:-10%;bottom:-200px;height:460px;filter:blur(70px);opacity:.85;
+    background:radial-gradient(40% 55% at 22% 60%,rgba(105,81,224,.85),transparent 70%),radial-gradient(35% 50% at 52% 70%,rgba(143,211,255,.5),transparent 70%),radial-gradient(30% 45% at 80% 55%,rgba(244,166,215,.5),transparent 70%)}
+  .brand{position:absolute;left:64px;top:64px;display:flex;align-items:center;gap:18px;font-size:28px;font-weight:600;letter-spacing:-.02em}
   .brand svg{width:52px;height:52px;border-radius:12px}
-  h1{position:absolute;left:64px;top:150px;margin:0;font-size:68px;line-height:1.02;letter-spacing:-.035em;font-weight:800;width:560px}
-  .hl{color:#ee7f4f}
-  p{position:absolute;left:64px;top:450px;margin:0;font-size:21px;line-height:1.45;color:#cdbfb4;width:520px}
+  h1{position:absolute;left:64px;top:150px;margin:0;font-size:66px;line-height:1.02;letter-spacing:-.045em;font-weight:500;width:560px}
+  .hl{background:linear-gradient(95deg,#f4a6d7,#9d8cff 50%,#8fd3ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  p{position:absolute;left:64px;top:450px;margin:0;font-size:21px;line-height:1.45;color:#b9b4dc;width:520px}
   .chips{position:absolute;left:64px;top:532px;display:flex;gap:12px}
-  .chip{font:17px ui-monospace,"Cascadia Mono",Consolas,monospace;border:1px solid #6b3b22;background:rgba(232,119,74,.08);border-radius:999px;padding:8px 16px;color:#f2e4d8}
+  .chip{font:500 16px Geist,system-ui,sans-serif;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);border-radius:999px;padding:8px 16px;color:#f3f1ff}
   .shot{position:absolute;left:640px;top:70px;width:720px;height:620px;border-radius:14px;overflow:hidden;
-    border:1px solid #4a3326;box-shadow:0 30px 80px rgba(0,0,0,.6),0 0 0 1px rgba(232,119,74,.15)}
+    border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 80px rgba(0,0,0,.6),0 40px 120px -30px rgba(105,81,224,.7)}
   .shot img{width:960px;display:block}
   </style>
+  <div class="aurora"></div>
   <div class="brand">${icon}<span>GridHive</span></div>
   <h1>Run a team of <span class="hl">Claude Code</span> agents from one board.</h1>
   <p>Real terminals, orchestrators that hand out jobs, one inbox for every prompt.</p>
@@ -383,7 +400,7 @@ async function renderOg(browser, heroWebp) {
   await page.close();
 }
 
-main().catch((err) => {
+(process.argv.includes('--og-only') ? ogOnly() : main()).catch((err) => {
   console.error(err);
   process.exit(1);
 });
