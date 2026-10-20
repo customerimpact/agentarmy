@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Group, Scaling, X } from 'lucide-react';
+import { Group, Repeat2, Scaling, X } from 'lucide-react';
+import { openSwitchAgent } from '../lib/switch-agent';
 import { clearSelection, groupSelection, makeSameSize, nextProjectName } from '../lib/board-actions';
 import { useBoardUi } from '../lib/board-ui';
 import { useBoard } from '../lib/store';
@@ -108,6 +109,20 @@ export function SelectionBar() {
           <button type="button" className={button} onClick={() => makeSameSize()} title="Give them all the same size">
             <Scaling size={13} />
             Same size
+          </button>
+          <button
+            type="button"
+            data-testid="selection-switch-agent"
+            disabled={!consoleCount}
+            className={`${button} disabled:opacity-40`}
+            onClick={() => {
+              const s = useBoard.getState();
+              openSwitchAgent(s.selectedIds.filter((id) => s.consoles[id] && s.consoles[id].agent !== 'custom'));
+            }}
+            title="Move the selected agents to another AI (one after another, each gets a handoff brief)"
+          >
+            <Repeat2 size={13} />
+            Switch agent…
           </button>
           <MoveSelectionButton className={button} />
           <KillButton compact />

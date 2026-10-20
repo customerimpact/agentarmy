@@ -1,4 +1,5 @@
-# Desktop app packaging (Windows first). Build: npm run desktop:dist -> release/AgentArmy-Setup-<version>.exe
+# Desktop app packaging. Windows: npm run desktop:dist -> release/AgentArmy-Setup-<version>.exe
+# macOS (on a Mac): npm run desktop:dist:mac -> release/AgentArmy-<version>-arm64.dmg and -x64.dmg
 appId: com.agentarmy.app # also the AppUserModelId set in src/desktop/main.ts (native toasts)
 productName: AgentArmy
 copyright: Copyright (c) AgentArmy contributors (MIT)
@@ -20,9 +21,7 @@ files:
   - '!node_modules/node-pty/**/*.pdb'
   - '!node_modules/node-pty/**/*.test.js'
   - '!node_modules/node-pty/build/**' # a local node-gyp build; the prebuilds are what we ship
-  - '!node_modules/node-pty/prebuilds/darwin-*/**'
-  # x64 only for now; an arm64 build must keep prebuilds/win32-arm64 instead
-  - '!node_modules/node-pty/prebuilds/win32-arm64/**'
+  # Each platform drops the other platforms' prebuilds (see win.files / mac.files)
 extraMetadata:
   main: dist/desktop/main.js
   author:
@@ -51,8 +50,38 @@ win:
       arch: [x64]
   icon: build/icons/icon.ico
   artifactName: AgentArmy-Setup-${version}.${ext}
+  files:
+    - '!node_modules/node-pty/prebuilds/darwin-*/**'
+    # x64 only for now; an arm64 build must keep prebuilds/win32-arm64 instead
+    - '!node_modules/node-pty/prebuilds/win32-arm64/**'
   # Unsigned for now. To sign, set CSC_LINK (path/URL/base64 of the .pfx) and CSC_KEY_PASSWORD in the
   # environment (CI secrets); electron-builder then signs the app and installer automatically.
+
+mac:
+  # Two downloads instead of one universal app: each is half the size
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+  icon: build/icons/icon.png # 512 px; electron-builder turns it into the .icns
+  category: public.app-category.developer-tools
+  artifactName: AgentArmy-${version}-${arch}.${ext}
+  darkModeSupport: true
+  # Not signed by Apple yet (needs a USD 99/year Developer ID and notarization). Ad-hoc signing still
+  # matters: Apple Silicon refuses to run an app whose signature broke during packaging. First launch:
+  # System Settings -> Privacy & Security -> Open Anyway. Hardened runtime would reject Electron's own
+  # frameworks under an ad-hoc signature, so it is off until we sign with a real identity.
+  identity: '-'
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  notarize: false
+  files:
+    - '!node_modules/node-pty/prebuilds/win32-*/**'
+  extendInfo:
+    NSMicrophoneUsageDescription: AgentArmy uses the microphone only while you dictate a prompt. Speech is turned into text on this Mac.
+
+dmg:
+  title: AgentArmy ${version}
+  artifactName: AgentArmy-${version}-${arch}.${ext}
 
 nsis:
   oneClick: true # per-user install to %LOCALAPPDATA%\Programs, no admin prompt, no wizard

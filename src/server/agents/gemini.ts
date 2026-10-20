@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnFor } from './resolve.js';
-import { agentarmyMcpServer, assertCwd, consoleFile, detectExecutable, pathOverride, removeConsoleFile, requireExecutable } from './common.js';
+import { agentarmyMcpServer, assertCwd, consoleFile, detectExecutable, modelArgs, pathOverride, removeConsoleFile, requireExecutable } from './common.js';
 import type { AgentAdapter } from './types.js';
 
 // Google Gemini CLI (`gemini`). Not installed on the dev machine, so nothing here was run; flags come
@@ -61,7 +61,7 @@ export const geminiAdapter: AgentAdapter = {
     const settings = geminiSystemSettings(readJson(systemPath), agentarmyMcpServer(info.id, ctx.port, ctx.token));
     fs.writeFileSync(file, JSON.stringify(settings, null, 2), { mode: 0o600 });
     env.GEMINI_CLI_SYSTEM_SETTINGS_PATH = path.resolve(file);
-    return { ...spawnFor(exe, mode === 'resume' ? ['--resume'] : []), env };
+    return { ...spawnFor(exe, [...(mode === 'resume' ? ['--resume'] : []), ...modelArgs(info)]), env };
   },
 
   removeConsoleFiles(consoleId) {

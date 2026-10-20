@@ -1,11 +1,11 @@
 # Product Mission
 
-> Last Updated: 2026-10-17
+> Last Updated: 2026-10-20
 > Version: 1.0.0
 
 ## Pitch
 
-AgentArmy (working name) is a free, open-source desktop app that helps developers run many Claude Code agents in parallel by putting each one in a real terminal on a pan-and-zoom board that shows at a glance which agents are working, done, or waiting for you.
+AgentArmy (working name) is the free, open-source control room for terminal coding agents: Claude Code, Codex, Gemini CLI, Grok and OpenCode run side by side in real terminals on one board, on the subscriptions developers already pay for, and you can launch, watch and approve them from your computer or your phone.
 
 ## Users
 

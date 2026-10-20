@@ -60,7 +60,8 @@ export const claudeAdapter: AgentAdapter = {
       '--mcp-config',
       mcpFile,
       // Settings tab: --model, --permission-mode and the user's extra flags
-      ...(settings ? claudeLaunchArgs(settings) : []),
+      // A model picked for this console (CreateConsoleRequest.model) wins over the Settings one
+      ...(settings ? claudeLaunchArgs(info.launchModel ? { ...settings, model: info.launchModel } : settings) : info.launchModel ? ['--model', info.launchModel] : []),
     ]);
     return { ...command, env: { ...ctx.baseEnv, ...ctx.accountEnv?.() } };
   },

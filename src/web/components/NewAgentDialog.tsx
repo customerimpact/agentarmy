@@ -9,12 +9,31 @@ import { Modal } from './Modal';
 import { WorktreeToggle } from './WorktreeToggle';
 import { AccountPicker } from './settings/AccountsSettings';
 import { AgentPicker, useAgentReady } from './AgentPicker';
-import { AGENT_META, type AgentKind } from '../../shared/agents';
+import { AGENT_META, isAgentKind, type AgentKind } from '../../shared/agents';
 import { useServerSettings } from '../lib/settings';
 
 type Mode = 'folder' | 'clone';
 
 const CLONE_PARENT_KEY = 'agentarmy.cloneParent';
+const LAST_AGENT_KEY = 'agentarmy.lastAgent';
+
+// The AI picked last time wins over Settings > Default agent, so repeat launches are one click
+function loadLastAgent(): AgentKind | null {
+  try {
+    const v = localStorage.getItem(LAST_AGENT_KEY);
+    return isAgentKind(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLastAgent(agent: AgentKind): void {
+  try {
+    localStorage.setItem(LAST_AGENT_KEY, agent);
+  } catch {
+    // convenience only
+  }
+}
 
 // Lets other entry points (empty state, command bar) open the dialog straight on the clone tab
 let nextMode: Mode = 'folder';
@@ -59,11 +78,12 @@ export function NewAgentDialog() {
   const [isolated, setIsolated] = useState(false);
   const [accountId, setAccountId] = useState('auto');
   // Settings > Agents > Default agent preselects; the user can switch per console
-  const [agent, setAgent] = useState<AgentKind>(() => useServerSettings.getState().data?.settings.defaultAgent ?? 'claude');
+  const [lastAgent] = useState(loadLastAgent);
+  const [agent, setAgent] = useState<AgentKind>(() => lastAgent ?? useServerSettings.getState().data?.settings.defaultAgent ?? 'claude');
   const [command, setCommand] = useState('');
   useEffect(() => {
     const settings = useServerSettings.getState();
-    if (settings.data) return;
+    if (settings.data || lastAgent) return;
     void settings.load().then(() => {
       const preferred = useServerSettings.getState().data?.settings.defaultAgent;
       if (preferred) setAgent((current) => (current === 'claude' ? preferred : current));
@@ -84,6 +104,7 @@ export function NewAgentDialog() {
     const options = { worktree, accountId, agent, command };
     if (count > 1) await createAgentGrid(cwd, 2, 2, options);
     else await createAgent(cwd, name, options);
+    if (agent !== 'custom') saveLastAgent(agent);
   };
 
   const create = async () => {
@@ -267,7 +288,7 @@ export function NewAgentDialog() {
           {mode === 'folder' && (
             <WorktreeToggle path={target} checked={isolated} onChange={setIsolated} />
           )}
-          {agent === 'claude' && <AccountPicker value={accountId} onChange={setAccountId} />}
+          {agent !== 'custom' && <AccountPicker provider={agent} value={accountId} onChange={setAccountId} />}
           {!agentReady.ready && agentReady.reason && (
             <div data-testid="agent-not-ready" className="mt-1 text-[11.5px] text-fg-subtle">
               {agentReady.reason}

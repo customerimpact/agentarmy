@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Crosshair, Network, Search, Terminal, User, X } from 'lucide-react';
+import { Crosshair, Network, Search, User, X } from 'lucide-react';
 import type { ConsoleInfo, Job, Project } from '../../shared/protocol';
 import { flyTo } from '../lib/board-actions';
 import {
@@ -18,7 +18,7 @@ import {
 import { STATUS_META } from '../lib/status';
 import { useBoard, useClock } from '../lib/store';
 import { activeLoopCount, useLoops } from '../lib/loops';
-import { ProgressBar, StatusPill } from './AgentBadges';
+import { AgentMark, ProgressBar, StatusPill } from './AgentBadges';
 import { JobRow, TodoList } from './ProgressPanel';
 
 type Filter = 'all' | FleetBucket;
@@ -454,8 +454,9 @@ export function MissionMap() {
                                   ${c.status === 'working' || c.status === 'needs_you' ? 'aa-ping' : ''}`}
                     />
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[12.5px] font-semibold text-fg">
-                        {c.name}
+                      <span className="flex items-center gap-1 truncate text-[12.5px] font-semibold text-fg">
+                        <AgentMark agent={c.agent} />
+                        <span className="truncate">{c.name}</span>
                       </span>
                       <span className="block truncate text-[11px] text-fg-subtle">
                         — {statusLine(c)}
@@ -656,7 +657,7 @@ function ConsoleInspector({
     <div data-testid="map-inspector">
       <BackButton onClick={onBack} />
       <div className="flex items-center gap-2">
-        <Terminal size={14} className="text-fg-subtle" />
+        <AgentMark agent={c.agent} />
         <span className="min-w-0 flex-1 truncate text-[14px] font-semibold text-fg">{c.name}</span>
         <StatusPill status={c.status} />
       </div>
@@ -750,6 +751,7 @@ function TeamInspector({
               className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-hover"
             >
               <span className={`size-2 shrink-0 rounded-full ${STATUS_META[c.status].dot}`} />
+              <AgentMark agent={c.agent} />
               <span className="min-w-0 flex-1 truncate text-[12.5px] text-fg">{c.name}</span>
               <span className="text-[11px] text-fg-subtle">{STATUS_META[c.status].label}</span>
             </button>

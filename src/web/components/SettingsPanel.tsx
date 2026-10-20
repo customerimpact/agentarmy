@@ -27,9 +27,10 @@ import { useServerSettings } from '../lib/settings';
 import { useBoard } from '../lib/store';
 import { DEFAULT_THEME, THEMES, setTheme, useTheme } from '../lib/theme';
 import { NtfyBelow } from './settings/NtfySetting';
-import { AccountsBelow, AutoSwitchBelow, AutoSwitchControl, NewAgentAccountControl, PriorityBelow } from './settings/AccountsSettings';
-import { UsersRound, Cpu } from 'lucide-react';
-import { AgentsDetectedBelow, DefaultAgentControl } from './settings/AgentsSettings';
+import { AutoSwitchBelow, AutoSwitchControl, NewAgentAccountControl, PriorityBelow } from './settings/AccountsSettings';
+import { ProvidersHubBelow } from './settings/ProvidersSettings';
+import { UsersRound } from 'lucide-react';
+import { DefaultAgentControl } from './settings/AgentsSettings';
 import { Note, Segmented, Select, SmallButton, Stepper, TextSave, Toggle } from './settings/fields';
 
 // Settings registry: general first, then increasingly specific sections. Every row is data
@@ -61,7 +62,6 @@ export interface SectionDef {
 
 export const SECTIONS: SectionDef[] = [
   { key: 'general', label: 'General', icon: SlidersHorizontal },
-  { key: 'accounts', label: 'Accounts', icon: UsersRound },
   { key: 'appearance', label: 'Appearance', icon: Palette },
   { key: 'notifications', label: 'Notifications', icon: Bell },
   { key: 'board', label: 'Board', icon: LayoutGrid },
@@ -74,9 +74,9 @@ export const SECTIONS: SectionDef[] = [
   },
   {
     key: 'agents',
-    label: 'Agents',
-    icon: Cpu,
-    note: 'Other agent CLIs a console can run. Codex, Gemini CLI and OpenCode keep their own login; nothing is changed in their config files.',
+    label: 'Agents & accounts',
+    icon: UsersRound,
+    note: 'Every agent CLI a console can run: install it, log in, add accounts. Nothing is changed in the CLIs’ own config files.',
   },
   {
     key: 'usage',
@@ -791,10 +791,9 @@ const SETTINGS: SettingDef[] = [
   { id: 'startup', section: 'general', label: 'On startup', description: 'What to do with saved conversations when AgentArmy starts.', keywords: 'resume restore relaunch reopen launch boot', Control: StartupControl },
   { id: 'sidebar-tab', section: 'general', label: 'Sidebar opens on', description: 'The tab shown when the app loads.', keywords: 'default tab panel start', Control: SidebarTabControl },
 
-  { id: 'accounts', section: 'accounts', group: 'Your accounts', label: 'Claude accounts', description: 'Each account is its own Claude Code login (config folder). Log in once in a terminal; agents can then run on it.', keywords: 'account login profile subscription email plan claude_config_dir multiple switch limit usage', Below: AccountsBelow },
-  { id: 'account-auto-switch', section: 'accounts', group: 'When an account hits its limit', label: 'Auto-switch accounts', description: 'Move an agent that hits its plan limit to another account you own and resume its conversation there. Only use accounts you are entitled to, and check Anthropic’s terms: using extra accounts to get around usage limits may not be allowed.', keywords: 'limit rate usage switch fallback failover weekly session 5-hour', Control: AutoSwitchControl, Below: AutoSwitchBelow },
-  { id: 'account-priority', section: 'accounts', group: 'When an account hits its limit', label: 'Priority order', description: 'Auto and auto-switch use the first account that is logged in and not limited.', keywords: 'order rank fallback first', Below: PriorityBelow },
-  { id: 'account-new-agents', section: 'accounts', group: 'New agents', label: 'New agents use', description: 'The account picked for New agent and templates unless you choose one there.', keywords: 'default account auto spawn', Control: NewAgentAccountControl },
+  { id: 'account-auto-switch', section: 'agents', group: 'Claude: when an account hits its limit', label: 'Auto-switch accounts', description: 'Move an agent that hits its plan limit to another account you own and resume its conversation there. Only use accounts you are entitled to, and check Anthropic’s terms: using extra accounts to get around usage limits may not be allowed.', keywords: 'limit rate usage switch fallback failover weekly session 5-hour', Control: AutoSwitchControl, Below: AutoSwitchBelow },
+  { id: 'account-priority', section: 'agents', group: 'Claude: when an account hits its limit', label: 'Priority order', description: 'Auto and auto-switch use the first account that is logged in and not limited.', keywords: 'order rank fallback first', Below: PriorityBelow },
+  { id: 'account-new-agents', section: 'agents', group: 'Claude: new agents', label: 'New agents use', description: 'The account picked for New agent and templates unless you choose one there.', keywords: 'default account auto spawn', Control: NewAgentAccountControl },
 
   { id: 'desktop', section: 'notifications', label: 'Desktop notifications', description: 'Pop-up when an agent needs you while this tab is in the background.', keywords: 'alert permission browser popup notify', Control: DesktopControl, Below: DesktopBelow },
   { id: 'sound', section: 'notifications', label: 'Sound', description: 'Short chime when an agent needs you.', keywords: 'audio chime beep mute alert', Control: SoundControl },
@@ -829,7 +828,7 @@ const SETTINGS: SettingDef[] = [
   { id: 'claude-path', section: 'claude', label: 'Claude executable', description: 'Path to claude, if it is not on PATH.', keywords: 'binary exe location install AGENTARMY_CLAUDE_PATH', Below: pathBelow('claudePath', 'Claude path', 'Auto-detect (claude on PATH)') },
 
   { id: 'agents-default', section: 'agents', label: 'Default agent', description: 'Preselected in the New agent dialog. You can switch per console.', keywords: 'codex gemini opencode custom command cli default new console', Control: DefaultAgentControl },
-  { id: 'agents-detected', section: 'agents', label: 'Installed agent CLIs', description: 'Found on PATH (or at the path you set). Restart a console to pick up a new path.', keywords: 'codex gemini opencode version path install detect executable binary', Below: AgentsDetectedBelow },
+  { id: 'agents-hub', section: 'agents', label: 'Agent CLIs and logins', description: 'Installed, logged in and accounts for each CLI. Install and Log in open a terminal on the board. Restart a console to pick up a new path or account.', keywords: 'codex gemini opencode grok claude accounts account login sign up install version path detect executable binary subscription api key claude_config_dir codex_home multiple profile', Below: ProvidersHubBelow },
   { id: 'budget-daily', section: 'usage', label: 'Daily budget', description: 'All Claude Code sessions on this machine, since midnight.', keywords: 'usage tokens limit cost spend today plan', Below: budgetBelow('budgetDailyTokens', 'Daily') },
   { id: 'budget-5h', section: 'usage', label: '5-hour budget', description: 'Rolling last 5 hours, like the plan’s session limit.', keywords: 'usage tokens limit pressure plan session window', Below: budgetBelow('budget5hTokens', '5-hour') },
   { id: 'budget-weekly', section: 'usage', label: 'Weekly budget', description: 'Rolling last 7 days, like the plan’s weekly limit.', keywords: 'usage tokens limit pressure plan week', Below: budgetBelow('budgetWeeklyTokens', 'Weekly') },

@@ -46,35 +46,45 @@ This starts the local server and opens the board in your default browser.
 
 Keep the terminal running `npx agentarmy` open. Stopping it (Ctrl-C) stops the server and the consoles; they come back the next time you start it.
 
-## Desktop app (Windows)
+## Desktop app (Windows and macOS)
 
-Prefer a real app window over a browser tab? The Windows desktop app runs the same server and board in its own window, with no browser shortcut clashes.
+Prefer a real app window over a browser tab? The desktop app runs the same server and board in its own window, with no browser shortcut clashes. Downloads: [agentarmy-site.vercel.app](https://agentarmy-site.vercel.app/#install) or the [releases page](https://github.com/customerimpact/agentarmy/releases) (tags `desktop-v*`).
 
-1. Download `AgentArmy-Setup-<version>.exe` from the [releases page](https://github.com/customerimpact/agentarmy/releases) (tags `desktop-v*`).
+**Windows 10/11 (x64)**
+
+1. Download `AgentArmy-Setup-<version>.exe`.
 2. Run it. It installs for your user only (no admin prompt) and adds Start menu and desktop shortcuts.
 3. The installer is **not code-signed yet**, so Windows SmartScreen may say "Windows protected your PC". Click **More info**, then **Run anyway**.
 
+**macOS 12 or later**
+
+1. Download `AgentArmy-<version>-arm64.dmg` (Apple Silicon, M1 and newer) or `AgentArmy-<version>-x64.dmg` (Intel).
+2. Open it and drag AgentArmy to Applications.
+3. The app is **not signed by Apple yet**, so the first launch is blocked. Open **System Settings → Privacy & Security**, scroll down and click **Open Anyway**. (Or in Terminal: `xattr -dr com.apple.quarantine /Applications/AgentArmy.app`.)
+4. The Mac app does not update itself yet: the menu bar menu shows **Download v…** when a new version is out.
+
 What the desktop app adds:
 
-- **Tray icon.** Closing the window keeps your agents running in the tray. The tray shows how many agents need you, lists them (click one to fly to it), and has Pause notifications 1 h, Start with Windows, Check for updates and Quit.
-- **Taskbar badge and flash** when an agent needs you, and native Windows notifications.
-- **Ctrl+Alt+A** shows or hides the window from anywhere.
-- **Auto-update** from GitHub Releases: checked at start and every 6 hours, downloaded in the background, installed when you choose "Restart to update" or quit. This is the only network call the app makes itself.
+- **Tray icon** (menu bar icon on macOS). Closing the window keeps your agents running in the tray. The tray shows how many agents need you, lists them (click one to fly to it), and has Pause notifications 1 h, Start with Windows (Open at login on macOS), Check for updates and Quit.
+- **Taskbar badge and flash** (Dock badge and bounce on macOS) when an agent needs you, and native notifications.
+- **Ctrl+Alt+A** (Cmd+Option+A on macOS) shows or hides the window from anywhere.
+- **Auto-update** (Windows) from GitHub Releases: checked at start and every 6 hours, downloaded in the background, installed when you choose "Restart to update" or quit. This is the only network call the app makes itself.
 - **Quit** asks first when agents are running. They stop and can be resumed next time, like Ctrl-C on `npx agentarmy`.
 
 The app and `npx agentarmy` share the same board (`~/.agentarmy`). If `npx agentarmy` is already running, the app opens that board instead of starting a second server.
 
-Build it yourself (Windows, Node 22):
+Build it yourself (Node 22):
 
 ```sh
 npm install
 npm run desktop:dev     # build and run the app from the repo
 npm run desktop:build   # unpacked app in release/win-unpacked
-npm run desktop:dist    # installer: release/AgentArmy-Setup-<version>.exe
+npm run desktop:dist    # Windows installer: release/AgentArmy-Setup-<version>.exe
+npm run desktop:dist:mac  # on a Mac: release/AgentArmy-<version>-arm64.dmg and -x64.dmg
 npm run test:desktop    # Playwright smoke test (set DESKTOP_EXE to test a packaged build)
 ```
 
-Releases: push a tag `desktop-v<version>` (matching `package.json`) and `.github/workflows/desktop.yml` builds the installer and attaches it, with `latest.yml` for auto-update, to a draft GitHub Release. To sign builds, set `CSC_LINK` (the `.pfx` certificate, as a path, URL or base64) and `CSC_KEY_PASSWORD` for electron-builder. macOS and Linux builds are not available yet.
+Releases: push a tag `desktop-v<version>` (matching `package.json`) and `.github/workflows/desktop.yml` builds the Windows installer (with `latest.yml` for auto-update) and the two Mac disk images and attaches them to a draft GitHub Release. To sign Windows builds, set `CSC_LINK` (the `.pfx` certificate, as a path, URL or base64) and `CSC_KEY_PASSWORD` for electron-builder. The Mac app is ad-hoc signed only; signing and notarizing it needs an Apple Developer ID (see the comments in the workflow). Linux builds are not available yet.
 
 ## How it works
 
@@ -113,6 +123,8 @@ See [.agent-os/product/roadmap.md](.agent-os/product/roadmap.md) for details.
 - **Phase 3 - Orchestration:** teams, composer, handoffs between agents, loops.
 - **Phase 4 - Board power tools:** localhost preview tiles, git panel, code viewer.
 - **Phase 5 - More agents and voice:** Codex, Gemini CLI and custom commands; local dictation.
+- **Phase 6 - Control room everywhere:** optional free account, launch and approve agents from your phone, desktop ⇄ phone handoff, team recipes and share links.
+- **Phase 7 - Review and autopilot:** one review lane for every agent's changes, project memory, teams started by GitHub, Slack or a schedule.
 
 ## Development
 

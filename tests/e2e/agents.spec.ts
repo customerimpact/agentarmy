@@ -48,7 +48,7 @@ test.afterEach(async ({}, testInfo) => {
 
 test('a. detection lists every agent; the fake Codex is installed with its version', async () => {
   const res = await server.api<AgentsDetectResponse>('GET', '/api/agents/detect?fresh=1');
-  expect(res.agents.map((a) => a.id)).toEqual(['claude', 'codex', 'gemini', 'opencode', 'custom']);
+  expect(res.agents.map((a) => a.id)).toEqual(['claude', 'codex', 'gemini', 'opencode', 'grok', 'custom']);
   const found = res.agents.find((a) => a.id === 'codex');
   expect(found).toMatchObject({ installed: true, version: 'codex-cli 0.0.0-fake', supportsResume: true });
   expect(res.agents.find((a) => a.id === 'custom')?.installed).toBe(true);
@@ -144,10 +144,10 @@ test('e. Settings > Agents lists the CLIs and saves the default agent', async ()
   await page.keyboard.press('4');
   await expect(page.getByTestId('settings-window')).toBeVisible();
   await page.getByTestId('settings-nav-agents').click();
-  await expect(page.getByTestId('settings-title')).toHaveText('Agents');
-  const codexRow = page.locator('[data-testid="agent-row"][data-agent="codex"]');
-  await expect(codexRow).toHaveAttribute('data-installed', 'true');
-  await expect(codexRow).toContainText('codex-cli 0.0.0-fake');
+  await expect(page.getByTestId('settings-title')).toHaveText('Agents & accounts');
+  const codexCard = page.locator('[data-testid="provider-card"][data-provider="codex"]');
+  await expect(codexCard).toHaveAttribute('data-installed', 'true');
+  await expect(codexCard).toContainText('codex-cli 0.0.0-fake');
   await page.locator('[data-setting-id="agents-default"]').getByRole('combobox').selectOption('codex');
   await waitFor(async () => (await server.api<{ settings: { defaultAgent: string } }>('GET', '/api/settings')).settings.defaultAgent === 'codex', {
     message: 'default agent saved',

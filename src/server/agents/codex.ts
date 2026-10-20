@@ -3,7 +3,7 @@ import { isElectron } from '../node-runtime.js';
 import path from 'node:path';
 import fs from 'node:fs';
 import { spawnFor } from './resolve.js';
-import { agentarmyMcpServer, assertCwd, detectExecutable, pathOverride, requireExecutable, writeOnce } from './common.js';
+import { agentarmyMcpServer, assertCwd, detectExecutable, modelArgs, pathOverride, requireExecutable, writeOnce } from './common.js';
 import { osc9Messages } from './output-status.js';
 import type { AgentAdapter } from './types.js';
 
@@ -115,7 +115,7 @@ export const codexAdapter: AgentAdapter = {
       mcp: agentarmyMcpServer(info.id, ctx.port, ctx.token),
       notify,
     });
-    return { ...spawnFor(exe, args), env: { ...ctx.baseEnv } };
+    return { ...spawnFor(exe, [...args, ...modelArgs(info)]), env: { ...ctx.baseEnv } };
   },
 
   removeConsoleFiles(consoleId) {

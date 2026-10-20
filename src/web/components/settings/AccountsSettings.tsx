@@ -322,10 +322,15 @@ export function NewAgentAccountControl() {
   );
 }
 
-// Account picker for New agent / templates; only shown when there is more than one account
-export function AccountPicker({ value, onChange }: { value: string; onChange: (id: string) => void }) {
-  const accounts = useAccountList();
+// Account picker for New agent / templates; only shown when the chosen CLI has more than one account.
+// provider: whose accounts to list (Claude by default; Codex, Gemini CLI, ... from providerAccounts).
+export function AccountPicker({ value, onChange, provider = 'claude' }: { value: string; onChange: (id: string) => void; provider?: string }) {
+  const claude = useAccountList();
+  const others = useAccounts((s) => s.state?.providerAccounts);
+  const accounts = provider === 'claude' ? claude : (others ?? []).filter((a) => a.provider === provider);
   if (accounts.length < 2) return null;
+  // A choice made for another CLI does not apply here
+  if (value !== 'auto' && !accounts.some((a) => a.id === value)) value = 'auto';
   return (
     <label className="mt-1.5 flex items-center gap-2 text-[11.5px] text-fg-muted">
       Account

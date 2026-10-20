@@ -1,7 +1,8 @@
 name: Desktop
 
-# Windows desktop app (Electron). Push a tag desktop-v<package.json version> (e.g. desktop-v0.1.0)
-# to build the installer and attach it to a DRAFT GitHub Release; review the draft, then publish it.
+# Desktop apps (Electron) for Windows and macOS. Push a tag desktop-v<package.json version> (e.g. desktop-v0.1.0)
+# to build the installer and the Mac disk images and attach them to a DRAFT GitHub Release; review the
+# draft, then publish it.
 # Installed apps only update from published (non-draft) desktop-v* releases that carry latest.yml
 # (src/desktop/updater.ts). Manual runs (workflow_dispatch) only build and keep the installer as a
 # workflow artifact.
@@ -10,6 +11,12 @@ name: Desktop
 # ("Windows protected your PC" -> More info -> Run anyway). To sign, add repository secrets with a
 # code-signing certificate and set CSC_LINK / CSC_KEY_PASSWORD on the build step below; electron-builder then
 # signs AgentArmy.exe and the installer automatically.
+#
+# The Mac app is only ad-hoc signed (no Apple Developer ID yet), so the first launch needs
+# System Settings -> Privacy & Security -> Open Anyway. It does not update itself: it tells the user
+# when a newer .dmg is out (src/desktop/updater.ts). To sign and notarize later, set CSC_LINK /
+# CSC_KEY_PASSWORD (Developer ID Application .p12) and APPLE_ID / APPLE_APP_SPECIFIC_PASSWORD /
+# APPLE_TEAM_ID, remove identity: '-' and turn hardenedRuntime + notarize on in electron-builder.yml.
 
 on:
   push:
@@ -86,3 +93,50 @@ jobs:
               --title "AgentArmy desktop $VERSION" \
               --notes "Windows installer for AgentArmy $VERSION. Unsigned: SmartScreen may warn (More info -> Run anyway)."
           fi
+
+  macos:
+    # Waits for the Windows job, which creates the draft release and runs the full test suite
+    needs: windows
+    runs-on: macos-latest # Apple Silicon; the x64 build uses node-pty's darwin-x64 prebuild, no compiling
+    permissions:
+      contents: write # add the disk images to the draft GitHub Release
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # npm can drop the execute bit of node-pty's helper; without it every terminal fails to start
+      - run: chmod +x node_modules/node-pty/prebuilds/darwin-*/spawn-helper
+
+      - name: Build disk images
+        run: npm run desktop:dist:mac
+
+      - name: Smoke test the packaged app
+        run: npx playwright test -c playwright.desktop.config.ts
+        env:
+          DESKTOP_EXE: ${{ github.workspace }}/release/mac-arm64/AgentArmy.app/Contents/MacOS/AgentArmy
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: desktop-test-results-macos
+          path: test-results/desktop
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AgentArmy-macos
+          path: release/AgentArmy-*.dmg
+          if-no-files-found: error
+
+      - name: Upload to the draft GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          gh release upload "$GITHUB_REF_NAME" "release/AgentArmy-$VERSION-arm64.dmg" "release/AgentArmy-$VERSION-x64.dmg" --clobber

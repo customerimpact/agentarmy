@@ -320,6 +320,8 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
     if (req.agent !== undefined && !isAgentKind(req.agent)) throw new Error(`Unknown agent: ${String(req.agent)}`);
     const agent = req.agent && req.agent !== 'claude' ? req.agent : undefined;
     const command = agent === 'custom' ? validateCommand(req.command) : undefined;
+    const launchModel = typeof req.model === 'string' && req.model.trim() ? req.model.trim() : undefined;
+    if (launchModel && !LAUNCH_MODEL_RE.test(launchModel)) throw new Error(`Not a model name: ${launchModel}`);
     const now = Date.now();
     const info: ConsoleInfo = {
       id: crypto.randomUUID(),
@@ -332,10 +334,11 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
       layout: this.initialLayout(req.layout, this.workspaceFor(req.workspaceId)),
       createdAt: now,
       workspaceId: this.workspaceFor(req.workspaceId),
-      // Accounts are Claude Code config dirs; other CLIs keep their own login
-      ...(!agent && (req.accountId || this.accountEnv) ? { accountId: req.accountId || 'auto' } : {}),
+      // Claude Code always gets an account ('auto'); other CLIs only when one was asked for (account-routes.ts)
+      ...(req.accountId || (!agent && this.accountEnv) ? { accountId: req.accountId || 'auto' } : {}),
       ...(agent ? { agent } : {}),
       ...(command ? { command } : {}),
+      ...(launchModel && agent !== 'custom' ? { launchModel } : {}),
     };
     const live = this.register(info);
     this.launch(live, 'new');
@@ -627,6 +630,8 @@ export class ConsoleManager extends EventEmitter<ConsoleManagerEvents> {
         baseEnv: adapter.id === 'claude' ? this.childEnv(settings) : childEnv(process.env, { enableTasks: settings?.enableTasks ?? true, useApiKey: true }),
         ...(adapter.id === 'claude' && this.accountEnv ? { accountEnv: () => this.accountEnv?.(info, mode) ?? {} } : {}),
       });
+      // Other CLIs' accounts: CODEX_HOME / GEMINI_CLI_HOME / XDG_DATA_HOME of the chosen account
+      if (adapter.id !== 'claude' && info.accountId && this.accountEnv) Object.assign(command.env, this.accountEnv(info, mode));
       proc = pty.spawn(command.file, command.args, {
         name: 'xterm-256color',
         cols: live.cols,
@@ -780,5 +785,8 @@ export function childEnv(
   else env.CLAUDE_CODE_ENABLE_TASKS ??= '1';
   return env;
 }
+
+// Model aliases / ids for --model / -m: "sonnet", "gpt-5.5-codex", "xai/grok-4", "claude-opus-4-1[1m]"
+export const LAUNCH_MODEL_RE = /^[A-Za-z0-9._:/@\-[\]]{1,200}$/;
 
 export class NotFoundError extends Error {}

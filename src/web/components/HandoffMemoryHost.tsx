@@ -1,6 +1,7 @@
 import { useHandoffMemory } from '../lib/handoff-memory';
 import { HandoffDialog } from './HandoffDialog';
 import { MemoryPanel } from './MemoryPanel';
+import { SwitchAgentHost } from './SwitchAgentDialog';
 
 // Mounted once in the board shell: the "Hand off to…" dialog and the Project memory panel
 export function HandoffMemoryHost() {
@@ -10,6 +11,7 @@ export function HandoffMemoryHost() {
     <>
       {handoffFrom && <HandoffDialog key={handoffFrom} fromId={handoffFrom} />}
       {memoryOpen && <MemoryPanel />}
+      <SwitchAgentHost />
     </>
   );
 }

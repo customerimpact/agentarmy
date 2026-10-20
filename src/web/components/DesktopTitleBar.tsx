@@ -4,8 +4,11 @@ import { attentionCount, needsYouLabel } from '../lib/fleet';
 import { useBoard } from '../lib/store';
 
 // Desktop app only (see lib/desktop.ts): the window has no native title bar, so this strip is the
-// draggable area. Windows draws the minimize/maximize/close buttons over its right end.
-const WINDOW_BUTTONS_WIDTH = 144;
+// draggable area. Windows draws the minimize/maximize/close buttons over its right end, macOS its
+// traffic lights over the left end.
+const IS_MAC = window.agentarmyDesktop?.platform === 'darwin';
+const WINDOW_BUTTONS_WIDTH = IS_MAC ? 12 : 144;
+const TRAFFIC_LIGHTS_WIDTH = IS_MAC ? 80 : 12;
 
 function useDocumentTitle(): string {
   const [title, setTitle] = useState(document.title);
@@ -26,8 +29,8 @@ export function DesktopTitleBar() {
   return (
     <div
       data-desktop-titlebar
-      className="aa-titlebar flex shrink-0 items-center gap-2 border-b border-line bg-surface pl-3 text-fg select-none"
-      style={{ height: DESKTOP_TITLE_BAR_HEIGHT, paddingRight: WINDOW_BUTTONS_WIDTH }}
+      className="aa-titlebar flex shrink-0 items-center gap-2 border-b border-line bg-surface text-fg select-none"
+      style={{ height: DESKTOP_TITLE_BAR_HEIGHT, paddingLeft: TRAFFIC_LIGHTS_WIDTH, paddingRight: WINDOW_BUTTONS_WIDTH }}
       onDoubleClick={(e) => e.preventDefault()}
     >
       <img src="/icon.svg" alt="" className="size-4" draggable={false} />

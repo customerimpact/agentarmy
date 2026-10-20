@@ -10,6 +10,8 @@ import type {
   AccountUtilization,
   AutoSwitchMode,
 } from '../shared/protocol.js';
+import { defaultAccountId, isProviderId, PROVIDER_IDS, type ProviderId } from '../shared/providers.js';
+import { accountEnvFor, defaultProviderDir, detectLogin, providerDef, PROVIDERS } from './agents/providers.js';
 
 // Claude Code accounts. One account = one Claude Code config dir (CLAUDE_CONFIG_DIR).
 //
@@ -27,9 +29,16 @@ import type {
 //
 // The default account is the user's own config dir; we never write into it except the
 // projects/ transcript copy that moves a conversation onto it during an account switch.
+//
+// Other CLIs (Codex, Gemini CLI, OpenCode) have accounts too (accounts.json v2: `provider` on every
+// record, v1 records are Claude's). Each provider has a built-in default account ('<provider>-default',
+// the CLI's own config dir) and extra ones in <accountsDir>/<provider>/<id>/, handed to the CLI through
+// its env var (CODEX_HOME, GEMINI_CLI_HOME, XDG_DATA_HOME; see agents/providers.ts). Extra Claude
+// accounts keep their v1 location <accountsDir>/<id>/. list()/state().accounts stay Claude-only so the
+// auto-switcher and Claude pickers are unchanged; the others are in state().providerAccounts.
 
 export const DEFAULT_ACCOUNT_ID = 'default';
-const FILE_VERSION = 1;
+const FILE_VERSION = 2;
 const UNKNOWN_RESET_MS = 60 * 60 * 1000; // limited without a known reset time: try again after 1 h
 const UTILIZATION_FRESH_MS = 6 * 60 * 60 * 1000;
 const MAX_NAME = 40;
@@ -38,6 +47,7 @@ export class AccountError extends Error {}
 
 interface StoredAccount {
   id: string;
+  provider?: ProviderId; // missing in v1 files = 'claude'
   name: string;
   configDir?: string; // extra accounts only; the default follows CLAUDE_CONFIG_DIR / ~/.claude
   limitedAt?: number;
@@ -220,7 +230,10 @@ export interface AccountStoreOptions {
   env?: NodeJS.ProcessEnv;
   now?: () => number;
   defaultDir?: string; // override for tests
+  providerDirs?: Partial<Record<ProviderId, string>>; // tests: other CLIs' default dirs
 }
+
+const providerOf = (a: StoredAccount): ProviderId => a.provider ?? 'claude';
 
 export interface AccountStoreEvents {
   change: [AccountsState];
@@ -250,11 +263,33 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
   }
 
   configDirOf(stored: StoredAccount): string {
-    if (stored.id === DEFAULT_ACCOUNT_ID) return this.defaultDir();
-    return stored.configDir ?? path.join(this.options.accountsDir, stored.id);
+    const provider = providerOf(stored);
+    if (stored.id === defaultAccountId(provider)) {
+      if (provider === 'claude') return this.defaultDir();
+      return this.options.providerDirs?.[provider] ?? defaultProviderDir(provider, this.env);
+    }
+    if (stored.configDir) return stored.configDir;
+    return provider === 'claude' ? path.join(this.options.accountsDir, stored.id) : path.join(this.options.accountsDir, provider, stored.id);
+  }
+
+  // Codex, Gemini CLI, OpenCode, ...: logged in = the CLI's login file exists; no usage numbers
+  private providerView(stored: StoredAccount, provider: ProviderId): Account {
+    const configDir = this.configDirOf(stored);
+    const login = detectLogin(provider, configDir, { env: this.env });
+    return {
+      id: stored.id,
+      provider,
+      name: stored.name,
+      configDir,
+      isDefault: stored.id === defaultAccountId(provider),
+      status: login.loggedIn ? 'ok' : 'needs_login',
+      lastSeenAt: stored.lastSeenAt,
+    };
   }
 
   private view(stored: StoredAccount): Account {
+    const provider = providerOf(stored);
+    if (provider !== 'claude') return this.providerView(stored, provider);
     const isDefault = stored.id === DEFAULT_ACCOUNT_ID;
     const configDir = this.configDirOf(stored);
     // A test override of the default dir keeps its metadata inside it, like an extra account
@@ -262,6 +297,7 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
     const now = this.now();
     const account: Account = {
       id: stored.id,
+      provider: 'claude',
       name: stored.name,
       configDir,
       isDefault,
@@ -295,8 +331,18 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
     return account;
   }
 
-  list(): Account[] {
+  // Accounts of one provider in priority order (Claude by default)
+  list(provider: ProviderId = 'claude'): Account[] {
+    return this.data.accounts.filter((a) => providerOf(a) === provider).map((a) => this.view(a));
+  }
+
+  listAll(): Account[] {
     return this.data.accounts.map((a) => this.view(a));
+  }
+
+  providerOf(id: string | undefined): ProviderId | undefined {
+    const stored = this.data.accounts.find((a) => a.id === (id ?? DEFAULT_ACCOUNT_ID));
+    return stored ? providerOf(stored) : undefined;
   }
 
   get(id: string | undefined): Account | undefined {
@@ -316,6 +362,7 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
       autoSwitch: this.data.autoSwitch,
       newAgentAccount: this.data.newAgentAccount,
       loginConsoles: Object.fromEntries(this.loginConsoles),
+      providerAccounts: this.data.accounts.filter((a) => providerOf(a) !== 'claude').map((a) => this.view(a)),
     };
   }
 
@@ -345,13 +392,15 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
     return true;
   }
 
-  create(name: string): Account {
+  create(name: string, provider: ProviderId = 'claude'): Account {
     const clean = cleanName(name);
+    if (!isProviderId(provider)) throw new AccountError(`Unknown provider ${String(provider)}`);
+    if (!PROVIDERS[provider].accountEnvVar) throw new AccountError(`${providerDef(provider).label} supports one account only`);
     const id = crypto.randomBytes(4).toString('hex');
-    const dir = path.join(this.options.accountsDir, id);
-    fs.mkdirSync(dir, { recursive: true });
     const now = this.now();
-    this.data.accounts.push({ id, name: clean, lastSeenAt: now, createdAt: now });
+    const stored: StoredAccount = { id, name: clean, lastSeenAt: now, createdAt: now, provider };
+    fs.mkdirSync(this.configDirOf(stored), { recursive: true });
+    this.data.accounts.push(stored);
     this.save();
     this.changed();
     return this.require(id);
@@ -367,8 +416,8 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
 
   // Deletes the account and its config dir (never the default one)
   remove(id: string): void {
-    if (id === DEFAULT_ACCOUNT_ID) throw new AccountError('The default account cannot be removed');
     const stored = this.stored(id);
+    if (id === defaultAccountId(providerOf(stored))) throw new AccountError('The default account cannot be removed');
     const dir = this.configDirOf(stored);
     this.data.accounts = this.data.accounts.filter((a) => a.id !== id);
     if (this.data.newAgentAccount === id) this.data.newAgentAccount = 'auto';
@@ -405,7 +454,10 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
     }
     if (patch.newAgentAccount !== undefined) {
       const v = patch.newAgentAccount;
-      if (v !== 'auto' && !this.data.accounts.some((a) => a.id === v)) throw new AccountError(`Unknown account ${String(v)}`);
+      // "New agents use" is the Claude choice; other CLIs start on their default account
+      if (v !== 'auto' && !this.data.accounts.some((a) => a.id === v && providerOf(a) === 'claude')) {
+        throw new AccountError(`Unknown account ${String(v)}`);
+      }
       this.data.newAgentAccount = v;
     }
     this.save();
@@ -465,31 +517,38 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
   }
 
   // Environment for a console on this account; the default account changes nothing
+  // CLAUDE_CONFIG_DIR / CODEX_HOME / GEMINI_CLI_HOME / XDG_DATA_HOME of the account's provider
   envFor(id: string | undefined): Record<string, string> {
-    if (!id || id === DEFAULT_ACCOUNT_ID) return {};
+    if (!id || id === 'auto') return {};
     const stored = this.data.accounts.find((a) => a.id === id);
     if (!stored) return {};
-    return { CLAUDE_CONFIG_DIR: this.configDirOf(stored) };
+    const provider = providerOf(stored);
+    if (stored.id === defaultAccountId(provider)) return {};
+    return accountEnvFor(provider, this.configDirOf(stored));
   }
 
   // First account in priority order that is ok, except the excluded ones
-  pickAvailable(exclude: string[] = []): Account | undefined {
-    return this.list().find((a) => a.status === 'ok' && !exclude.includes(a.id));
+  pickAvailable(exclude: string[] = [], provider: ProviderId = 'claude'): Account | undefined {
+    return this.list(provider).find((a) => a.status === 'ok' && !exclude.includes(a.id));
   }
 
-  // 'auto' / undefined -> the "new agents use" choice, else the highest-priority usable account
-  resolveForNew(requested?: string): string {
-    const want = requested && requested !== 'auto' ? requested : this.data.newAgentAccount;
+  // 'auto' / undefined -> the "new agents use" choice (Claude), else the highest-priority usable account
+  resolveForNew(requested?: string, provider: ProviderId = 'claude'): string {
+    const want = requested && requested !== 'auto' ? requested : provider === 'claude' ? this.data.newAgentAccount : 'auto';
     if (want && want !== 'auto') {
-      if (!this.data.accounts.some((a) => a.id === want)) throw new AccountError(`Unknown account ${want}`);
+      const stored = this.data.accounts.find((a) => a.id === want);
+      if (!stored) throw new AccountError(`Unknown account ${want}`);
+      if (providerOf(stored) !== provider) throw new AccountError(`${stored.name} is not a ${providerDef(provider).label} account`);
       return want;
     }
-    return this.pickAvailable()?.id ?? DEFAULT_ACCOUNT_ID;
+    return this.pickAvailable([], provider)?.id ?? defaultAccountId(provider);
   }
 
-  // One projects/ folder per account, for usage totals per account
+  // One projects/ folder per Claude account, for usage totals per account
   transcriptRoots(): { accountId: string; dir: string }[] {
-    return this.data.accounts.map((a) => ({ accountId: a.id, dir: path.join(this.configDirOf(a), 'projects') }));
+    return this.data.accounts
+      .filter((a) => providerOf(a) === 'claude')
+      .map((a) => ({ accountId: a.id, dir: path.join(this.configDirOf(a), 'projects') }));
   }
 
   private stored(id: string): StoredAccount {
@@ -506,6 +565,7 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
       autoSwitch: 'ask',
       newAgentAccount: 'auto',
     };
+    ensureProviderDefaults(fresh.accounts, now);
     if (!this.options.file) return fresh;
     let parsed: Partial<AccountsFile>;
     try {
@@ -513,10 +573,12 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
     } catch {
       return fresh;
     }
-    const accounts = (Array.isArray(parsed.accounts) ? parsed.accounts : []).filter(
-      (a): a is StoredAccount => !!a && typeof a.id === 'string' && typeof a.name === 'string',
-    );
+    // v1 -> v2: every record keeps all its fields; records without a provider are Claude's
+    const accounts = (Array.isArray(parsed.accounts) ? parsed.accounts : [])
+      .filter((a): a is StoredAccount => !!a && typeof a.id === 'string' && typeof a.name === 'string')
+      .map((a): StoredAccount => (isProviderId(a.provider) ? a : { ...a, provider: 'claude' }));
     if (!accounts.some((a) => a.id === DEFAULT_ACCOUNT_ID)) accounts.unshift(fresh.accounts[0]);
+    ensureProviderDefaults(accounts, now);
     return {
       version: FILE_VERSION,
       accounts,
@@ -546,6 +608,16 @@ export class AccountStore extends EventEmitter<AccountStoreEvents> {
 }
 
 export class AccountNotFound extends AccountError {}
+
+// One built-in account per other CLI (its own config dir), so every provider has a default to show
+function ensureProviderDefaults(accounts: StoredAccount[], now: number): void {
+  for (const provider of PROVIDER_IDS) {
+    if (provider === 'claude') continue;
+    const id = defaultAccountId(provider);
+    if (accounts.some((a) => a.id === id)) continue;
+    accounts.push({ id, provider, name: 'Default', lastSeenAt: now, createdAt: now });
+  }
+}
 
 function cleanName(name: unknown): string {
   const clean = typeof name === 'string' ? name.replace(/\s+/g, ' ').trim() : '';

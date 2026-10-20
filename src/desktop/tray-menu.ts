@@ -10,6 +10,7 @@ export type UpdateState =
   | { kind: 'checking' }
   | { kind: 'downloading'; version: string }
   | { kind: 'ready'; version: string }
+  | { kind: 'available'; version: string } // macOS: a newer build to download from the website
   | { kind: 'disabled' };
 
 export interface TrayState {
@@ -43,7 +44,12 @@ function clock(ms: number): string {
 }
 
 // Pure, so the menu layout is unit-testable without Electron
-export function trayMenuTemplate(state: TrayState, actions: TrayActions, now = Date.now()): MenuItemConstructorOptions[] {
+export function trayMenuTemplate(
+  state: TrayState,
+  actions: TrayActions,
+  now = Date.now(),
+  platform: NodeJS.Platform = 'win32',
+): MenuItemConstructorOptions[] {
   const template: MenuItemConstructorOptions[] = [{ label: 'Open AgentArmy', click: () => actions.open() }];
 
   if (state.count > 0) {
@@ -66,7 +72,7 @@ export function trayMenuTemplate(state: TrayState, actions: TrayActions, now = D
   });
   if (state.openAtLogin !== null) {
     template.push({
-      label: 'Start with Windows',
+      label: platform === 'darwin' ? 'Open at login' : 'Start with Windows',
       type: 'checkbox',
       checked: state.openAtLogin,
       click: () => actions.toggleOpenAtLogin(),
@@ -75,7 +81,9 @@ export function trayMenuTemplate(state: TrayState, actions: TrayActions, now = D
 
   template.push({ type: 'separator' });
   const update = state.update;
-  if (update.kind === 'ready') {
+  if (update.kind === 'available') {
+    template.push({ label: `Download v${update.version}…`, click: () => actions.restartToUpdate() });
+  } else if (update.kind === 'ready') {
     template.push({ label: `Restart to update (v${update.version})`, click: () => actions.restartToUpdate() });
   } else if (update.kind === 'downloading') {
     template.push({ label: `Downloading v${update.version}…`, enabled: false });

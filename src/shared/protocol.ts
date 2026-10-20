@@ -3,6 +3,7 @@
 
 import type { UsageBroadcast } from './usage.js';
 import type { AgentKind } from './agents.js';
+import type { ProviderEvent, ProviderId } from './providers.js';
 
 export type { AgentKind } from './agents.js';
 import type { Shape } from './drawings.js';
@@ -51,7 +52,11 @@ export interface ConsoleInfo {
   agent?: AgentKind; // CLI it runs (src/server/agents); missing = 'claude'
   command?: string; // agent 'custom': the command line, run through the user's shell
   agentSessionId?: string; // non-Claude CLIs: their own session id when known (e.g. Codex thread id), for resume
+  launchModel?: string; // model chosen at creation (CreateConsoleRequest.model), passed as the CLI's model flag
   paused?: boolean; // stopped by "Pause all" (Esc); "Resume all" types a continue prompt and clears it
+  // Set on a console that took over from another provider because that one hit its limit
+  // (src/server/provider-fallback.ts); offers "Switch back" once the old provider is available again
+  fallbackFrom?: { agent: AgentKind; accountId?: string; resetsAt?: number; at: number; offered?: boolean };
 }
 
 // ---------- Worktree + review (each agent on its own branch) ----------
@@ -167,6 +172,10 @@ export interface LaunchTemplateRequest {
   worktrees?: boolean; // give each agent (not the orchestrator) its own branch + worktree
   accountId?: string; // 'auto' (default) or an account id, for every console of the launch
   teamAgents?: AgentKind[]; // agent per team (same order as Template.teams); missing = 'claude'
+  teamModels?: string[]; // model per team (same order); '' / missing = the CLI's own default
+  orchestratorAgent?: AgentKind; // CLI of the orchestrator console; missing = 'claude' (needs MCP: claude or codex)
+  orchestratorModel?: string;
+  agentAccounts?: Partial<Record<AgentKind, string>>; // account per provider; overrides accountId for that CLI
 }
 
 export interface LaunchTemplateResponse {
@@ -452,6 +461,7 @@ export interface CreateConsoleRequest {
   workspaceId?: string; // default: the active workspace
   agent?: AgentKind; // default 'claude' (the UI preselects settings.defaultAgent)
   command?: string; // required for agent 'custom'
+  model?: string; // launch model for this console (--model); '' / missing = settings / the CLI's default
 }
 
 export interface UpdateConsoleRequest {
@@ -507,9 +517,18 @@ export interface AppSettings {
   projectDailyBudgets: Record<string, number>; // project id -> daily budget for its consoles
   pauseJobsAtBudget: boolean; // block agent-to-agent send_job while a budget is used up
   defaultAgent: AgentKind; // preselected in the New agent dialog and used when a request names none
-  agentPaths: Partial<Record<'codex' | 'gemini' | 'opencode', string>>; // '' / missing = find on PATH
+  agentPaths: Partial<Record<'codex' | 'gemini' | 'opencode' | 'grok', string>>; // '' / missing = find on PATH
   handoffMode: HandoffMode; // default brief for 'Hand off to…': 'quick' (free, from the transcript) or 'smart' (claude -p, haiku)
+  // When every Claude account is limited: 'ask' (Actions item), 'switch' (continue on limitFallbackAgent), 'wait'
+  limitFallback: LimitFallbackMode;
+  limitFallbackAgent: AgentKind; // default 'codex'; must be installed (and logged in)
 }
+
+export type LimitFallbackMode = 'ask' | 'switch' | 'wait';
+
+// Provider API keys AgentArmy stores for the user (settings.json, never sent back; masked like webhooks)
+export type ProviderKeyId = 'grok';
+export const PROVIDER_KEY_IDS: ProviderKeyId[] = ['grok'];
 
 export interface WebhookInfo {
   set: boolean;
@@ -532,6 +551,7 @@ export interface PublicSettings {
   slack: WebhookInfo;
   discord: WebhookInfo;
   ntfy: NtfyInfo;
+  providerKeys: Record<ProviderKeyId, WebhookInfo>; // { set, hint: last 4 } only
   version: string; // AgentArmy package version
   dataDir: string; // AGENTARMY_HOME
   port: number;
@@ -543,6 +563,7 @@ export type SettingsPatch = Partial<AppSettings> & {
   discordWebhookUrl?: string;
   ntfyTopic?: string; // '' turns phone notifications off
   ntfyServer?: string; // '' = https://ntfy.sh
+  providerKeys?: Partial<Record<ProviderKeyId, string>>; // merged per key; '' clears that key
 };
 
 // ---------- WebSocket /ws?token=  (one multiplexed socket per browser tab) ----------
@@ -588,6 +609,7 @@ export type ServerMessage =
   | { type: 'preview-offer-removed'; id: string }
   | { type: 'accounts'; accounts: AccountsState } // accounts added / changed / limited
   | { type: 'account-switch'; event: AccountSwitchEvent } // a console moved to another account
+  | { type: 'provider-event'; event: ProviderEvent } // an agent CLI install or login finished (src/shared/providers.ts)
   | { type: 'loop'; loop: Loop } // added or updated (runs, enabled, retired)
   | { type: 'loop-removed'; id: string }
   | { type: 'drawings'; upsert: Shape[]; remove: string[]; origin?: string }; // see src/shared/drawings.ts
@@ -626,6 +648,7 @@ export interface ComposerRow {
   accountId?: string; // 'auto' or an account id
   worktree?: boolean; // isolated branch (git worktree)
   agent?: AgentKind; // CLI for this console (no 'custom': rows have no command); missing = 'claude'
+  model?: string; // model for this console ('' / missing = the CLI's own default)
 }
 
 export interface ComposeRequest {
@@ -782,7 +805,7 @@ export interface RecapResponse {
 // ~/.claude (never modified by us); extra ones live in <AGENTARMY_HOME>/accounts/<id>/ and the user
 // logs in to them in a 'Login' console. accounts.json keeps them in priority order.
 // GET    /api/accounts                       -> AccountsState
-// POST   /api/accounts { name }              -> Account        (creates the config dir)
+// POST   /api/accounts { name, provider? }   -> Account        (creates the config dir; provider default 'claude')
 // PATCH  /api/accounts AccountsPatch         -> AccountsState  (priority order, auto-switch, default for new agents)
 // PATCH  /api/accounts/:id { name }          -> Account
 // DELETE /api/accounts/:id                   -> { ok: true }   (deletes the dir; not for the default account)
@@ -801,7 +824,8 @@ export interface AccountUtilization {
 }
 
 export interface Account {
-  id: string; // 'default' for ~/.claude
+  id: string; // 'default' for ~/.claude; '<provider>-default' for the other CLIs' own config dirs
+  provider?: ProviderId; // CLI vendor the login is for; missing (older servers) = 'claude'
   name: string;
   configDir: string;
   isDefault: boolean;
@@ -819,6 +843,7 @@ export interface AccountsState {
   autoSwitch: AutoSwitchMode; // when a console hits a limit: switch it, ask first, or do nothing
   newAgentAccount: string; // 'auto' or an account id: what New agent and templates pick by default
   loginConsoles: Record<string, string>; // account id -> console id of its open Login console
+  providerAccounts?: Account[]; // accounts of the other CLIs (Codex, Gemini CLI, ...); see src/shared/providers.ts
 }
 
 export interface AccountsPatch {
@@ -876,6 +901,30 @@ export interface HandoffSendRequest {
 export interface HandoffSendResponse {
   job: Job;
   console: ConsoleInfo; // the target (new or existing)
+}
+
+// ---------- Switch a running agent to another provider (src/server/switch-agent.ts) ----------
+// POST /api/consoles/:id/switch-agent SwitchAgentRequest -> SwitchAgentResponse
+// Builds a handoff brief from the console, starts the target CLI in the same folder / project /
+// workspace / spot with the same name and role (worktree carried over when closeOld), types the brief
+// in once it is idle (handoff Job line old -> new), then removes the old console when closeOld.
+// Errors: 400 { error, code: 'not_installed', agent, installCommand?, installUrl? } when the CLI is missing,
+// 400 { error } for bad input, 404 unknown console.
+export interface SwitchAgentRequest {
+  agent: AgentKind; // not 'custom'
+  accountId?: string; // Claude: account id or 'auto'; other CLIs: their provider account (when supported)
+  model?: string; // launch model for the new console ('' = the CLI's default)
+  closeOld?: boolean; // default true: remove the old console once the brief is typed in (UI confirms)
+  briefMode?: HandoffMode; // default: settings.handoffMode
+  note?: string; // extra line for the brief
+}
+
+export interface SwitchAgentResponse {
+  console: ConsoleInfo; // the new console
+  job: Job; // kind 'handoff', old -> new
+  brief: string;
+  briefMode: HandoffMode;
+  warning?: string; // e.g. smart brief failed, quick one used
 }
 
 // ---------- Project memory (src/server/memory.ts) ----------

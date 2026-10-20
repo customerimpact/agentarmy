@@ -1,10 +1,10 @@
 # Product Roadmap
 
-> Last Updated: 2026-10-19
+> Last Updated: 2026-10-20
 > Version: 1.0.0
 > Status: Planning
 
-Claude Code is the only supported agent until Phase 5.
+Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, local-first, on the subscriptions people already pay for. See @.agent-os/product/vision.md.
 
 ## Phase 0: Technical Spike (3-4 days)
 
@@ -61,7 +61,8 @@ Claude Code is the only supported agent until Phase 5.
 - [x] Windows desktop app - Electron wrapper, NSIS per-user installer, tray, taskbar badge, close-to-tray, Ctrl+Shift+A, auto-update from `desktop-v*` GitHub Releases `L`
 - [ ] Windows code signing - Buy a certificate, set CSC_LINK / CSC_KEY_PASSWORD in CI, removes the SmartScreen warning `S`
 - [ ] Windows arm64 build - Ship the win32-arm64 node-pty prebuild in a separate arm64 installer `S`
-- [ ] macOS app - Pending: needs an Apple Developer account (USD 99/year, signing + notarization) and a Mac to test `M`
+- [x] macOS app (unsigned) - Apple Silicon + Intel .dmg, ad-hoc signed, menu bar icon, Dock badge, login-shell PATH, "Download vX" update notice (DEC-006) `M`
+- [ ] macOS signing + notarization - Apple Developer ID (USD 99/year); then hardened runtime and real auto-update `S`
 - [ ] Linux AppImage/deb - Same Electron app, untested `S`
 
 ## Phase 2: Workspaces and Insight (2 weeks)
@@ -148,3 +149,47 @@ Claude Code is the only supported agent until Phase 5.
 ### Dependencies
 
 - Stable command/action layer from Phases 1-3
+
+## Phase 6: Control Room Everywhere (4-6 weeks)
+
+**Goal:** Your agents follow you: start, watch and answer them from your phone, and hand a session back and forth between computer and phone.
+**Success Criteria:** A user launches a team from their phone, approves a "needs you" prompt from the lock screen and continues the same conversation on the computer without retyping anything.
+
+### Must-Have Features
+
+- [ ] Optional free account - GitHub or email sign-in on the website; the app keeps working fully without it (DEC-005) `M`
+- [ ] Secure relay - The desktop app connects out to a relay with end-to-end encryption; the relay never sees terminal content or code `L`
+- [ ] Phone app (PWA first) - Fleet list, live terminal view, needs-you approvals, push notifications `L`
+- [ ] Launch from your phone - Pick a project or team recipe on the phone; agents start on your computer and you monitor them there `M`
+- [ ] Desktop ⇄ phone handoff, both ways - Move a running session to the phone and back (same session id, resumed in place), not one-way like Claude Code's remote control `L`
+
+### Should-Have Features
+
+- [ ] Team recipes - Shareable JSON of roles, prompts, agents and loops; import by link `S`
+- [ ] Share links and "Run in AgentArmy" badge - One click from a README or a post opens the recipe in the app `S`
+- [ ] Recipe gallery - Public, community-submitted recipes with ratings, on the website `M`
+
+### Dependencies
+
+- Optional account and relay before phone features; recipe format before the gallery
+
+## Phase 7: Review Lane and Autopilot (4 weeks)
+
+**Goal:** Many agents produce many changes; make reviewing and steering them the easy part.
+**Success Criteria:** All agents' changes land in one queue; a user reviews and merges 10 agents' work in under 15 minutes.
+
+### Must-Have Features
+
+- [ ] Review lane - One queue of every agent's diffs: AI pre-review, approve, merge, or send back with a comment `L`
+- [ ] Project memory - Shared, versioned notes per project that every agent reads and updates `M`
+- [ ] Triggers - Start a team from a GitHub issue or PR, a Slack message, or a schedule `M`
+
+### Should-Have Features
+
+- [ ] Plugin API - Third-party board nodes, agent adapters and triggers `L`
+- [ ] Team plan (paid) - Shared boards, shared recipes and memory, usage across the team, SSO `L`
+
+### Dependencies
+
+- Git panel (Phase 4), loops (Phase 3), account (Phase 6) for team features
+

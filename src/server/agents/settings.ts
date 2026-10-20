@@ -10,7 +10,7 @@ export function validateAgentSetting(
   error: (message: string) => Error,
 ): Partial<AppSettings> {
   if (key === 'defaultAgent') {
-    if (!isAgentKind(value)) throw error('defaultAgent must be claude, codex, gemini, opencode or custom');
+    if (!isAgentKind(value)) throw error('defaultAgent must be claude, codex, gemini, opencode, grok or custom');
     return { defaultAgent: value };
   }
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw error('agentPaths must be an object');

@@ -60,7 +60,8 @@ export class AgentArmyServer {
   }
 
   private async launch(options: StartOptions): Promise<void> {
-    const port = options.port ?? (await freePort());
+    // AGENTARMY_E2E_PORT pins every spec to one port (parallel dev sessions on one machine)
+    const port = options.port ?? (Number(process.env.AGENTARMY_E2E_PORT) || (await freePort()));
     const env: Record<string, string> = {
       ...(process.env as Record<string, string>),
       AGENTARMY_CLAUDE_PATH: FAKE_CLAUDE_SHIM,
