@@ -9,3 +9,6 @@ release/
 
 # Agent worktrees (Claude Code)
 .claude/worktrees/
+
+# Wrangler local state (Cloudflare relay)
+.wrangler/

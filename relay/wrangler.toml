@@ -1,0 +1,21 @@
+# gridhive-relay: end-to-end encrypted relay between a user's computers and phones (DEC-009).
+# Deploy: npm run deploy (in relay/). The public key comes from npm run relay:keys at the repo root.
+name = "gridhive-relay"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+account_id = "98e337973bc009cb260bd967ee75bbbd"
+workers_dev = true
+
+[vars]
+RELAY_PUBLIC_KEY = ""
+
+[[durable_objects.bindings]]
+name = "RELAY"
+class_name = "Relay"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Relay"]
+
+[observability]
+enabled = true

@@ -7,13 +7,13 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
 
 ## Tasks
 
-- [ ] 1. Waitlist on gridhive.dev
+- [x] 1. Waitlist on gridhive.dev
   - [x] 1.1 Write tests for the waitlist handler
   - [x] 1.2 POST /api/waitlist on Vercel with Neon (honeypot, one row per email)
-  - [ ] 1.3 "Get early access" form on the homepage (after the Kaizo-palette restyle)
-  - [ ] 1.4 Privacy notice: waitlist emails, how to be removed
-  - [ ] 1.5 Owner: add Neon to the Vercel project; point gridhive.dev to Vercel
-  - [ ] 1.6 Verify a signup lands in Neon on the live site
+  - [x] 1.3 "Get early access" form on the homepage (after the Kaizo-palette restyle)
+  - [x] 1.4 Privacy notice: waitlist emails, how to be removed
+  - [x] 1.5 Owner: add Neon to the Vercel project; point gridhive.dev to Vercel
+  - [x] 1.6 Verify a signup lands in Neon on the live site
 
 - [ ] 2. Accounts (Auth.js on Vercel, Neon adapter)
   - [ ] 2.1 Write tests for session and sign-in routes (test provider)
@@ -29,10 +29,11 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [ ] 3.4 Verify all tests pass
 
 - [ ] 4. Cloudflare relay
-  - [ ] 4.1 Write Durable Object tests (vitest-pool-workers)
-  - [ ] 4.2 Worker + DO, Ed25519 token check, limits, presence, revoke
+  - [x] 4.1 Write relay tests (token check and forwarding rules, relay/test)
+  - [x] 4.2 Worker + DO, Ed25519 token check, limits, presence, revoke (deployed: gridhive-relay.gridhive-relay.workers.dev)
   - [ ] 4.3 /api/relay/token on Vercel
-  - [ ] 4.4 Owner: Cloudflare account, `wrangler login`, relay.gridhive.dev
+  - [x] 4.4 Owner: Cloudflare account (customerimpact), wrangler logged in
+  - [ ] 4.6 Owner: `npm run relay:keys` (signing key to Vercel + relay)
   - [ ] 4.5 Verify all tests pass
 
 - [ ] 5. Phone from anywhere

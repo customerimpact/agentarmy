@@ -39,7 +39,8 @@
     "desktop:dist:mac": "npm run desktop:compile && electron-builder --mac --publish never",
     "test:desktop": "playwright test -c playwright.desktop.config.ts",
     "site:shots": "npm run build && node scripts/site-shots.mjs",
-    "site:stamp": "node scripts/site-stamp.mjs"
+    "site:stamp": "node scripts/site-stamp.mjs",
+    "relay:keys": "node scripts/relay-keys.mjs"
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",
