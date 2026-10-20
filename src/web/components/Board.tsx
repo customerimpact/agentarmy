@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { sendOwnCursor } from '../lib/share';
+import { SharePointers } from './ShareDialog';
 import {
   Background,
   BackgroundVariant,
@@ -593,6 +595,14 @@ export function Board({ projectId }: { projectId?: string } = {}) {
         (document.activeElement as HTMLElement | null)?.blur?.();
       }}
       onMoveEnd={onMoveEnd}
+      onMouseMove={(event) => {
+        // Our pointer for people watching a shared board (sent only while someone watches)
+        if (projectId) return;
+        const p = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+        const v = flow.getViewport();
+        sendOwnCursor({ x: p.x, y: p.y, vx: v.x, vy: v.y, vz: v.zoom });
+      }}
+      onMouseLeave={() => !projectId && sendOwnCursor(null)}
       onDoubleClick={(event) => {
         // Double-click on the empty board: "add here" (note, checklist, kanban, agent)
         if (projectId || !(event.target as Element).classList?.contains('react-flow__pane')) return;
@@ -625,6 +635,7 @@ export function Board({ projectId }: { projectId?: string } = {}) {
       <Background variant={BackgroundVariant.Dots} gap={24} size={1.4} color="var(--aa-dots)" />
       <FlowLines lines={edges} rects={lineSpace.rects} obstacles={lineSpace.obstacles} />
       <AlignmentGuides />
+      {!projectId && <SharePointers />}
       {/* Drawings / annotations: own layer, tool rail and draw mode (see drawing/DrawingLayer.tsx) */}
       <DrawingLayer />
       <Panel position="top-center">

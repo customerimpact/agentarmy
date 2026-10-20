@@ -13,6 +13,7 @@ import { receiveProviderEvent, useProviderHub } from './providers-hub';
 import { useProviders } from './provider-store';
 import { receiveDeviceHandoff, usePhoneAccess } from './phone-access';
 import { useCloud } from './cloud';
+import { useShare } from './share';
 
 export type TerminalStreamListener = (kind: 'replay' | 'output', data: string) => void;
 export type BrowserFrameListener = (
@@ -26,6 +27,9 @@ const MAX_BACKOFF_MS = 10_000;
 class BoardSocket {
   private ws: WebSocket | null = null;
   private attempts = 0;
+  // Board events that arrive while the full state is being re-read are applied after it, so a
+  // state computed a moment earlier can't overwrite them (e.g. a console stuck on 'starting')
+  private held: ServerMessage[] | null = null;
   private reconnectTimer: number | null = null;
   private stopped = false;
   private listeners = new Map<string, Set<TerminalStreamListener>>();
@@ -113,13 +117,19 @@ class BoardSocket {
       for (const id of this.listeners.keys()) this.send({ type: 'attach', id });
       for (const id of this.frameListeners.keys()) this.send({ type: 'browser-attach', id });
       // Statuses may have changed while we were away; resync the full list
+      this.held = [];
       api
         .getState()
         .then((state) => {
           useBoard.getState().loadState(state);
           useItems.getState().load(state);
         })
-        .catch(() => undefined);
+        .catch(() => undefined)
+        .finally(() => {
+          const held = this.held ?? [];
+          this.held = null;
+          for (const message of held) this.dispatch(message);
+        });
       void useUsage.getState().load();
       void useAccounts.getState().load();
       void useLoops.getState().load();
@@ -130,6 +140,11 @@ class BoardSocket {
       try {
         message = JSON.parse(event.data as string) as ServerMessage;
       } catch {
+        return;
+      }
+      // Terminal output and frames are not part of the state snapshot: never hold them
+      if (this.held && message.type !== 'output' && message.type !== 'replay' && message.type !== 'browser-frame') {
+        this.held.push(message);
         return;
       }
       this.dispatch(message);
@@ -234,6 +249,12 @@ class BoardSocket {
       case 'provider-event':
         receiveProviderEvent(message.event);
         void useProviders.getState().load(true);
+        break;
+      case 'share':
+        useShare.getState().receive(message.share);
+        break;
+      case 'share-cursor':
+        useShare.getState().cursor(message.cursor);
         break;
       case 'cloud':
         useCloud.getState().receive(message.cloud);

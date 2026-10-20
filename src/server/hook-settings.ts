@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -60,19 +61,30 @@ export function settingsDir(): string {
   return path.join(os.tmpdir(), 'agentarmy');
 }
 
-function ensureScript(file: string, source: string): string {
-  let current: string | null = null;
+// Helper scripts live in a temp folder shared by every GridHive on this computer (CLI, app, tests,
+// older versions). The name carries a hash of the content and the file is written via rename, so one
+// version never rewrites another's script while an agent is running it.
+export function scriptPath(dir: string, base: string, ext: string, source: string): string {
+  return path.join(dir, `${base}-${crypto.createHash('sha256').update(source).digest('hex').slice(0, 12)}${ext}`);
+}
+
+export function ensureScript(dir: string, base: string, ext: string, source: string): string {
+  const file = scriptPath(dir, base, ext, source);
+  if (fs.existsSync(file)) return file;
+  fs.mkdirSync(dir, { recursive: true });
+  const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(tmp, source);
   try {
-    current = fs.readFileSync(file, 'utf8');
+    fs.renameSync(tmp, file);
   } catch {
-    // not written yet
+    // Another process wrote the same content first
+    fs.rmSync(tmp, { force: true });
   }
-  if (current !== source) fs.writeFileSync(file, source);
   return file;
 }
 
 function ensureForwarder(dir: string): string {
-  return ensureScript(path.join(dir, 'forward-hook.cjs'), FORWARDER_SOURCE);
+  return ensureScript(dir, 'forward-hook', '.cjs', FORWARDER_SOURCE);
 }
 
 // A file path instead of inline JSON sidesteps Windows command-line quoting entirely
@@ -84,7 +96,7 @@ export function writeSettingsFile(consoleId: string, port: number, token: string
   // Desktop app on Windows: GridHive.exe is not node, so PowerShell relays the payload instead
   const powershell =
     isElectron() && process.platform === 'win32'
-      ? ensureScript(path.join(dir, 'forward-hook.ps1'), POWERSHELL_FORWARDER_SOURCE)
+      ? ensureScript(dir, 'forward-hook', '.ps1', POWERSHELL_FORWARDER_SOURCE)
       : undefined;
   const settings = buildHookSettings(hookUrl(port, consoleId, token), forwarderCommand({ node: script, powershell }));
   fs.writeFileSync(file, JSON.stringify(settings, null, 2), { mode: 0o600 });

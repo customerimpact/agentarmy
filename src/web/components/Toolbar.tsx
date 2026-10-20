@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { useShare } from '../lib/share';
+import { SharePresence } from './ShareDialog';
 import { CircleQuestionMark, Maximize2, Plus, Share2 } from 'lucide-react';
 import { fitAll } from '../lib/board-actions';
 import { useBoard } from '../lib/store';
@@ -112,13 +114,14 @@ export function Toolbar() {
       <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
       {/* Presence + sharing: who else is looking at this board (coming with shared boards) */}
       <div data-testid="presence-slot" className="flex items-center gap-1.5 pr-1.5">
+        <SharePresence />
         <button
           type="button"
           data-testid="share-button"
-          disabled
-          title="Share this board · coming soon"
-          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-fg-subtle
-                     disabled:cursor-not-allowed"
+          title="Share this board: people watch it live, with pointers"
+          onClick={() => useShare.getState().setDialogOpen(true)}
+          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-fg
+                     hover:border-accent/60 hover:text-accent"
         >
           <Share2 size={13} />
           Share

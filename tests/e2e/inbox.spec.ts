@@ -35,7 +35,11 @@ test.beforeAll(async ({ browser }) => {
 test.afterAll(async () => {
   await page?.close();
   await server?.stop();
-  if (home) fs.rmSync(home, { recursive: true, force: true, maxRetries: 5 });
+  try {
+    if (home) fs.rmSync(home, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 });
+  } catch {
+    // Windows may still hold the fake CLI's folder for a moment; it is a temp dir anyway
+  }
 });
 
 test.afterEach(async ({}, testInfo) => {

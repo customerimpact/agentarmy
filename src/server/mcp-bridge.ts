@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { settingsDir } from './hook-settings.js';
+import { ensureScript, settingsDir } from './hook-settings.js';
 import { isElectron, nodeScriptCommand } from './node-runtime.js';
 
 // The gridhive MCP server that runs inside every console. Claude Code starts it over stdio
@@ -119,24 +119,17 @@ process.stdin.on('data', (chunk) => {
 process.stdin.on('end', () => process.exit(0));
 `;
 
+// Written on first use; Codex, Gemini and OpenCode configs point at it directly
 export function mcpScriptPath(): string {
-  return path.join(settingsDir(), 'gridhive-mcp.cjs');
+  return ensureMcpScript();
 }
 
 export function mcpConfigPath(consoleId: string): string {
   return path.join(settingsDir(), `${consoleId}.mcp.json`);
 }
 
-function ensureScript(): string {
-  const script = mcpScriptPath();
-  let current: string | null = null;
-  try {
-    current = fs.readFileSync(script, 'utf8');
-  } catch {
-    // not written yet
-  }
-  if (current !== MCP_SCRIPT_SOURCE) fs.writeFileSync(script, MCP_SCRIPT_SOURCE);
-  return script;
+function ensureMcpScript(): string {
+  return ensureScript(settingsDir(), 'gridhive-mcp', '.cjs', MCP_SCRIPT_SOURCE);
 }
 
 export function buildMcpConfig(
@@ -153,7 +146,7 @@ export function buildMcpConfig(
 // One config per console: the console id and token travel as argv to the proxy
 export function writeMcpConfigFile(consoleId: string, port: number, token: string): string {
   fs.mkdirSync(settingsDir(), { recursive: true });
-  const script = ensureScript();
+  const script = ensureMcpScript();
   const file = mcpConfigPath(consoleId);
   const config = buildMcpConfig(process.execPath, script, `http://127.0.0.1:${port}`, consoleId, token);
   fs.writeFileSync(file, JSON.stringify(config, null, 2), { mode: 0o600 });

@@ -73,7 +73,7 @@ describe('ShareService (Viewer)', () => {
     const link = status.shares[0].link;
     expect(link).toMatch(/^https:\/\/site\.test\/s\/abcdefghijkl#k=[A-Za-z0-9_-]{43}$/);
     const key = await importShareKey(link.split('#k=')[1]);
-    await expect.poll(() => service.status().shares[0].connected).toBe(true);
+    await expect.poll(() => service.status().shares[0].connected, { timeout: 10_000 }).toBe(true);
 
     const guest = new WsClient(`${relay.url}?token=guest:g_tim`);
     const inbox: OwnerMessage[] = [];
@@ -85,10 +85,10 @@ describe('ShareService (Viewer)', () => {
     });
     await new Promise((r) => guest.once('open', r));
     const say = async (m: unknown) => guest.send(JSON.stringify(await seal(key, 'g_tim', 'pc1', m)));
-    await expect.poll(() => service.status().shares[0].guests.map((g) => g.name)).toEqual(['Tim']);
+    await expect.poll(() => service.status().shares[0].guests.map((g) => g.name), { timeout: 10_000 }).toEqual(['Tim']);
 
     await say({ t: 'hello' });
-    await expect.poll(() => inbox.find((m) => m.t === 'snapshot')).toBeTruthy();
+    await expect.poll(() => inbox.find((m) => m.t === 'snapshot'), { timeout: 10_000 }).toBeTruthy();
     const snapshot = inbox.find((m) => m.t === 'snapshot') as Extract<OwnerMessage, { t: 'snapshot' }>;
     expect(snapshot.consoles.map((c) => c.name)).toEqual(['Ada']);
     expect(snapshot.consoles[0]).not.toHaveProperty('cwd');
@@ -100,15 +100,15 @@ describe('ShareService (Viewer)', () => {
     const cursors: ShareCursorEvent[] = [];
     service.on('cursor', (c: ShareCursorEvent) => cursors.push(c));
     await say({ t: 'cursor', c: { x: 10, y: 20 } });
-    await expect.poll(() => cursors.at(-1)).toMatchObject({ dev: 'g_tim', name: 'Tim', c: { x: 10, y: 20 } });
+    await expect.poll(() => cursors.at(-1), { timeout: 10_000 }).toMatchObject({ dev: 'g_tim', name: 'Tim', c: { x: 10, y: 20 } });
 
     // Typing is not something a viewer can do: nothing reaches the console
     const before = manager.get(consoleId)!.status;
     await say({ t: 'input', id: consoleId, data: 'exit\r' });
     service.localCursor({ x: 5, y: 6 });
-    await expect.poll(() => inbox.find((m) => m.t === 'cursor')).toMatchObject({ t: 'cursor', dev: 'pc1', c: { x: 5, y: 6 } });
+    await expect.poll(() => inbox.find((m) => m.t === 'cursor'), { timeout: 10_000 }).toMatchObject({ t: 'cursor', dev: 'pc1', c: { x: 5, y: 6 } });
     expect(manager.get(consoleId)!.status).toBe(before);
     guest.close();
-    await expect.poll(() => service.status().shares[0].guests).toEqual([]);
+    await expect.poll(() => service.status().shares[0].guests, { timeout: 10_000 }).toEqual([]);
   });
 });

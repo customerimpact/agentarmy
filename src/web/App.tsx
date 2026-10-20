@@ -37,6 +37,8 @@ import { openPendingRecipe } from './lib/recipe-link';
 import { usePhoneAccess } from './lib/phone-access';
 import { useCloud } from './lib/cloud';
 import { CloudSignInPrompt } from './components/CloudSignIn';
+import { ShareDialog } from './components/ShareDialog';
+import { useShare } from './lib/share';
 
 // ?view=console|project|focus opens a pop-out window instead of the full board (see lib/views.ts)
 const VIEW = parseView(window.location.search);
@@ -51,6 +53,7 @@ function Shell() {
   const newAgentOpen = useBoard((s) => s.newAgentOpen);
   const missionMapOpen = useBoard((s) => s.missionMapOpen);
   const templatesOpen = useBoard((s) => s.templatesOpen);
+  const shareOpen = useShare((s) => s.dialogOpen);
   useShortcuts();
 
   return (
@@ -78,6 +81,7 @@ function Shell() {
       <SettingsHost />
       <ConfirmDialog />
       {loaded && !SETTINGS_PAGE && <CloudSignInPrompt />}
+      {shareOpen && <ShareDialog />}
     </div>
   );
 }
@@ -109,6 +113,7 @@ export function App() {
           openPendingRecipe();
           void usePhoneAccess.getState().load();
           void useCloud.getState().load();
+          void useShare.getState().load();
         } else {
           startPopoutPresence(VIEW);
         }
