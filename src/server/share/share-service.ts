@@ -201,7 +201,8 @@ export class ShareService extends EventEmitter {
     }
     const conn = this.conns.get(id);
     if (conn) {
-      for (const dev of conn.guests.keys()) void this.send(conn, dev, { t: 'bye', reason: 'The owner stopped sharing' });
+      // Say goodbye before closing, so guests see why the board went away
+      await Promise.all([...conn.guests.keys()].map((dev) => this.send(conn, dev, { t: 'bye', reason: 'The owner stopped sharing' })));
       this.disconnect(conn);
       this.conns.delete(id);
     }
@@ -332,10 +333,19 @@ export class ShareService extends EventEmitter {
       const present = new Set(frame.devices.filter((d) => d.kind === 'guest').map((d) => d.id));
       for (const dev of [...conn.guests.keys()]) if (!present.has(dev)) this.dropGuest(conn, dev);
       const fresh = [...present].filter((dev) => !conn.guests.has(dev));
-      if (fresh.length) await this.lookupNames(conn);
+      // Register right away so their first message is not dropped; names arrive a moment later
       for (const dev of fresh) conn.guests.set(dev, { dev, name: this.names.get(dev) ?? 'Guest', color: peerColor(dev) });
       this.sendPeers(conn);
       this.changed();
+      if (fresh.some((dev) => !this.names.has(dev))) {
+        await this.lookupNames(conn);
+        for (const dev of fresh) {
+          const guest = conn.guests.get(dev);
+          if (guest) guest.name = this.names.get(dev) ?? guest.name;
+        }
+        this.sendPeers(conn);
+        this.changed();
+      }
       return;
     }
     if (!frame.from || !frame.nonce || !frame.box || !conn.guests.has(frame.from)) return;

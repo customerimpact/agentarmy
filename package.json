@@ -40,7 +40,8 @@
     "test:desktop": "playwright test -c playwright.desktop.config.ts",
     "site:shots": "npm run build && node scripts/site-shots.mjs",
     "site:stamp": "node scripts/site-stamp.mjs",
-    "relay:keys": "node scripts/relay-keys.mjs"
+    "relay:keys": "node scripts/relay-keys.mjs",
+    "build:viewer": "vite build --config vite.viewer.config.ts"
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",
