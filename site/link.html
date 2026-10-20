@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Link your computer · GridHive</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#08061a">
+  <meta name="color-scheme" content="dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/styles.css?v=53b5a73a0d">
+  <style>
+    .acct { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; }
+    .acct-card { width: min(460px, 100%); text-align: center; padding: 40px 32px; border-radius: 24px; border: 1px solid var(--line-2); background: rgba(21, 18, 58, 0.72); backdrop-filter: blur(10px); box-shadow: 0 40px 120px -40px rgba(105, 81, 224, 0.6); }
+    .acct-card img.logo { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 18px; display: block; }
+    .acct-card h1 { font-size: 26px; letter-spacing: -0.02em; margin: 0 0 8px; }
+    .acct-card .sub { color: var(--fg-2); margin: 0 0 22px; }
+    .code { font: 600 30px/1 'JetBrains Mono', monospace; letter-spacing: 0.12em; padding: 16px; border-radius: 14px; border: 1px dashed var(--line-2); margin: 0 0 22px; }
+    .acct-btns { display: grid; gap: 10px; }
+    .acct-btns .btn { width: 100%; justify-content: center; }
+    .btn.provider { background: #fff; color: #14112e; box-shadow: none; }
+    .msg { margin: 16px 0 0; font-size: 14px; color: var(--fg-2); }
+    .msg.err { color: #ffb3b3; }
+    .msg.ok { color: #8fd3ff; }
+    .acct-note { margin: 22px 0 0; font-size: 13px; color: var(--fg-3); }
+  </style>
+</head>
+<body>
+  <main class="acct">
+    <div class="acct-card">
+      <a href="/" aria-label="GridHive home"><img class="logo" src="/assets/icon.svg" alt=""></a>
+      <h1 id="title">Link your computer</h1>
+      <p class="sub" id="sub">Check that this code matches the one in the GridHive app.</p>
+      <p class="code" id="code">····-····</p>
+
+      <div class="acct-btns" id="signin" hidden>
+        <a class="btn lg provider" id="gh" href="#">Sign in with GitHub to link</a>
+        <a class="btn lg provider" id="gg" href="#">Sign in with Google to link</a>
+      </div>
+      <div class="acct-btns" id="confirm" hidden>
+        <button class="btn primary lg" type="button" id="link">Link this computer</button>
+      </div>
+      <p class="msg" id="msg" role="status"></p>
+      <p class="acct-note">Only link a computer you started this from yourself. You can remove it later on your <a href="/account">account page</a>.</p>
+    </div>
+  </main>
+  <script src="/link.js?v=41f5047301" defer></script>
+</body>
+</html>
