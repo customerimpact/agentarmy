@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, type PointerEvent, type ReactNode } from 'react';
 import { NodeResizer, useStore, type Node, type NodeProps } from '@xyflow/react';
-import { ArrowRightLeft, Play, Repeat2, RotateCcw, Smartphone, X } from 'lucide-react';
+import { ArrowRightLeft, Folder, GitBranch, Play, Repeat2, RotateCcw, Smartphone, X } from 'lucide-react';
 import type { ConsoleStatus } from '../../shared/protocol';
 import { AGENT_META, type AgentKind } from '../../shared/agents';
 import { AGENT_ICONS, AgentIcon } from './AgentIcon';
@@ -15,7 +15,6 @@ import {
 } from '../lib/board-actions';
 import {
   STATUS_META,
-  basename,
   formatSince,
   isDormant,
   modelShortName,
@@ -39,7 +38,14 @@ import { continueOnPhone, phonesOnline, usePhoneAccess } from '../lib/phone-acce
 
 export type TerminalFlowNode = Node<Record<string, never>, 'terminal'>;
 
-const HEADER_HEIGHT = 36;
+// Last two folders of a path, like a shell prompt: …/dev/shop
+function shortPath(cwd: string): string {
+  const parts = cwd.split(/[\\/]+/).filter(Boolean);
+  return parts.length <= 2 ? cwd : `…/${parts.slice(-2).join('/')}`;
+}
+
+const HEADER_HEIGHT = 32;
+const FOOTER_HEIGHT = 22;
 
 function IconButton({
   label,
@@ -61,15 +67,15 @@ function IconButton({
       aria-label={label}
       data-testid={testId}
       onClick={onClick}
-      className={`nodrag grid size-6 place-items-center rounded-md text-fg-subtle transition-colors
-                  hover:bg-hover ${danger ? 'hover:text-error' : 'hover:text-accent'}`}
+      className={`nodrag grid size-6 place-items-center rounded-[4px] text-fg-subtle transition-colors
+                  hover:bg-hover ${danger ? 'hover:text-error' : 'hover:text-fg'}`}
     >
       {children}
     </button>
   );
 }
 
-// Rounded-square agent mark, tinted with the project color (orange when ungrouped)
+// Square agent mark: the CLI's logo on a flat tile, status dot in the corner
 export function AgentAvatar({
   status,
   color,
@@ -82,25 +88,13 @@ export function AgentAvatar({
   agent?: AgentKind; // missing = Claude Code
 }) {
   const Mark = AGENT_ICONS[agent ?? 'claude'];
-  const tint = projectColorVar(color);
-  const live = status === 'working';
   return (
     <span
-      className="relative grid shrink-0 place-items-center rounded-[7px]"
-      style={{
-        width: size,
-        height: size,
-        background: `linear-gradient(140deg, color-mix(in srgb, ${tint} 34%, transparent), color-mix(in srgb, ${tint} 12%, transparent))`,
-        boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${tint} 45%, transparent)`,
-        color: tint,
-      }}
+      className="relative grid shrink-0 place-items-center rounded-[5px] border border-line-strong bg-surface"
+      style={{ width: size, height: size, color: projectColorVar(color) }}
     >
-      <Mark
-        size={Math.round(size * (agent === 'custom' ? 0.6 : 0.66))}
-        strokeWidth={2.75}
-        className={live ? 'animate-spin [animation-duration:3s] motion-reduce:animate-none' : ''}
-      />
-      <span className="absolute -right-0.5 -bottom-0.5 rounded-full ring-2 ring-surface-2">
+      <Mark size={Math.round(size * (agent === 'custom' ? 0.6 : 0.62))} strokeWidth={2.5} />
+      <span className="absolute -right-[3px] -bottom-[3px] rounded-full ring-2 ring-surface-2">
         <StatusDot status={status} size={6} />
       </span>
     </span>
@@ -198,14 +192,16 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
   };
 
   const ringClass = needsYou
-    ? 'ring-2 ring-needs'
+    ? 'ring-1 ring-needs'
     : inSelection
-      ? 'ring-2 ring-accent shadow-[0_0_0_5px_color-mix(in_srgb,var(--aa-accent)_16%,transparent)]'
+      ? 'ring-[1.5px] ring-accent'
       : focused
-        ? 'ring-1 ring-accent/60'
+        ? 'ring-1 ring-accent/70'
         : working
-          ? 'ring-0'
+          ? 'ring-1 ring-working/45'
           : 'ring-1 ring-line hover:ring-line-strong';
+  const edge = working ? 'aa-edge-working' : needsYou ? 'aa-edge-needs' : c.status === 'error' ? 'aa-edge-error' : null;
+  const shortSession = c.agentSessionId ?? c.sessionId;
 
   return (
     <>
@@ -216,34 +212,33 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
         data-selected={inSelection || undefined}
         className={`aa-node relative h-full w-full ${needsYou ? 'aa-needs-glow' : ''}`}
       >
-        {working && <div aria-hidden className="aa-glow aa-glow-working" />}
-        {needsYou && <div aria-hidden className="aa-glow aa-glow-needs" />}
-        {working && <div aria-hidden className="aa-ring aa-ring-working" />}
         <div
-          className={`relative flex h-full w-full flex-col overflow-hidden rounded-xl bg-surface shadow-2xl shadow-black/50 transition-shadow
+          className={`relative flex h-full w-full flex-col overflow-hidden rounded-lg bg-surface shadow-[0_12px_32px_-14px_rgb(0_0_0/0.7)] transition-shadow
                       ${ringClass}`}
         >
+          {edge && <div aria-hidden className={`aa-edge ${edge}`} />}
           {projectColor && (
+            // Project color as a rail down the left edge (status owns the top edge)
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-[2px]"
+              className="pointer-events-none absolute inset-y-0 left-0 z-[2] w-[3px]"
               style={{ background: projectColorVar(projectColor) }}
             />
           )}
           <header
             onPointerDown={onHeaderPointerDown}
-            className={`aa-drag-handle flex shrink-0 cursor-grab items-center gap-2 border-b border-line pr-1.5 pl-2.5 select-none
+            className={`aa-drag-handle flex shrink-0 cursor-grab items-center gap-1.5 border-b border-line pr-1 pl-2.5 select-none
                         active:cursor-grabbing
-                        ${needsYou ? 'bg-needs/10' : working ? 'bg-[linear-gradient(90deg,color-mix(in_srgb,var(--aa-working)_12%,var(--aa-surface-2)),var(--aa-surface-2)_55%)]' : 'bg-surface-2'}`}
+                        ${needsYou ? 'bg-needs/8' : 'bg-surface-2'}`}
             style={{ height: HEADER_HEIGHT }}
           >
-            <AgentAvatar status={c.status} color={projectColor} agent={c.agent} />
-            <span className="truncate text-[13px] font-semibold text-fg">{c.name}</span>
+            <AgentAvatar status={c.status} color={projectColor} agent={c.agent} size={18} />
+            <span className="truncate text-[12.5px] font-semibold tracking-[-0.01em] text-fg">{c.name}</span>
             {c.agent === 'custom' ? (
               <span
                 data-testid="console-agent"
                 data-agent={c.agent}
-                className="aa-label inline-flex min-w-0 shrink items-center gap-1 rounded-md bg-surface px-1.5 py-[2px] text-fg-muted ring-1 ring-line"
+                className="inline-flex h-[18px] min-w-0 shrink items-center gap-1 rounded-[4px] border border-line px-1.5 text-fg-muted"
                 title={`Runs: ${c.command ?? ''}`}
               >
                 <code data-testid="console-command" className="truncate font-mono text-[10.5px] normal-case tracking-normal text-fg">
@@ -257,22 +252,17 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
                 data-testid="console-agent"
                 data-agent={c.agent ?? 'claude'}
                 onClick={() => openSwitchAgent(id)}
-                className="aa-label nodrag inline-flex shrink-0 items-center gap-1 rounded-md bg-surface px-1.5 py-[2px] text-fg ring-1 ring-line transition-colors
-                           hover:text-accent hover:ring-accent/50"
+                className="nodrag inline-flex h-[18px] shrink-0 items-center gap-1 rounded-[4px] border border-line px-1.5 text-[11px] font-medium text-fg-muted transition-colors
+                           hover:border-line-strong hover:text-fg"
                 title={`Runs ${AGENT_META[c.agent ?? 'claude'].label} · click to switch agent…`}
               >
-                <AgentIcon agent={c.agent ?? 'claude'} size={11} className="text-accent" />
+                <AgentIcon agent={c.agent ?? 'claude'} size={11} />
                 {AGENT_META[c.agent ?? 'claude'].short}
               </button>
             )}
             {c.role && (
-              <span
-                className="aa-label shrink-0 rounded-md px-1.5 py-[2px]"
-                style={{
-                  color: projectColorVar(projectColor),
-                  background: `color-mix(in srgb, ${projectColorVar(projectColor)} 12%, transparent)`,
-                }}
-              >
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-fg-muted">
+                <span aria-hidden className="size-1.5 rounded-[2px]" style={{ background: projectColorVar(projectColor) }} />
                 {c.role}
               </span>
             )}
@@ -281,10 +271,6 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
                 {model}
               </span>
             )}
-            <span className="truncate font-mono text-[11px] text-fg-subtle" title={c.cwd}>
-              {(model || c.role) && <span className="mr-1.5 text-line-strong">·</span>}
-              {basename(c.cwd)}
-            </span>
             <span className="ml-auto" />
             <ConsoleAccountChip console={c} />
             <UsageChip id={id} />
@@ -294,21 +280,21 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
             {c.paused && <PausedPill />}
             <span
               data-testid="console-status"
-              className={`aa-label relative inline-flex h-5 shrink-0 items-center gap-1.5 overflow-hidden rounded-full px-2 ${meta.pill}`}
+              className={`inline-flex h-5 shrink-0 items-center gap-1.5 rounded-[4px] px-1.5 font-mono text-[10.5px] font-medium ${meta.text}
+                          ${needsYou ? 'bg-needs/12' : ''}`}
               title={c.statusDetail}
             >
-              {working && <span aria-hidden className="aa-shimmer absolute inset-0" />}
-              <span className="relative">{meta.label}</span>
-              <span className="relative font-medium tabular-nums opacity-70">
-                {formatSince(c.statusChangedAt, now)}
-              </span>
+              <StatusDot status={c.status} size={6} />
+              <span>{meta.label}</span>
+              <span className="text-fg-subtle tabular-nums">{formatSince(c.statusChangedAt, now)}</span>
             </span>
+            <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-line" />
             {isDormant(c.status) ? (
               <button
                 type="button"
                 data-testid="console-restart"
                 onClick={() => void restartConsole(id)}
-                className="aa-btn-primary nodrag inline-flex h-6 shrink-0 items-center gap-1 rounded-md px-2 text-[11px] font-semibold"
+                className="aa-btn-primary nodrag inline-flex h-6 shrink-0 items-center gap-1 rounded-[4px] px-2 text-[11px] font-semibold"
               >
                 <RotateCcw size={12} />
                 {c.status === 'suspended' ? 'Resume' : 'Restart'}
@@ -338,7 +324,7 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
             <MoveToWorkspaceButton consoleId={id} />
             <PopOutButton view={consoleView(id)} testId="console-popout" />
             <IconButton testId="console-close" label="Close console" onClick={askClose} danger>
-              <X size={15} />
+              <X size={14} />
             </IconButton>
           </header>
           {needsYou && c.statusDetail && !compact && (
@@ -386,6 +372,34 @@ function TerminalNodeImpl({ id, width, height }: NodeProps<TerminalFlowNode>) {
               />
             )}
           </div>
+          {!compact && (
+            // Terminal status line: where it runs, on what branch and model, and what it is doing now
+            <footer
+              data-testid="console-footer"
+              className="flex shrink-0 items-center gap-3 border-t border-line bg-surface-2 px-2.5 font-mono text-[10.5px] text-fg-subtle"
+              style={{ height: FOOTER_HEIGHT }}
+            >
+              <span className="inline-flex min-w-0 shrink items-center gap-1" title={c.cwd}>
+                <Folder size={10} className="shrink-0" />
+                <span className="truncate">{shortPath(c.cwd)}</span>
+              </span>
+              {c.git && (
+                <span className="inline-flex min-w-0 shrink items-center gap-1" title={c.git.branch}>
+                  <GitBranch size={10} className="shrink-0" />
+                  <span className="truncate">{c.git.branch.replace(/^(gridhive|agentarmy)\//, '')}</span>
+                  {c.gitStats && (c.gitStats.added > 0 || c.gitStats.removed > 0) && (
+                    <span className="shrink-0 tabular-nums">
+                      <span className="text-resting">+{c.gitStats.added}</span> <span className="text-error">−{c.gitStats.removed}</span>
+                    </span>
+                  )}
+                </span>
+              )}
+              {model && <span className="shrink-0">{model}</span>}
+              <span className="ml-auto min-w-0 truncate text-right text-fg-muted">
+                {c.activity ?? (shortSession ? `session ${shortSession.slice(0, 8)}` : '')}
+              </span>
+            </footer>
+          )}
         </div>
       </div>
       {/* After the clipped card so the edge handles sit on top and aren't cut off */}

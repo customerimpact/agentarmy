@@ -81,7 +81,7 @@ export function AddItemButton() {
         aria-expanded={open}
         title="Add a note, checklist or kanban board"
         onClick={() => setOpen(!open)}
-        className="inline-flex h-8 items-center gap-1 rounded-lg border border-line bg-surface px-2.5 font-semibold text-fg-muted shadow-lg shadow-black/20
+        className="inline-flex h-7 items-center gap-1 rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-fg-muted
                    hover:bg-hover hover:text-fg"
       >
         <Plus size={14} />

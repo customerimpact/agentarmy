@@ -63,16 +63,16 @@ function AgentRow({
       data-status={c.status}
       aria-pressed={selected}
       onClick={(e) => onClick(e, c.id)}
-      className={`group flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors select-none
+      className={`group flex w-full items-center gap-2.5 rounded-md px-2 py-[5px] text-left transition-colors select-none
                   hover:bg-hover
                   ${focused ? 'bg-hover' : ''}
                   ${selected ? 'bg-accent/10 ring-1 ring-accent/50 hover:bg-accent/15' : ''}
                   ${needs && !selected ? 'bg-needs/8 ring-1 ring-needs/35 hover:bg-needs/12' : ''}`}
     >
-      <Avatar name={c.name} status={c.status} agent={c.agent} />
+      <Avatar name={c.name} status={c.status} agent={c.agent} size={26} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[13px] leading-5 font-medium text-fg">{c.name}</span>
-        <span className="block truncate text-[11.5px] leading-4 text-fg-subtle">{meta}</span>
+        <span className="block truncate text-[12.5px] leading-[18px] font-medium text-fg">{c.name}</span>
+        <span className="block truncate font-mono text-[10.5px] leading-4 text-fg-subtle">{meta}</span>
         <GitLink console={c} />
         {c.git && (
           // Own branch: open the Review panel without flying to the console
@@ -160,7 +160,7 @@ function AgentRow({
           {c.paused && <PausedPill />}
           <StatusPill status={c.status} />
         </span>
-        <span className="text-[10px] text-fg-subtle tabular-nums">
+        <span className="font-mono text-[10px] text-fg-subtle tabular-nums">
           {formatSince(c.statusChangedAt, now)}
         </span>
       </span>
@@ -476,9 +476,9 @@ export function AgentsPanel() {
       <div className="flex shrink-0 items-center gap-2 px-3 pt-3 pb-2">
         <Ring ratio={list.length ? working / list.length : 0} />
         <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-[13px] font-semibold text-fg">Orchestrator</span>
-            <span className="text-[11.5px] text-fg-subtle tabular-nums">
+          <div className="flex min-w-0 items-baseline gap-1.5">
+            <span className="truncate text-[12.5px] font-semibold text-fg">Orchestrator</span>
+            <span className="shrink-0 font-mono text-[10.5px] text-fg-subtle tabular-nums">
               {working}/{list.length}
             </span>
           </div>
@@ -499,13 +499,13 @@ export function AgentsPanel() {
         </button>
         <button
           type="button"
-          title="Launch a team from a template"
+          title="Templates: launch a team"
+          aria-label="Templates"
           onClick={() => setTemplatesOpen(true)}
-          className="flex h-7 items-center gap-1.5 rounded-md border border-line px-2 text-[12px] font-medium text-fg-muted
+          className="grid size-7 place-items-center rounded-md border border-line text-fg-muted
                      hover:border-line-strong hover:bg-hover hover:text-fg"
         >
           <LayoutTemplate size={13} />
-          Templates
         </button>
         <LoopsButton />
       </div>

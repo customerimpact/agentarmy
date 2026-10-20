@@ -276,7 +276,7 @@ function Tab({
         setDraft(ws.name);
         setEditing(true);
       }}
-      className={`group/tab relative flex h-8 max-w-48 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border pr-1 pl-2.5 text-[12.5px] font-medium shadow-lg shadow-black/20 transition-colors select-none
+      className={`group/tab relative flex h-7 max-w-48 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border pr-1 pl-2.5 text-[12px] font-medium transition-colors select-none
                   ${active ? 'border-line-strong bg-elevated text-fg' : 'border-line bg-surface/90 text-fg-muted hover:bg-hover hover:text-fg'}`}
     >
       {dragOver && (
@@ -406,7 +406,7 @@ export function WorkspaceTabs() {
         title="New workspace"
         aria-label="New workspace"
         onClick={() => void newWorkspace()}
-        className="grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface/90 text-fg-muted shadow-lg shadow-black/20
+        className="grid size-7 shrink-0 place-items-center rounded-md border border-line bg-surface/90 text-fg-muted
                    hover:bg-hover hover:text-fg"
       >
         <Plus size={14} />

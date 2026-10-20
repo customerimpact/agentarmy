@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { CircleQuestionMark, Maximize2, Plus } from 'lucide-react';
+import { CircleQuestionMark, Maximize2, Plus, Share2 } from 'lucide-react';
 import { fitAll } from '../lib/board-actions';
 import { useBoard } from '../lib/store';
 import { ArrangeMenu } from './ArrangeMenu';
@@ -38,11 +38,7 @@ const SHORTCUTS: { keys: string[]; label: string; note?: string }[] = [
 ];
 
 function Kbd({ children }: { children: string }) {
-  return (
-    <kbd className="min-w-5 rounded border border-line-strong bg-surface-2 px-1.5 py-px text-center font-mono text-[10px] text-fg-muted">
-      {children}
-    </kbd>
-  );
+  return <kbd className="aa-kbd">{children}</kbd>;
 }
 
 function HelpPopover() {
@@ -104,8 +100,8 @@ export function Toolbar() {
   // With 2+ selected, the selection bar shows the Kill button instead
   const multiSelect = useBoard((s) => s.selectedIds.length >= 2);
   const { setNewAgentOpen, setHelpOpen } = useBoard.getState();
-  const buttonClass = `grid size-8 place-items-center rounded-lg border border-line bg-surface text-fg-muted shadow-lg shadow-black/20
-                       hover:bg-hover hover:text-fg`;
+  const buttonClass = `grid size-7 place-items-center rounded-md border border-line bg-surface text-fg-muted
+                       hover:border-line-strong hover:bg-hover hover:text-fg`;
 
   return (
     // Workspace tabs on the left, actions on the right; the gap between them stays click-through
@@ -113,16 +109,31 @@ export function Toolbar() {
       <div className="pointer-events-auto min-w-0 flex-1">
         <WorkspaceTabs />
       </div>
-      <div className="pointer-events-auto flex shrink-0 items-center gap-2">
+      <div className="pointer-events-auto flex shrink-0 items-center gap-1.5">
+      {/* Presence + sharing: who else is looking at this board (coming with shared boards) */}
+      <div data-testid="presence-slot" className="flex items-center gap-1.5 pr-1.5">
+        <button
+          type="button"
+          data-testid="share-button"
+          disabled
+          title="Share this board · coming soon"
+          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[12px] font-medium text-fg-subtle
+                     disabled:cursor-not-allowed"
+        >
+          <Share2 size={13} />
+          Share
+        </button>
+        <span aria-hidden className="h-4 w-px bg-line" />
+      </div>
       <button
         type="button"
         data-testid="new-agent-button"
         onClick={() => setNewAgentOpen(true)}
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 font-semibold text-accent-fg shadow-lg shadow-black/20
-                   hover:brightness-110"
+        className="aa-btn-primary inline-flex h-7 items-center gap-1.5 rounded-md pr-1.5 pl-2.5 text-[12px] font-semibold"
       >
-        <Plus size={15} />
+        <Plus size={14} />
         New agent
+        <kbd className="ml-0.5 grid h-4 min-w-4 place-items-center rounded-[3px] bg-black/15 px-1 font-mono text-[9.5px] font-medium">N</kbd>
       </button>
       <AddItemButton />
       <ArrangeMenu />

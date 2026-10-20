@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import {
-  ArrowRight,
   Boxes,
   Check,
   Grid2x2,
@@ -79,12 +78,14 @@ function Chip({
   testId,
   title,
   active,
+  hint,
 }: {
   onClick: () => void;
   children: ReactNode;
   testId?: string;
   title?: string;
   active?: boolean;
+  hint?: string; // keyboard shortcut shown as a keycap
 }) {
   return (
     <button
@@ -92,12 +93,13 @@ function Chip({
       data-testid={testId}
       title={title}
       onClick={onClick}
-      className={`inline-flex h-7 items-center gap-1.5 rounded-full border px-3 text-[12px] font-medium shadow-lg shadow-black/30 backdrop-blur transition-colors
-                  hover:border-accent/60 hover:bg-accent/10 hover:text-fg
-                  [&_svg]:text-accent/80
-                  ${active ? 'border-accent/50 bg-accent/10 text-fg' : 'border-line-strong/80 bg-elevated/85 text-fg-muted'}`}
+      className={`inline-flex h-[26px] items-center gap-1.5 rounded-md border px-2 text-[11.5px] font-medium backdrop-blur transition-colors
+                  hover:border-line-strong hover:text-fg
+                  [&_svg]:text-fg-subtle
+                  ${active ? 'border-accent/60 bg-accent/10 text-fg' : 'border-line bg-elevated/90 text-fg-muted'}`}
     >
       {children}
+      {hint && <kbd className="aa-kbd ml-0.5">{hint}</kbd>}
     </button>
   );
 }
@@ -316,7 +318,7 @@ export function CommandBar() {
       className="pointer-events-none absolute bottom-4 left-1/2 z-10 flex w-[min(680px,calc(100%-2rem))] -translate-x-1/2 flex-col gap-2"
     >
       <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-1.5">
-        <Chip onClick={() => setNewAgentOpen(true)}>
+        <Chip onClick={() => setNewAgentOpen(true)} hint="N">
           <Plus size={13} />
           New agent
         </Chip>
@@ -385,11 +387,11 @@ export function CommandBar() {
           <Brain size={12} />
           Memory
         </Chip>
-        <Chip testId="command-bar-mission-map" onClick={() => setMissionMapOpen(true)}>
+        <Chip testId="command-bar-mission-map" onClick={() => setMissionMapOpen(true)} hint="M">
           <Network size={13} />
           Mission map
         </Chip>
-        <Chip onClick={fitAll}>
+        <Chip onClick={fitAll} hint="F">
           <Maximize2 size={12} />
           Fit all
         </Chip>
@@ -464,8 +466,8 @@ export function CommandBar() {
         )}
 
         <div
-          className="flex items-end gap-2 rounded-2xl border border-line-strong bg-elevated/90 p-2 shadow-[0_20px_60px_-15px_rgb(0_0_0/0.7)] backdrop-blur-md transition-shadow
-                     focus-within:border-accent/60 focus-within:shadow-[0_20px_60px_-15px_rgb(0_0_0/0.7),0_0_40px_-8px_color-mix(in_srgb,var(--aa-glow)_45%,transparent)]"
+          className="flex items-end gap-2 rounded-xl border border-line-strong bg-elevated/95 p-1.5 shadow-[0_16px_40px_-16px_rgb(0_0_0/0.75)] backdrop-blur-md transition-colors
+                     focus-within:border-accent/70"
         >
           <button
             type="button"
@@ -477,11 +479,11 @@ export function CommandBar() {
               inputRef.current?.focus();
               window.requestAnimationFrame(() => inputRef.current?.setSelectionRange(1, 1));
             }}
-            className={`inline-flex h-8 max-w-48 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[12px] font-medium
-                        hover:brightness-110
-                        ${targetId ? 'bg-accent/15 text-fg' : 'bg-surface-2 text-fg-subtle'}`}
+            className={`inline-flex h-8 max-w-48 shrink-0 items-center gap-1.5 rounded-md border px-2 text-[12px] font-medium
+                        hover:border-line-strong
+                        ${targetId ? 'border-line bg-surface-2 text-fg' : 'border-dashed border-line-strong text-fg-subtle'}`}
           >
-            <ArrowRight size={12} className="shrink-0 text-accent" />
+            <span className="font-mono text-[10.5px] text-fg-subtle">to</span>
             {targetId === ALL ? (
               <span className="truncate">all ({readyCount} ready)</span>
             ) : targetProject ? (
@@ -522,11 +524,19 @@ export function CommandBar() {
             title="Send (Enter)"
             disabled={!value.trim()}
             onClick={send}
-            className="aa-btn-primary grid size-8 shrink-0 place-items-center rounded-lg disabled:opacity-40"
+            className="aa-btn-primary grid size-8 shrink-0 place-items-center rounded-md disabled:opacity-40"
           >
             <SendHorizontal size={15} />
           </button>
         </div>
+      </div>
+      {/* Palette-style key hints under the input */}
+      <div className="pointer-events-none flex items-center justify-center gap-3 text-[10.5px] text-fg-subtle">
+        <span className="inline-flex items-center gap-1"><kbd className="aa-kbd">↵</kbd> send</span>
+        <span className="inline-flex items-center gap-1"><kbd className="aa-kbd">⇧</kbd><kbd className="aa-kbd">↵</kbd> new line</span>
+        <span className="inline-flex items-center gap-1"><kbd className="aa-kbd">@</kbd> target</span>
+        <span className="inline-flex items-center gap-1"><kbd className="aa-kbd">↑</kbd> history</span>
+        <span className="inline-flex items-center gap-1"><kbd className="aa-kbd">/</kbd> focus</span>
       </div>
     </div>
   );

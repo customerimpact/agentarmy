@@ -256,13 +256,13 @@ body {
   text-transform: uppercase;
 }
 
-/* Primary button: warm orange with a soft glow */
+/* Primary button: solid accent with a 1px top highlight */
 .aa-btn-primary {
-  background: linear-gradient(180deg, var(--aa-accent-strong), var(--aa-accent));
+  background: var(--aa-accent);
   color: var(--aa-accent-fg);
   box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.18),
-    0 6px 20px -6px color-mix(in srgb, var(--aa-glow) 70%, transparent);
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    0 1px 2px rgb(0 0 0 / 0.25);
 }
 
 .aa-btn-primary:hover:not(:disabled) {
@@ -294,162 +294,28 @@ body {
 }
 
 /*
-  Ambient "orange cloud": two screen-space layers behind the dot grid.
-  ::before = soft drifting color blobs, ::after = an orange halftone dot field that only shows
-  where its drifting radial mask is. Both animate transform/opacity only (GPU composited).
+  Calm canvas: one faint vignette from the top in the theme's glow color, behind the dot grid.
+  No drifting blobs or halftone fields; the consoles are the content.
 */
-.react-flow::before,
-.react-flow::after {
+.react-flow::before {
   content: '';
   position: absolute;
-  inset: -25%;
-  pointer-events: none;
-  will-change: transform;
-}
-
-.react-flow::before {
+  inset: 0;
   z-index: -3;
-  background:
-    radial-gradient(38% 34% at 12% 8%, color-mix(in srgb, var(--aa-glow) 28%, transparent), transparent 70%),
-    radial-gradient(30% 30% at 92% 88%, color-mix(in srgb, var(--aa-glow-2) 24%, transparent), transparent 70%),
-    radial-gradient(26% 24% at 78% 14%, color-mix(in srgb, var(--aa-glow) 12%, transparent), transparent 70%),
-    radial-gradient(28% 26% at 20% 86%, color-mix(in srgb, var(--aa-glow-2) 8%, transparent), transparent 70%);
-  animation: aa-aurora 46s ease-in-out infinite alternate;
+  pointer-events: none;
+  background: radial-gradient(90% 55% at 50% -12%, color-mix(in srgb, var(--aa-glow) 7%, transparent), transparent 70%);
 }
 
-.react-flow::after {
-  z-index: -2;
-  background-image: radial-gradient(circle, color-mix(in srgb, var(--aa-glow) 55%, transparent) 0.9px, transparent 1.5px);
-  background-size: 5px 5px;
-  -webkit-mask-image:
-    radial-gradient(30% 28% at 18% 16%, #000, transparent 72%),
-    radial-gradient(26% 26% at 84% 82%, #000, transparent 72%);
-  mask-image:
-    radial-gradient(30% 28% at 18% 16%, #000, transparent 72%),
-    radial-gradient(26% 26% at 84% 82%, #000, transparent 72%);
-  opacity: 0.42;
-  animation: aa-halftone 60s ease-in-out infinite alternate;
-}
-
-@keyframes aa-aurora {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  50% {
-    transform: translate3d(4%, 3%, 0) scale(1.06);
-  }
-  100% {
-    transform: translate3d(-3%, 5%, 0) scale(1.02);
-  }
-}
-
-@keyframes aa-halftone {
-  0% {
-    transform: translate3d(0, 0, 0);
-    opacity: 0.34;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    transform: translate3d(5%, -4%, 0);
-    opacity: 0.4;
-  }
-}
-
-/* ----- Midnight: cool blue/violet haze, a faint cyan dot field, a horizon glow at the bottom ----- */
-:root[data-theme='midnight'] .react-flow::before {
-  background:
-    radial-gradient(60% 40% at 50% 112%, color-mix(in srgb, var(--aa-glow) 22%, transparent), transparent 70%),
-    radial-gradient(34% 30% at 10% 10%, color-mix(in srgb, var(--aa-glow) 20%, transparent), transparent 70%),
-    radial-gradient(30% 30% at 90% 22%, color-mix(in srgb, var(--aa-glow-2) 20%, transparent), transparent 70%),
-    radial-gradient(24% 22% at 72% 86%, color-mix(in srgb, var(--aa-accent) 8%, transparent), transparent 70%);
-}
-
-:root[data-theme='midnight'] .react-flow::after {
-  background-image: radial-gradient(circle, color-mix(in srgb, var(--aa-accent) 50%, transparent) 0.8px, transparent 1.4px);
-  background-size: 6px 6px;
-  opacity: 0.3;
-}
-
-/*
-  ----- Aurora: long soft curtains of green, teal and violet light sweeping across the top -----
-  ::before holds the curtains (wide, flat ellipses), ::after a second, counter-drifting band.
-*/
-:root[data-theme='aurora'] .react-flow::before {
-  background:
-    radial-gradient(70% 16% at 30% 22%, color-mix(in srgb, var(--aa-glow) 30%, transparent), transparent 72%),
-    radial-gradient(55% 13% at 62% 30%, color-mix(in srgb, #3fd9c8 20%, transparent), transparent 72%),
-    radial-gradient(48% 20% at 82% 16%, color-mix(in srgb, var(--aa-glow-2) 28%, transparent), transparent 72%),
-    radial-gradient(40% 28% at 12% 90%, color-mix(in srgb, var(--aa-glow-2) 10%, transparent), transparent 70%);
-  transform-origin: 50% 20%;
-  animation: aa-aurora-sway 38s ease-in-out infinite alternate;
-}
-
-:root[data-theme='aurora'] .react-flow::after {
-  background-image:
-    radial-gradient(60% 10% at 46% 38%, color-mix(in srgb, var(--aa-glow) 16%, transparent), transparent 75%),
-    radial-gradient(36% 12% at 76% 42%, color-mix(in srgb, var(--aa-glow-2) 14%, transparent), transparent 75%);
-  background-size: auto;
-  -webkit-mask-image: none;
-  mask-image: none;
-  opacity: 1;
-  animation: aa-aurora-drift 52s ease-in-out infinite alternate;
-}
-
-@keyframes aa-aurora-sway {
-  0% {
-    transform: translate3d(-3%, 0, 0) skewX(-6deg) scaleY(1);
-  }
-  50% {
-    transform: translate3d(2%, 2%, 0) skewX(4deg) scaleY(1.12);
-  }
-  100% {
-    transform: translate3d(4%, -1%, 0) skewX(-2deg) scaleY(0.94);
-  }
-}
-
-@keyframes aa-aurora-drift {
-  0% {
-    transform: translate3d(4%, 0, 0) skewX(5deg);
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    transform: translate3d(-5%, 3%, 0) skewX(-4deg);
-    opacity: 0.7;
-  }
-}
-
-/* ----- Paper: soft indigo and peach washes, a fine ink dot "grain" that barely shows ----- */
 :root[data-theme='paper'] .react-flow::before {
-  background:
-    radial-gradient(40% 36% at 8% 6%, color-mix(in srgb, var(--aa-glow) 11%, transparent), transparent 70%),
-    radial-gradient(34% 32% at 94% 92%, color-mix(in srgb, var(--aa-glow-2) 16%, transparent), transparent 70%),
-    radial-gradient(26% 24% at 80% 12%, color-mix(in srgb, var(--aa-glow) 6%, transparent), transparent 70%);
-}
-
-:root[data-theme='paper'] .react-flow::after {
-  background-image: radial-gradient(circle, color-mix(in srgb, var(--aa-glow) 45%, transparent) 0.8px, transparent 1.4px);
-  opacity: 0.2;
-  animation: none;
-}
-
-/* Light theme: softer button glow */
-:root[data-theme='paper'] .aa-btn-primary {
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.22),
-    0 6px 18px -8px color-mix(in srgb, var(--aa-glow) 70%, transparent);
+  background: radial-gradient(90% 55% at 50% -12%, color-mix(in srgb, var(--aa-glow) 5%, transparent), transparent 70%);
 }
 
 .react-flow__controls,
 .react-flow__minimap {
   border: 1px solid var(--aa-line);
-  border-radius: 10px;
+  border-radius: 6px;
   overflow: hidden;
-  box-shadow: 0 10px 30px var(--aa-shadow);
+  box-shadow: 0 4px 14px var(--aa-shadow);
 }
 
 .react-flow__attribution a {
@@ -476,74 +342,51 @@ body {
 /* ---------- Console status effects ---------- */
 
 /*
-  Working: a slowly rotating orange gradient ring + soft glow behind the card.
-  .aa-ring is a clipped box 1.5px larger than the card; its child spins (transform only).
+  Console status edge: a 2px line along the top of the card.
+  working = faint track with a brighter segment sweeping across (indeterminate progress)
+  needs_you = solid, softly pulsing; error = solid
 */
-.aa-ring {
+.aa-edge {
   position: absolute;
-  inset: -1.5px;
-  border-radius: 13.5px;
+  inset-inline: 0;
+  top: 0;
+  z-index: 3;
+  height: 2px;
   overflow: hidden;
   pointer-events: none;
-  container-type: size;
 }
 
-/* A square of side w+h always covers the ring's diagonal while it spins */
-.aa-ring::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: calc(100cqw + 100cqh);
-  height: calc(100cqw + 100cqh);
-  translate: -50% -50%;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg,
-    color-mix(in srgb, var(--aa-working) 20%, transparent) 60deg,
-    var(--aa-working) 110deg,
-    var(--aa-ring-hi) 130deg,
-    var(--aa-working) 150deg,
-    color-mix(in srgb, var(--aa-working) 20%, transparent) 200deg,
-    transparent 260deg,
-    color-mix(in srgb, var(--aa-working) 35%, transparent) 300deg,
-    transparent 360deg
-  );
-  animation: aa-spin 3.6s linear infinite;
-  will-change: transform;
-}
-
-.aa-ring-working {
+.aa-edge-working {
   background: color-mix(in srgb, var(--aa-working) 28%, transparent);
 }
 
-@keyframes aa-spin {
-  to {
-    transform: rotate(1turn);
-  }
-}
-
-/* Soft colored cloud behind an active console (opacity animation only) */
-.aa-glow {
+.aa-edge-working::after {
+  content: '';
   position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  pointer-events: none;
+  inset-block: 0;
+  left: 0;
+  width: 35%;
+  background: linear-gradient(90deg, transparent, var(--aa-working), transparent);
+  animation: aa-sweep 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform;
 }
 
-.aa-glow-working {
-  box-shadow:
-    0 0 40px 2px color-mix(in srgb, var(--aa-glow) 30%, transparent),
-    0 0 120px 20px color-mix(in srgb, var(--aa-glow-2) 14%, transparent);
-  animation: aa-breathe 3.2s ease-in-out infinite;
-}
-
-.aa-glow-needs {
-  box-shadow:
-    0 0 0 2px var(--aa-needs),
-    0 0 44px 6px color-mix(in srgb, var(--aa-needs) 40%, transparent),
-    0 0 110px 24px color-mix(in srgb, var(--aa-needs) 14%, transparent);
+.aa-edge-needs {
+  background: var(--aa-needs);
   animation: aa-breathe 1.6s ease-in-out infinite;
+}
+
+.aa-edge-error {
+  background: var(--aa-error);
+}
+
+@keyframes aa-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(290%);
+  }
 }
 
 @keyframes aa-breathe {
@@ -554,6 +397,24 @@ body {
   50% {
     opacity: 1;
   }
+}
+
+/* Keyboard hint caps (toolbar, command bar, sidebar tabs) */
+.aa-kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border: 1px solid var(--aa-line-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--aa-surface-2);
+  color: var(--aa-fg-subtle);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 /* Kept for other components; on console nodes it is only a state marker (tests rely on it) */
@@ -637,33 +498,26 @@ body {
 .aa-card-glow {
   background-image: radial-gradient(
     120% 80% at 50% -20%,
-    color-mix(in srgb, var(--aa-glow) 16%, transparent),
+    color-mix(in srgb, var(--aa-glow) 6%, transparent),
     transparent 60%
   );
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .react-flow::before,
-  .react-flow::after,
-  .aa-ring::before,
-  .aa-glow-working,
-  .aa-glow-needs,
+  .aa-edge-working::after,
+  .aa-edge-needs,
   .aa-needs-glow,
   .aa-ping::after,
   .aa-shimmer,
   .aa-pop {
     animation: none;
   }
-  .aa-glow-working,
-  .aa-glow-needs {
-    opacity: 0.85;
-  }
 }
 
 /* ---------- xterm ---------- */
 .aa-term-host .xterm {
   height: 100%;
-  padding: 8px 0 0 10px;
+  padding: 10px 0 0 12px;
 }
 
 .aa-term-host .xterm-viewport {

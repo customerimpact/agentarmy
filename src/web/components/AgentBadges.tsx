@@ -14,67 +14,68 @@ interface PillMeta {
 export const PILL: Record<ConsoleStatus, PillMeta> = {
   working: {
     label: 'running',
-    pill: 'bg-working/12 text-working ring-1 ring-working/30',
+    pill: 'text-working',
     dot: 'bg-working',
-    avatar: 'bg-working/18 text-working ring-1 ring-working/40',
+    avatar: 'bg-surface-2 text-fg ring-1 ring-working/50',
     pulse: true,
   },
   needs_you: {
     label: 'Needs you',
-    pill: 'bg-needs/15 text-needs ring-1 ring-needs/45',
+    pill: 'bg-needs/15 text-needs',
     dot: 'bg-needs',
-    avatar: 'bg-needs/20 text-needs ring-1 ring-needs/50',
+    avatar: 'bg-needs/15 text-needs ring-1 ring-needs/60',
     pulse: true,
   },
   error: {
     label: 'error',
-    pill: 'bg-error/15 text-error ring-1 ring-error/40',
+    pill: 'text-error',
     dot: 'bg-error',
-    avatar: 'bg-error/18 text-error ring-1 ring-error/40',
+    avatar: 'bg-surface-2 text-error ring-1 ring-error/50',
     pulse: false,
   },
   resting: {
     label: 'done',
-    pill: 'bg-resting/12 text-resting ring-1 ring-resting/30',
+    pill: 'text-resting',
     dot: 'bg-resting',
-    avatar: 'bg-resting/15 text-resting ring-1 ring-resting/30',
+    avatar: 'bg-surface-2 text-fg-muted ring-1 ring-line-strong',
     pulse: false,
   },
   idle: {
     label: 'idle',
-    pill: 'bg-hover text-fg-muted ring-1 ring-line-strong',
+    pill: 'text-fg-muted',
     dot: 'bg-idle',
-    avatar: 'bg-hover text-fg-muted ring-1 ring-line-strong',
+    avatar: 'bg-surface-2 text-fg-muted ring-1 ring-line-strong',
     pulse: false,
   },
   starting: {
     label: 'starting',
-    pill: 'bg-hover text-fg-muted ring-1 ring-line-strong',
+    pill: 'text-fg-muted',
     dot: 'bg-idle',
-    avatar: 'bg-hover text-fg-muted ring-1 ring-line-strong',
+    avatar: 'bg-surface-2 text-fg-muted ring-1 ring-line-strong',
     pulse: true,
   },
   suspended: {
     label: 'suspended',
-    pill: 'text-fg-subtle ring-1 ring-line',
+    pill: 'text-fg-subtle',
     dot: 'bg-exited',
     avatar: 'bg-surface-2 text-fg-subtle ring-1 ring-line',
     pulse: false,
   },
   exited: {
     label: 'exited',
-    pill: 'text-fg-subtle ring-1 ring-line',
+    pill: 'text-fg-subtle',
     dot: 'bg-exited',
     avatar: 'bg-surface-2 text-fg-subtle ring-1 ring-line',
     pulse: false,
   },
 };
 
+// Dot + label; only "needs you" gets a filled background so it stands out in a long list
 export function StatusPill({ status }: { status: ConsoleStatus }) {
   const meta = PILL[status];
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2 py-[1px] text-[11px] font-medium whitespace-nowrap ${meta.pill}`}
+      className={`inline-flex h-[18px] shrink-0 items-center gap-1.5 rounded-[4px] px-1.5 text-[11px] font-medium whitespace-nowrap ${meta.pill}`}
     >
       <span
         className={`relative inline-block size-1.5 rounded-full ${meta.dot} ${meta.pulse ? 'aa-ping' : ''}`}
@@ -98,14 +99,14 @@ export function Avatar({
   return (
     <span
       aria-hidden
-      className={`relative grid shrink-0 place-items-center rounded-lg font-semibold ${PILL[status].avatar}`}
+      className={`relative grid shrink-0 place-items-center rounded-[6px] font-semibold ${PILL[status].avatar}`}
       style={{ width: size, height: size, fontSize: Math.round(size * 0.45) }}
     >
       {(name.trim()[0] ?? '?').toUpperCase()}
       <span
         data-testid="avatar-agent"
         data-agent={agent ?? 'claude'}
-        className="absolute -right-1 -bottom-1 grid place-items-center rounded-full bg-surface text-accent ring-1 ring-line-strong"
+        className="absolute -right-1 -bottom-1 grid place-items-center rounded-[4px] bg-surface ring-1 ring-line-strong"
         style={{ width: Math.round(size * 0.5), height: Math.round(size * 0.5) }}
       >
         <AgentIcon agent={agent ?? 'claude'} size={Math.round(size * 0.32)} />
@@ -134,7 +135,7 @@ export function ProgressBar({
   className?: string;
 }) {
   return (
-    <span className={`block h-1.5 overflow-hidden rounded-full bg-hover ${className}`}>
+    <span className={`block h-1 overflow-hidden rounded-full bg-hover ${className}`}>
       <span
         className={`block h-full rounded-full transition-[width] duration-500 ${color ? '' : 'bg-accent'}`}
         style={{

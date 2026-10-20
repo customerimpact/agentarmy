@@ -37,9 +37,9 @@ export function KillButton({ compact = false }: { compact?: boolean }) {
       className={`inline-flex items-center gap-1.5 font-semibold text-white shadow-black/20
                   bg-[var(--aa-danger,var(--aa-error))]
                   hover:brightness-110
-                  ${compact ? 'h-7 rounded-md px-2' : 'h-8 rounded-lg px-3 shadow-lg'}`}
+                  ${compact ? 'h-7 rounded-md px-2' : 'h-7 rounded-md px-2.5 text-[12px]'}`}
     >
-      <Icon size={compact ? 13 : 15} />
+      <Icon size={13} />
       {count > 1 ? `${verb} ${count}` : verb}
     </button>
   );

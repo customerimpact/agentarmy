@@ -15,7 +15,7 @@ interface StatusCardProps {
   height: number;
 }
 
-// What a console looks like when zoomed out: big, readable at a glance, no live xterm
+// What a console looks like when zoomed out: status, name and last lines, readable at a glance, no live xterm
 export function StatusCard({ console: c, width, height }: StatusCardProps) {
   // Type is sized for a default node; shrink it for small nodes so nothing gets clipped
   const scale = Math.min(1, width / DESIGN_WIDTH, height / DESIGN_HEIGHT);
@@ -31,39 +31,37 @@ export function StatusCard({ console: c, width, height }: StatusCardProps) {
 
   return (
     <div
-      className="aa-drag-handle aa-card-glow absolute inset-0 flex cursor-grab flex-col gap-4 overflow-hidden bg-surface p-8
+      className="aa-drag-handle absolute inset-0 flex cursor-grab flex-col gap-5 overflow-hidden bg-surface px-9 py-8
                  active:cursor-grabbing"
       style={{ zoom: scale }}
     >
-      <div className={`flex items-center gap-4 ${meta.text}`}>
+      <div className="flex items-center gap-3 font-mono text-[26px] font-medium">
         <Icon
-          size={56}
+          size={26}
           strokeWidth={2.25}
-          className={c.status === 'starting' ? 'animate-spin' : ''}
+          className={`${meta.text} ${c.status === 'starting' ? 'animate-spin' : ''}`}
         />
-        <span className="font-mono text-5xl font-semibold tracking-[0.06em] uppercase">{meta.label}</span>
-        <span className="ml-auto text-4xl font-medium text-fg-subtle tabular-nums">
-          {formatSince(c.statusChangedAt, now)}
-        </span>
+        <span className={meta.text}>{meta.label}</span>
+        <span className="text-fg-subtle tabular-nums">· {formatSince(c.statusChangedAt, now)}</span>
       </div>
       <div className="min-w-0">
-        <div className="truncate text-5xl font-semibold text-fg">{c.name}</div>
-        <div className="mt-1 truncate font-mono text-3xl text-fg-muted">
-          {[c.role, modelShortName(c.model), basename(c.cwd)].filter(Boolean).join(' · ')}
+        <div className="truncate text-[56px] leading-tight font-semibold tracking-[-0.02em] text-fg">{c.name}</div>
+        <div className="mt-1 truncate font-mono text-[24px] text-fg-subtle">
+          {[c.role, modelShortName(c.model), basename(c.cwd)].filter(Boolean).join('  ·  ')}
         </div>
       </div>
-      {c.statusDetail && <div className="line-clamp-2 text-3xl text-fg">{c.statusDetail}</div>}
+      {c.statusDetail && <div className="line-clamp-2 text-[26px] leading-snug text-fg-muted">{c.statusDetail}</div>}
       {isDormant(c.status) ? (
         <button
           type="button"
           onClick={() => void restartConsole(c.id)}
-          className="aa-btn-primary nodrag inline-flex w-fit items-center gap-3 rounded-xl px-6 py-3 text-3xl font-semibold"
+          className="aa-btn-primary nodrag inline-flex w-fit items-center gap-3 rounded-lg px-6 py-3 text-[26px] font-semibold"
         >
-          <RotateCcw size={32} />
+          <RotateCcw size={26} />
           {c.status === 'suspended' ? 'Resume' : 'Restart'}
         </button>
       ) : (
-        <pre className="mt-auto min-h-0 overflow-hidden rounded-xl border border-line bg-term p-4 font-mono text-xl leading-snug whitespace-pre text-term-fg">
+        <pre className="mt-auto min-h-0 overflow-hidden border-l-2 border-line-strong pl-5 font-mono text-[19px] leading-snug whitespace-pre text-fg-muted">
           {lines.length ? lines.join('\n') : ' '}
         </pre>
       )}

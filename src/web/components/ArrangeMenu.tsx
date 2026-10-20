@@ -208,7 +208,7 @@ export function ArrangeMenu({
           compact
             ? `inline-flex h-7 items-center gap-1 rounded-md px-2 text-fg-muted
                hover:bg-hover hover:text-fg`
-            : `inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface px-2.5 text-fg-muted shadow-lg shadow-black/20
+            : `inline-flex h-7 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-[12px] text-fg-muted
                hover:bg-hover hover:text-fg`
         }
       >

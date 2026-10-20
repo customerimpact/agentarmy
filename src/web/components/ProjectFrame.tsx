@@ -220,11 +220,10 @@ function ProjectFrameImpl({ data }: NodeProps<FrameFlowNode>) {
     <div
       data-testid="project-frame"
       data-project-id={project.id}
-      className="relative h-full w-full rounded-2xl"
+      className="relative h-full w-full rounded-xl"
       style={{
-        border: `1.5px solid color-mix(in srgb, ${color} 55%, transparent)`,
-        background: `color-mix(in srgb, ${color} 4%, transparent)`,
-        boxShadow: `0 0 0 4px color-mix(in srgb, ${color} 6%, transparent), 0 0 60px -12px color-mix(in srgb, ${color} 35%, transparent)`,
+        border: `1px solid color-mix(in srgb, ${color} 45%, transparent)`,
+        background: `color-mix(in srgb, ${color} 3%, transparent)`,
       }}
     >
       <div
@@ -240,12 +239,11 @@ function ProjectFrameImpl({ data }: NodeProps<FrameFlowNode>) {
         onDoubleClick={startRename}
       >
         <span
-          className="shrink-0 rounded-full"
+          className="shrink-0 rounded-[2px]"
           style={{
-            width: '0.7em',
-            height: '0.7em',
+            width: '0.65em',
+            height: '0.65em',
             background: color,
-            boxShadow: `0 0 10px ${color}`,
           }}
         />
         {editing ? (
@@ -266,13 +264,13 @@ function ProjectFrameImpl({ data }: NodeProps<FrameFlowNode>) {
         ) : (
           <span
             data-testid="project-frame-title"
-            className="truncate font-semibold tracking-[0.14em] uppercase"
+            className="truncate font-mono font-semibold tracking-[0.08em] uppercase"
             style={{ color }}
           >
             {project.name}
           </span>
         )}
-        <span className="shrink-0 text-fg-muted tabular-nums">{summary}</span>
+        <span className="shrink-0 font-mono text-fg-subtle tabular-nums">{summary}</span>
         <ProjectPoppedOutTag projectId={project.id} />
         <button
           ref={chevronRef}

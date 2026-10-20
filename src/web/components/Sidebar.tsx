@@ -209,7 +209,7 @@ export function Sidebar() {
               aria-label={t.label}
               title={t.key === 'settings' ? 'Settings (4 or Ctrl+,)' : `${t.label} (${t.hotkey})`}
               onClick={() => setSidebarTab(t.key)}
-              className={`relative flex items-center justify-center gap-1.5 rounded-t-md px-2 pt-1.5 pb-2 text-[12.5px] font-medium transition-colors
+              className={`relative flex items-center justify-center gap-1.5 rounded-t-md px-2 pt-1.5 pb-2 text-[12px] font-medium transition-colors
                           ${iconOnly ? 'flex-none' : 'flex-1'}
                           ${active ? 'text-fg' : 'text-fg-subtle hover:text-fg-muted'}`}
             >
@@ -217,10 +217,10 @@ export function Sidebar() {
               {!iconOnly && t.label}
               {t.key === 'actions' && <Badge count={counts.actions} tone="needs" />}
               {t.key === 'agents' && counts.agents > 0 && (
-                <span className="text-[11px] text-fg-subtle tabular-nums">{counts.agents}</span>
+                <span className="font-mono text-[10.5px] text-fg-subtle tabular-nums">{counts.agents}</span>
               )}
               <span
-                className={`absolute inset-x-2 -bottom-px h-0.5 rounded-full transition-colors ${active ? 'bg-accent' : 'bg-transparent'}`}
+                className={`absolute inset-x-2 -bottom-px h-px transition-colors ${active ? 'bg-fg' : 'bg-transparent'}`}
               />
             </button>
           );
