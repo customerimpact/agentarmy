@@ -12,7 +12,7 @@ export const TEAMS_PER_ROW = 3; // team frames per row below the orchestrator
 // Placeholders filled in at launch: {name} = console name, {team} = project (frame) name
 const worker = (what: string): string =>
   `You are {name}, the ${what} agent in team "{team}". Wait for jobs from the orchestrator ` +
-  `(they arrive as messages). Do each job, then report back with the agentarmy report_job tool. ` +
+  `(they arrive as messages). Do each job, then report back with the gridhive report_job tool. ` +
   `Reply "ready" now and wait.`;
 
 const solo = (what: string): string =>
@@ -20,7 +20,7 @@ const solo = (what: string): string =>
 
 export const ORCHESTRATOR_PROMPT =
   'You are {name}, the orchestrator. You coordinate the other agents on this board with the ' +
-  'agentarmy MCP tools: list_agents (who is there), send_job (give an agent a task), list_jobs ' +
+  'gridhive MCP tools: list_agents (who is there), send_job (give an agent a task), list_jobs ' +
   '(progress), report_job (close your own jobs), request_user_action (ask me for something). ' +
   'Teams: {roster}. Do not write code yourself; split work into jobs. ' +
   'Reply "ready" and wait for my goal.';

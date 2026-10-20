@@ -68,7 +68,7 @@ export function TemplateRunStep({
       {orchestrator && !isOrchestratorReady(orchestrator) && (
         <p data-testid="orchestrator-limited" className="mt-2 flex items-start gap-1.5 text-[11.5px] text-needs">
           <AlertTriangle size={12} className="mt-0.5 shrink-0" />
-          The orchestrator on {providerShort(orchestrator)}: jobs need the agentarmy MCP tools, which are verified on Claude Code and Codex. Coordination
+          The orchestrator on {providerShort(orchestrator)}: jobs need the gridhive MCP tools, which are verified on Claude Code and Codex. Coordination
           may be limited.
         </p>
       )}

@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { STATE_VERSION, type BoardState } from '../shared/protocol.js';
-import { emptyState, StateStore } from './store.js';
+import { agentArmyHome, emptyState, StateStore } from './store.js';
 
 let dir: string;
 
@@ -87,5 +87,16 @@ describe('StateStore', () => {
     const store = new StateStore(file);
     expect(store.load().consoles).toEqual([]);
     expect(fs.readdirSync(dir).some((f) => f.endsWith('.bad'))).toBe(true);
+  });
+});
+
+describe('agentArmyHome', () => {
+  it('uses ~/.gridhive for new installs and keeps ~/.agentarmy when it exists', () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), 'gridhive-home-'));
+    expect(agentArmyHome({}, home)).toBe(path.join(home, '.gridhive'));
+    fs.mkdirSync(path.join(home, '.agentarmy'));
+    expect(agentArmyHome({}, home)).toBe(path.join(home, '.agentarmy'));
+    expect(agentArmyHome({ GRIDHIVE_HOME: '/x' }, home)).toBe('/x');
+    expect(agentArmyHome({ AGENTARMY_HOME: '/y' }, home)).toBe('/y');
   });
 });

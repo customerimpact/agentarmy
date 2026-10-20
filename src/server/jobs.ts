@@ -39,7 +39,7 @@ export function jobPrompt(job: Job, senderName: string): string {
     `[GridHive job ${shortJobId(job.id)} from ${senderName}] ${job.title}`,
     job.message,
     '',
-    `When finished, call the agentarmy report_job tool with job_id "${job.id}" and a short result.`,
+    `When finished, call the gridhive report_job tool with job_id "${job.id}" and a short result.`,
   ].join('\n');
 }
 

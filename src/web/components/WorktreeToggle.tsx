@@ -49,7 +49,7 @@ export function WorktreeToggle({
     <label
       data-testid="worktree-toggle"
       className="mt-1.5 flex cursor-pointer items-start gap-2 text-[12px] text-fg-muted select-none"
-      title={`git worktree add -b agentarmy/<name> ../${name}.worktrees/<name> ${info.branch ?? 'HEAD'}`}
+      title={`git worktree add -b gridhive/<name> ../${name}.worktrees/<name> ${info.branch ?? 'HEAD'}`}
     >
       <input
         type="checkbox"

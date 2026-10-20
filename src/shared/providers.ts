@@ -63,7 +63,7 @@ export interface ProviderStatus {
   loginMethod?: string; // 'login file' | 'API key in environment' | ...
   accounts: ProviderAccountStatus[];
   installConsoleId?: string; // its open Install console
-  supportsMcp?: boolean; // gets the agentarmy MCP tools (from detection)
+  supportsMcp?: boolean; // gets the gridhive MCP tools (from detection)
   notes?: string;
 }
 

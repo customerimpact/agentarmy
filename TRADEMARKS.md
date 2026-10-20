@@ -14,7 +14,7 @@ The GridHive source code is MIT licensed: you may use, copy, modify and sell it.
 - Use the Marks in a way that suggests your product is official, endorsed or certified by the project.
 - Use the Marks in domain names, app store listings or company names.
 
-Forks must use their own name and icon. Ask by opening an issue at https://github.com/customerimpact/agentarmy/issues if you are unsure.
+Forks must use their own name and icon. Ask by opening an issue at https://github.com/customerimpact/gridhive/issues if you are unsure.
 
 ## Third-party marks
 

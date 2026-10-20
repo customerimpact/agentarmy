@@ -9,7 +9,7 @@ import type { AgentAdapter } from './types.js';
 // - `--continue` (-c) continues the last session; `--session <id>` exists but we never learn the id.
 // - OPENCODE_CONFIG points at an extra config file that is merged between the global and project
 //   configs ("Configuration files are merged together, not replaced"), so a per-console file can add
-//   the agentarmy MCP server ({"mcp": {"agentarmy": {"type": "local", "command": [...], ...}}}).
+//   the gridhive MCP server ({"mcp": {"gridhive": {"type": "local", "command": [...], ...}}}).
 //   Skipped when the user already sets OPENCODE_CONFIG themselves.
 // - No hook mechanism is used: status comes from terminal output heuristics.
 export const OPENCODE_CONFIG_SUFFIX = 'opencode.json';
@@ -18,7 +18,7 @@ export function opencodeConfig(mcp: { command: string; args: string[]; env?: Rec
   return {
     $schema: 'https://opencode.ai/config.json',
     mcp: {
-      agentarmy: {
+      gridhive: {
         type: 'local',
         command: [mcp.command, ...mcp.args],
         enabled: true,

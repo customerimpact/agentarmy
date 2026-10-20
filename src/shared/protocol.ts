@@ -65,7 +65,7 @@ export interface ConsoleInfo {
 
 export interface ConsoleGit {
   repoRoot: string; // the checkout the agent branched from; merges happen here
-  branch: string; // agentarmy/<name-slug>-<short>
+  branch: string; // gridhive/<name-slug>-<short> (agentarmy/ before the rename)
   baseRef: string; // branch name (or commit) of repoRoot when the worktree was made
   worktree: string; // absolute path of the agent's worktree
 }
@@ -311,7 +311,7 @@ export interface KanbanData {
 }
 
 // ---------- Agent-to-agent jobs (the lines between consoles on the board) ----------
-// An orchestrator console sends a job to another console through the agentarmy MCP tools.
+// An orchestrator console sends a job to another console through the gridhive MCP tools.
 // sent -> working (target submitted it) -> done | failed (target reported, or its turn ended)
 
 export type JobStatus = 'sent' | 'working' | 'done' | 'failed';
@@ -420,7 +420,7 @@ export interface BoardState {
 // DELETE /api/browsers/:id               -> { ok: true }
 // POST   /hook/:consoleId                <- Claude Code HTTP hook POSTs (token in query string)
 //
-// ---------- Bridge (used by the agentarmy MCP server running inside each console) ----------
+// ---------- Bridge (used by the gridhive MCP server running inside each console) ----------
 // Token in the query string only, like /hook. :consoleId is the calling console.
 // GET    /bridge/:consoleId/agents                     -> BridgeAgent[] (others, nearest first)
 // POST   /bridge/:consoleId/jobs   BridgeSendJob       -> Job   (types the job into the target)
@@ -975,7 +975,7 @@ export interface SwitchAgentResponse {
 // PUT    /api/memory?scope=global|folder&path=  { content?, autoPush? } -> MemoryDoc
 // GET    /api/memory/folders                    -> MemoryDoc[] (every folder memory on disk)
 // POST   /api/memory/push  MemoryPushRequest     -> MemoryPushResponse
-// Agents use the agentarmy MCP tools read_memory and append_memory.
+// Agents use the gridhive MCP tools read_memory and append_memory.
 
 export type MemoryScope = 'global' | 'folder';
 

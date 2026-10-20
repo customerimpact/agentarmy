@@ -5,7 +5,7 @@ import electronUpdater from 'electron-updater';
 import { DESKTOP_TAG_PREFIX, DOWNLOAD_PAGE, isNewerVersion, pickDesktopRelease, UPDATE_REPO, type GitHubRelease } from './release-feed';
 import type { UpdateState } from './tray-menu';
 
-// Auto-update from GitHub Releases (customerimpact/agentarmy, public, no token).
+// Auto-update from GitHub Releases (customerimpact/gridhive, public, no token).
 // The repo also has npm releases tagged v*, so the stock GitHub provider (which takes the newest
 // release) could land on one without latest.yml. We pick the newest desktop-v* release ourselves
 // and hand its download folder to the generic provider.

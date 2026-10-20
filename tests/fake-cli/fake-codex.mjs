@@ -72,7 +72,7 @@ out('\x1b[2J\x1b[H\x1b[1m>_ OpenAI Codex\x1b[0m (fake)\r\n');
 out(`\x1b[2mthread ${threadId}\x1b[0m\r\n`);
 if (process.env.CODEX_HOME) out(`\x1b[2mcodex-home ${process.env.CODEX_HOME}\x1b[0m\r\n`);
 if (resume) out(`Resumed session ${resume}\r\n`);
-if (config['mcp_servers.agentarmy.command']) out('\x1b[2mmcp: agentarmy ready\x1b[0m\r\n');
+if (config['mcp_servers.gridhive.command']) out('\x1b[2mmcp: gridhive ready\x1b[0m\r\n');
 out('\r\n');
 
 let line = '';

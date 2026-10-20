@@ -29,4 +29,4 @@ This is a local web app (browser UI + local Node server), so it overrides the gl
 - **Database hosting:** n/a
 - **Asset hosting:** npm registry
 - **Deployment solution:** GitHub Actions: test on windows/macos/ubuntu, `npm publish` on tag push
-- **Code repository URL:** https://github.com/customerimpact/agentarmy (public, MIT)
+- **Code repository URL:** https://github.com/customerimpact/gridhive (public, MIT)

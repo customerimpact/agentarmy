@@ -10,7 +10,7 @@ function setup(options: { installed?: boolean } = {}) {
   const ada: ConsoleInfo = { ...fakeConsole('ada', 'working', { x: 100, y: 200, width: 600, height: 400 }), role: 'Backend', projectId: 'p1' };
   const { manager, typed, setStatus } = fakeManager([ada, fakeConsole('bex')]);
   manager.projects.push({ id: 'p1', name: 'API', color: 'blue', consoleIds: ['ada', 'bex'], open: true, createdAt: 1 } as never);
-  manager.get('ada')!.git = { repoRoot: 'C:/repo', branch: 'agentarmy/ada-1', baseRef: 'main', worktree: process.cwd() };
+  manager.get('ada')!.git = { repoRoot: 'C:/repo', branch: 'gridhive/ada-1', baseRef: 'main', worktree: process.cwd() };
   new JobService(manager);
   const created: CreateConsoleRequest[] = [];
   let n = 0;
@@ -50,7 +50,7 @@ describe('SwitchAgentService', () => {
     expect(created[0]).toMatchObject({ cwd: process.cwd(), name: 'Ada', agent: 'codex', model: 'gpt-5.5-codex', layout: { x: 100, y: 200, width: 600, height: 400 } });
     const target = manager.get(res.console.id)!;
     expect(target).toMatchObject({ name: 'Ada', agent: 'codex', role: 'Backend', projectId: 'p1', launchModel: 'gpt-5.5-codex' });
-    expect(target.git?.branch).toBe('agentarmy/ada-1'); // worktree carried over (closeOld)
+    expect(target.git?.branch).toBe('gridhive/ada-1'); // worktree carried over (closeOld)
     expect(manager.projects[0].consoleIds).toEqual(['ada', target.id, 'bex']);
     // Old one moved aside and stopped so two agents never edit the same folder
     expect(manager.get('ada')!.layout.x).toBe(100 + 600 + 40);

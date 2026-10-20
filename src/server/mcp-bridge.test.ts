@@ -36,10 +36,10 @@ beforeAll(async () => {
   const port = (app.server.address() as { port: number }).port;
 
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agentarmy-mcp-'));
-  const script = path.join(dir, 'agentarmy-mcp.cjs');
+  const script = path.join(dir, 'gridhive-mcp.cjs');
   fs.writeFileSync(script, MCP_SCRIPT_SOURCE);
   const config = buildMcpConfig(process.execPath, script, `http://127.0.0.1:${port}`, 'c 1', 't/k');
-  const server = config.mcpServers.agentarmy;
+  const server = config.mcpServers.gridhive;
   child = spawn(server.command, server.args);
   let buffer = '';
   child.stdout.setEncoding('utf8');
@@ -62,7 +62,7 @@ afterAll(async () => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-describe('agentarmy MCP stdio proxy', () => {
+describe('gridhive MCP stdio proxy', () => {
   it('answers initialize with the requested protocol version, tools capability and instructions', async () => {
     const reply = await rpc(1, 'initialize', {
       protocolVersion: '2025-03-26',
@@ -72,7 +72,7 @@ describe('agentarmy MCP stdio proxy', () => {
     const result = reply.result as Record<string, unknown>;
     expect(result.protocolVersion).toBe('2025-03-26');
     expect(result.capabilities).toEqual({ tools: {} });
-    expect(result.serverInfo).toMatchObject({ name: 'agentarmy' });
+    expect(result.serverInfo).toMatchObject({ name: 'gridhive' });
     expect(result.instructions).toMatch(/send_job/);
     // Notifications get no reply
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n');

@@ -67,7 +67,7 @@ test('a. create an agent on an isolated branch', async () => {
   agent = await waitFor(async () => (await readState()).consoles.find((c) => c.git), {
     message: 'console with git',
   });
-  expect(agent.git!.branch).toMatch(/^agentarmy\//);
+  expect(agent.git!.branch).toMatch(/^gridhive\//);
   expect(agent.git!.baseRef).toBe('main');
   expect(path.dirname(agent.git!.worktree)).toBe(path.join(home, 'demo.worktrees'));
   expect(path.resolve(agent.cwd)).toBe(path.resolve(agent.git!.worktree));

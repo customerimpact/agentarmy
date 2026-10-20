@@ -16,7 +16,7 @@ import type { AgentAdapter } from './types.js';
 // - MCP servers and hooks are only read from config files (~/.grok/config.toml [mcp_servers.*],
 //   .grok/config.toml, ~/.grok/hooks/*.json, plus Claude/Cursor compat files). There is no per-run flag
 //   or env var to add one, and GridHive never writes the user's or the project's config, so Grok
-//   consoles get no agentarmy MCP tools and status comes from terminal output heuristics.
+//   consoles get no gridhive MCP tools and status comes from terminal output heuristics.
 //   (GROK_HOME would relocate config but also the login, sessions and skills.)
 // - The community `grok-dev` / @vibe-kit/grok-cli (superagent-ai) also installs a `grok` binary; it
 //   takes GROK_API_KEY and different flags. We also set GROK_API_KEY so a fresh start works there too,
@@ -47,7 +47,7 @@ export const grokAdapter: AgentAdapter = {
   supportsMcp: false,
   notes:
     'xAI Grok Build (flags from docs.x.ai, not tested here): --continue resumes the newest session in the folder. ' +
-    'Uses your Grok login, or the xAI API key from Settings (pay per token at xAI). No agentarmy MCP tools.',
+    'Uses your Grok login, or the xAI API key from Settings (pay per token at xAI). No gridhive MCP tools.',
 
   detect(settings) {
     return detectExecutable('grok', pathOverride(settings, 'grok'), 'Grok Build');

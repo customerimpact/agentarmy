@@ -97,7 +97,7 @@ describe('executable resolution', () => {
 });
 
 describe('codex adapter', () => {
-  const mcp = { command: 'C:\\node\\node.exe', args: ['C:\\tmp\\agentarmy-mcp.cjs', 'http://127.0.0.1:4317', 'c1', 'tok'] };
+  const mcp = { command: 'C:\\node\\node.exe', args: ['C:\\tmp\\gridhive-mcp.cjs', 'http://127.0.0.1:4317', 'c1', 'tok'] };
 
   it('new session: per-process -c overrides for OSC 9 notifications, notify relay and the MCP server', () => {
     expect(codexArgs({ mode: 'new', mcp, notify: ['C:\\node\\node.exe', 'C:\\tmp\\codex-notify.cjs', 'http://x/hook/c1?token=t'] })).toEqual([
@@ -105,8 +105,8 @@ describe('codex adapter', () => {
       '-c', "tui.notification_method='osc9'",
       '-c', "tui.notification_condition='always'",
       '-c', "notify=['C:\\node\\node.exe','C:\\tmp\\codex-notify.cjs','http://x/hook/c1?token=t']",
-      '-c', "mcp_servers.agentarmy.command='C:\\node\\node.exe'",
-      '-c', "mcp_servers.agentarmy.args=['C:\\tmp\\agentarmy-mcp.cjs','http://127.0.0.1:4317','c1','tok']",
+      '-c', "mcp_servers.gridhive.command='C:\\node\\node.exe'",
+      '-c', "mcp_servers.gridhive.args=['C:\\tmp\\gridhive-mcp.cjs','http://127.0.0.1:4317','c1','tok']",
     ]);
   });
 
@@ -114,7 +114,7 @@ describe('codex adapter', () => {
     expect(codexArgs({ mode: 'resume', threadId: 'abc-123' }).slice(0, 2)).toEqual(['resume', 'abc-123']);
     expect(codexArgs({ mode: 'resume' }).slice(0, 2)).toEqual(['resume', '--last']);
     const args = codexArgs({ mode: 'new', mcp: { ...mcp, env: { ELECTRON_RUN_AS_NODE: '1' } } });
-    expect(args).toContain("mcp_servers.agentarmy.env={ELECTRON_RUN_AS_NODE='1'}");
+    expect(args).toContain("mcp_servers.gridhive.env={ELECTRON_RUN_AS_NODE='1'}");
     expect(args).not.toContain('notify');
   });
 
@@ -141,7 +141,7 @@ describe('codex adapter', () => {
     const args = typeof spec.args === 'string' ? spec.args : spec.args.join(' ');
     // The fake may run directly (file) or through node/cmd.exe (args), depending on the platform
     expect(`${spec.file} ${args}`).toMatch(/fake-cli|codex\.cmd/);
-    expect(args).toContain("mcp_servers.agentarmy.command=");
+    expect(args).toContain("mcp_servers.gridhive.command=");
     expect(spec.env.CLAUDE_CONFIG_DIR).toBeUndefined();
     expect(spec.env.HOME).toBe('h');
   });
@@ -150,10 +150,10 @@ describe('codex adapter', () => {
 describe('gemini and opencode config', () => {
   const mcp = { command: 'node', args: ['mcp.cjs', 'http://127.0.0.1:1', 'c1', 't'] };
 
-  it('gemini: adds a trusted agentarmy server to a copy of the system settings', () => {
+  it('gemini: adds a trusted gridhive server to a copy of the system settings', () => {
     expect(geminiSystemSettings({ theme: 'x', mcpServers: { mine: { command: 'a' } } }, mcp)).toEqual({
       theme: 'x',
-      mcpServers: { mine: { command: 'a' }, agentarmy: { ...mcp, trust: true } },
+      mcpServers: { mine: { command: 'a' }, gridhive: { ...mcp, trust: true } },
     });
   });
 
@@ -166,7 +166,7 @@ describe('gemini and opencode config', () => {
   it('opencode: a local MCP server in its own merged config file', () => {
     expect(opencodeConfig(mcp)).toEqual({
       $schema: 'https://opencode.ai/config.json',
-      mcp: { agentarmy: { type: 'local', command: ['node', 'mcp.cjs', 'http://127.0.0.1:1', 'c1', 't'], enabled: true } },
+      mcp: { gridhive: { type: 'local', command: ['node', 'mcp.cjs', 'http://127.0.0.1:1', 'c1', 't'], enabled: true } },
     });
   });
 });

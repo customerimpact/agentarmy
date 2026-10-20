@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isNewerVersion } from '../shared/version.js';
 
-// `npx agentarmy` prints one line when npm has a newer version. Quiet when offline,
+// `npx gridhive` prints one line when npm has a newer version. Quiet when offline,
 // when the package is not on npm yet, or when AGENTARMY_DISABLE_UPDATES=1.
 
 const REGISTRY_URL = 'https://registry.npmjs.org/gridhive/latest';

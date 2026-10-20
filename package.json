@@ -5,11 +5,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/customerimpact/agentarmy.git"
+    "url": "git+https://github.com/customerimpact/gridhive.git"
   },
-  "homepage": "https://github.com/customerimpact/agentarmy#readme",
+  "homepage": "https://github.com/customerimpact/gridhive#readme",
   "bugs": {
-    "url": "https://github.com/customerimpact/agentarmy/issues"
+    "url": "https://github.com/customerimpact/gridhive/issues"
   },
   "type": "module",
   "bin": {
@@ -38,7 +38,8 @@
     "desktop:dist": "npm run desktop:compile && electron-builder --win --publish never",
     "desktop:dist:mac": "npm run desktop:compile && electron-builder --mac --publish never",
     "test:desktop": "playwright test -c playwright.desktop.config.ts",
-    "site:shots": "npm run build && node scripts/site-shots.mjs"
+    "site:shots": "npm run build && node scripts/site-shots.mjs",
+    "site:stamp": "node scripts/site-stamp.mjs"
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",

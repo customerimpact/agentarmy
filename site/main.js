@@ -112,7 +112,7 @@
   // GitHub star count (optional; the button works without it)
   const count = document.querySelector('[data-stars]');
   if (count && 'fetch' in window) {
-    fetch('https://api.github.com/repos/customerimpact/agentarmy', { headers: { Accept: 'application/vnd.github+json' } })
+    fetch('https://api.github.com/repos/customerimpact/gridhive', { headers: { Accept: 'application/vnd.github+json' } })
       .then((r) => (r.ok ? r.json() : null))
       .then((repo) => {
         // Only worth showing once there are a few

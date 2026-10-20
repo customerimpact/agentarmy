@@ -59,7 +59,7 @@ const RESUME_FAILURE_WINDOW_MS = 10_000;
 const STARTING_FALLBACK_MS = 15_000;
 const STARTING_GIVE_UP_MS = 120_000;
 
-// Variables that tie a process to the Claude Code session that launched agentarmy;
+// Variables that tie a process to the Claude Code session that launched GridHive;
 // inheriting them would make every console think it is a nested child session.
 const PARENT_SESSION_ENV = [
   'CLAUDECODE',

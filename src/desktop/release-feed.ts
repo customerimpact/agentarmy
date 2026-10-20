@@ -1,6 +1,6 @@
 // Which GitHub release the desktop updater follows (pure, unit-tested)
 
-export const UPDATE_REPO = 'customerimpact/agentarmy';
+export const UPDATE_REPO = 'customerimpact/gridhive';
 export const DESKTOP_TAG_PREFIX = 'desktop-v';
 // macOS builds are not signed by Apple yet, so they cannot replace themselves: the update opens this page
 export const DOWNLOAD_PAGE = 'https://gridhive.dev/#install';

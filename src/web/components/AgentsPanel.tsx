@@ -95,7 +95,7 @@ function AgentRow({
                        hover:border-accent/60 hover:text-fg"
           >
             <GitBranch size={10} className="shrink-0 text-accent" />
-            <span className="truncate font-mono">{c.git.branch.replace(/^agentarmy\//, '')}</span>
+            <span className="truncate font-mono">{c.git.branch.replace(/^(gridhive|agentarmy)\//, '')}</span>
             {c.gitStats && (c.gitStats.added > 0 || c.gitStats.removed > 0) && (
               <span className="shrink-0 font-mono tabular-nums">
                 <span className="text-project-green">+{c.gitStats.added}</span>{' '}

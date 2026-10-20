@@ -34,7 +34,7 @@ describe('MemoryStore', () => {
     expect(fs.readFileSync(path.join(dir, 'global.md'), 'utf8')).toBe('Be brief.');
     const file = path.join(dir, `${folderKey(folder)}.md`);
     expect(store.filePath('folder', folder)).toBe(file);
-    expect(fs.readFileSync(file, 'utf8')).toBe(`<!-- agentarmy memory for folder: ${path.resolve(folder)} -->\n# Shop\nUse pnpm.`);
+    expect(fs.readFileSync(file, 'utf8')).toBe(`<!-- gridhive memory for folder: ${path.resolve(folder)} -->\n# Shop\nUse pnpm.`);
 
     const again = new MemoryStore(dir);
     expect(again.read('folder', folder)).toMatchObject({ scope: 'folder', path: path.resolve(folder), content: '# Shop\nUse pnpm.', autoPush: true });

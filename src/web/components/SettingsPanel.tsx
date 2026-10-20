@@ -774,7 +774,7 @@ function AboutControl() {
       v<span data-testid="settings-version">{data?.version ?? '…'}</span>
       {' · '}
       <a
-        href="https://github.com/customerimpact/agentarmy"
+        href="https://github.com/customerimpact/gridhive"
         target="_blank"
         rel="noreferrer"
         className="text-accent hover:underline"
@@ -844,7 +844,7 @@ const SETTINGS: SettingDef[] = [
   ...VOICE_SETTINGS,
 
   { id: 'data-dir', section: 'advanced', label: 'Data folder', description: 'Board, settings and token files live here.', keywords: 'storage state json home AGENTARMY_HOME location', Below: DataDirBelow },
-  { id: 'port', section: 'advanced', label: 'Server port', description: 'Change it with agentarmy --port <n>.', keywords: 'network localhost url', Control: PortControl },
+  { id: 'port', section: 'advanced', label: 'Server port', description: 'Change it with gridhive --port <n>.', keywords: 'network localhost url', Control: PortControl },
   { id: 'token', section: 'advanced', label: 'Access token', description: 'Rotate it if the board URL leaked: restart with --new-token, then open the new URL.', keywords: 'security rotate secret url new-token', Below: TokenBelow },
   { id: 'reset', section: 'advanced', label: 'Reset all settings', description: 'Back to defaults, in this browser and on the server.', keywords: 'defaults restore clear', Control: ResetControl },
   { id: 'about', section: 'advanced', label: 'About', description: 'Free, open-source (MIT) board for Claude Code agents. Independent project, not affiliated with or endorsed by Anthropic.', keywords: 'version license update', Control: AboutControl },

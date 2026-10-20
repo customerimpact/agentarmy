@@ -7,7 +7,7 @@ import type { AgentAdapter } from './types.js';
 import { readVersion } from './resolve.js';
 
 // Claude Code: the CLI GridHive was built around. We pick the session id up front (--session-id),
-// resume with --resume, get status from HTTP hooks (--settings) and add the agentarmy MCP tools.
+// resume with --resume, get status from HTTP hooks (--settings) and add the gridhive MCP tools.
 // Resolved once per setting value (and AGENTARMY_CLAUDE_PATH), not at every launch
 let cached: { key: string; path: string } | null = null;
 
@@ -56,7 +56,7 @@ export const claudeAdapter: AgentAdapter = {
       info.sessionId,
       '--settings',
       settingsFile,
-      // Adds the agentarmy MCP tools; no --strict-mcp-config, so the user's own servers still load
+      // Adds the gridhive MCP tools; no --strict-mcp-config, so the user's own servers still load
       '--mcp-config',
       mcpFile,
       // Settings tab: --model, --permission-mode and the user's extra flags

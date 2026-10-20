@@ -50,7 +50,7 @@ Keep the terminal running `npx gridhive` open. Stopping it (Ctrl-C) stops the se
 
 ## Desktop app (Windows and macOS)
 
-Prefer a real app window over a browser tab? The desktop app runs the same server and board in its own window, with no browser shortcut clashes. Downloads: [gridhive.dev](https://gridhive.dev/#install) or the [releases page](https://github.com/customerimpact/agentarmy/releases) (tags `desktop-v*`).
+Prefer a real app window over a browser tab? The desktop app runs the same server and board in its own window, with no browser shortcut clashes. Downloads: [gridhive.dev](https://gridhive.dev/#install) or the [releases page](https://github.com/customerimpact/gridhive/releases) (tags `desktop-v*`).
 
 **Windows 10/11 (x64)**
 
@@ -73,7 +73,7 @@ What the desktop app adds:
 - **Auto-update** (Windows) from GitHub Releases: checked at start and every 6 hours, downloaded in the background, installed when you choose "Restart to update" or quit. This is the only network call the app makes itself.
 - **Quit** asks first when agents are running. They stop and can be resumed next time, like Ctrl-C on `npx gridhive`.
 
-The app and `npx gridhive` share the same board (`~/.agentarmy`). If `npx gridhive` is already running, the app opens that board instead of starting a second server.
+The app and `npx gridhive` share the same board (`~/.gridhive`, or `~/.agentarmy` from before the rename). If `npx gridhive` is already running, the app opens that board instead of starting a second server.
 
 Build it yourself (Node 22):
 
@@ -92,7 +92,7 @@ Releases: push a tag `desktop-v<version>` (matching `package.json`) and `.github
 
 - **One PTY per console.** The server uses [node-pty](https://github.com/microsoft/node-pty) (ConPTY on Windows) to start `claude` in the chosen folder. The browser renders it with xterm.js over a WebSocket.
 - **Status via HTTP hooks.** Each console is started as `claude --session-id <uuid> --settings <temp file>`. The temp settings file adds Claude Code [HTTP hooks](https://docs.anthropic.com/en/docs/claude-code/hooks) that POST events (session start, prompt submitted, notification, stop) to the local server. Your own `~/.claude` settings are never modified.
-- **State on disk.** Board layout and console list are stored in `~/.agentarmy/state.json`.
+- **State on disk.** Board layout and console list are stored in `~/.gridhive/state.json` (`~/.agentarmy` on older installs).
 - **Resume.** On restart, each console is relaunched with `claude --resume <session id>`, so the conversation continues where it stopped.
 
 ## Security model

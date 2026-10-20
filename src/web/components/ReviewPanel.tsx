@@ -479,7 +479,7 @@ export function ReviewHost() {
 export function BranchChip({ console: c }: { console: ConsoleInfo }) {
   if (!c.git) return null;
   const s = c.gitStats;
-  const short = c.git.branch.replace(/^agentarmy\//, '');
+  const short = c.git.branch.replace(/^(gridhive|agentarmy)\//, '');
   const changed = !!s && (s.added > 0 || s.removed > 0);
   return (
     <button

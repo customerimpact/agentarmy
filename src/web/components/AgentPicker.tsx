@@ -148,7 +148,7 @@ export function AgentPicker({
           {selected.version ? `${selected.version} · ` : ''}
           {selected.supportsResume ? 'restart resumes the conversation' : 'restart starts a new conversation'} ·{' '}
           {selected.supportsHooks ? 'status from its notifications and output' : 'status from its terminal output'}
-          {selected.supportsMcp ? ' · agentarmy tools' : ''}
+          {selected.supportsMcp ? ' · GridHive tools' : ''}
         </p>
       )}
     </div>
@@ -156,7 +156,7 @@ export function AgentPicker({
 }
 
 // Templates: which CLI each team runs (custom commands need a command line, so they are not offered).
-// The orchestrator always runs Claude Code: it coordinates the board with the agentarmy MCP tools.
+// The orchestrator always runs Claude Code: it coordinates the board with the gridhive MCP tools.
 const TEAM_AGENTS: AgentKind[] = ['claude', 'codex', 'gemini', 'opencode'];
 
 export function TeamAgentsPicker({

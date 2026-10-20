@@ -17,7 +17,7 @@ export function randomTopic(length = 16): string {
   const bytes = new Uint8Array(length);
   crypto.getRandomValues(bytes);
   // 62 symbols: the tiny modulo bias is irrelevant for a 95-bit topic
-  return `agentarmy-${Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('')}`;
+  return `gridhive-${Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join('')}`;
 }
 
 const toast = (message: string) => useBoard.getState().toast(message);

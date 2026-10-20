@@ -102,7 +102,7 @@ test('c. Codex console: idle, working, needs you on an approval prompt, answered
   await flyToConsole(page, codex.id);
   await expect(consoleNode(page, codex.id).getByTestId('console-agent')).toHaveText('Codex');
   await expectTerminalToContain(page, codex.id, 'OpenAI Codex');
-  await expectTerminalToContain(page, codex.id, 'mcp: agentarmy ready'); // -c mcp_servers.agentarmy.* reached the CLI
+  await expectTerminalToContain(page, codex.id, 'mcp: gridhive ready'); // -c mcp_servers.gridhive.* reached the CLI
   await expectStatus(page, codex.id, 'idle', 10_000);
 
   await typeInTerminal(page, codex.id, 'hello');

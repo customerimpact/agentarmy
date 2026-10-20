@@ -39,7 +39,7 @@ export function providerShort(kind: AgentKind): string {
   return AGENT_META[kind]?.short ?? kind;
 }
 
-// Orchestrators coordinate the board with the agentarmy MCP tools; these CLIs are verified with them
+// Orchestrators coordinate the board with the gridhive MCP tools; these CLIs are verified with them
 export const ORCHESTRATOR_AGENTS: ProviderKind[] = ['claude', 'codex'];
 export const isOrchestratorReady = (kind: AgentKind): boolean => (ORCHESTRATOR_AGENTS as AgentKind[]).includes(kind);
 

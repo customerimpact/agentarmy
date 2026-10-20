@@ -1,4 +1,4 @@
-// Registry of tools that the agentarmy MCP server (running inside every console) exposes to Claude.
+// Registry of tools that the gridhive MCP server (running inside every console) exposes to Claude.
 // The MCP process is a thin proxy: it lists tools from GET /bridge/:consoleId/tools and forwards
 // calls to POST /bridge/:consoleId/tools/:name. All logic lives here in the GridHive server.
 

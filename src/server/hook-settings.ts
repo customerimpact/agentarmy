@@ -7,8 +7,8 @@ import { forwarderCommand, isElectron, POWERSHELL_FORWARDER_SOURCE } from './nod
 const HOOK_TIMEOUT_SECONDS = 5;
 // Covers node start-up plus two forwarder attempts on a loaded machine
 const SESSION_START_TIMEOUT_SECONDS = 20;
-// Allows every tool of the 'agentarmy' MCP server (see mcp-bridge.ts)
-export const AGENTARMY_MCP_PERMISSION = 'mcp__agentarmy';
+// Allows every tool of the 'gridhive' MCP server (see mcp-bridge.ts)
+export const AGENTARMY_MCP_PERMISSION = 'mcp__gridhive';
 
 // SessionStart only runs command hooks (not http), so a tiny Node script relays its payload.
 // Never fails, never prints: Claude Code would show stdout or errors in the session.

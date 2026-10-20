@@ -11,7 +11,7 @@ import type { AgentAdapter } from './types.js';
 // and config overrides checked with `codex -c ... mcp list`, which rejects unknown enum values/types):
 // - `-c key=value` overrides ~/.codex/config.toml for this process only (value parsed as TOML), so
 //   nothing in the user's own config is touched.
-// - `-c mcp_servers.agentarmy.command=... -c mcp_servers.agentarmy.args=[...]` adds the agentarmy MCP server
+// - `-c mcp_servers.gridhive.command=... -c mcp_servers.gridhive.args=[...]` adds the gridhive MCP server
 //   (shows up in `codex mcp list`).
 // - `-c tui.notifications=true -c tui.notification_method='osc9' -c tui.notification_condition='always'`
 //   makes the TUI print OSC 9 notifications ("Approval requested: ...", turn complete), which we read
@@ -70,9 +70,9 @@ export function codexArgs(input: CodexArgsInput): string[] {
   ];
   if (input.notify) config.push(`notify=${tomlArray(input.notify)}`);
   if (input.mcp) {
-    config.push(`mcp_servers.agentarmy.command=${tomlString(input.mcp.command)}`);
-    config.push(`mcp_servers.agentarmy.args=${tomlArray(input.mcp.args)}`);
-    if (input.mcp.env) config.push(`mcp_servers.agentarmy.env=${tomlInlineTable(input.mcp.env)}`);
+    config.push(`mcp_servers.gridhive.command=${tomlString(input.mcp.command)}`);
+    config.push(`mcp_servers.gridhive.args=${tomlArray(input.mcp.args)}`);
+    if (input.mcp.env) config.push(`mcp_servers.gridhive.env=${tomlInlineTable(input.mcp.env)}`);
   }
   const resume = input.mode === 'resume' ? ['resume', input.threadId || '--last'] : [];
   return [...resume, ...config.flatMap((c) => ['-c', c])];

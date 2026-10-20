@@ -25,7 +25,8 @@ const MAX_APPEND = 4000;
 const AUTO_PUSH_DELAY_MS = 1500; // after a template's first prompt (sent 800 ms after the first idle)
 const AUTO_PUSH_TIMEOUT_MS = 3 * 60_000;
 const TYPEABLE = new Set<ConsoleStatus>(['idle', 'resting', 'working', 'error']);
-const HEADER_RE = /^<!-- agentarmy memory for folder: (.*) -->\r?\n/;
+// agentarmy: files written before the rename to GridHive
+const HEADER_RE = /^<!-- (?:gridhive|agentarmy) memory for folder: (.*) -->\r?\n/;
 
 export class MemoryError extends Error {}
 
@@ -113,7 +114,7 @@ export class MemoryStore {
       return;
     }
     fs.mkdirSync(this.dir, { recursive: true });
-    const header = folder ? `<!-- agentarmy memory for folder: ${folder.replace(/-->/g, '')} -->\n` : '';
+    const header = folder ? `<!-- gridhive memory for folder: ${folder.replace(/-->/g, '')} -->\n` : '';
     const file = path.join(this.dir, `${key}.md`);
     const tmp = `${file}.${process.pid}.tmp`;
     fs.writeFileSync(tmp, header + content);

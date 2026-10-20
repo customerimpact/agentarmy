@@ -3,7 +3,7 @@ import path from 'node:path';
 import { settingsDir } from './hook-settings.js';
 import { isElectron, nodeScriptCommand } from './node-runtime.js';
 
-// The agentarmy MCP server that runs inside every console. Claude Code starts it over stdio
+// The gridhive MCP server that runs inside every console. Claude Code starts it over stdio
 // (newline-delimited JSON-RPC 2.0). It is a thin, dependency-free proxy: tools are listed from
 // and called on the GridHive server's /bridge routes, so all logic stays in the server.
 // stdout carries JSON-RPC only; anything else would corrupt the protocol.
@@ -68,7 +68,7 @@ async function handle(msg) {
       return reply(id, {
         protocolVersion: requested || DEFAULT_PROTOCOL,
         capabilities: { tools: {} },
-        serverInfo: { name: 'agentarmy', version: '1.0.0' },
+        serverInfo: { name: 'gridhive', version: '1.0.0' },
         instructions: INSTRUCTIONS,
       });
     }
@@ -120,7 +120,7 @@ process.stdin.on('end', () => process.exit(0));
 `;
 
 export function mcpScriptPath(): string {
-  return path.join(settingsDir(), 'agentarmy-mcp.cjs');
+  return path.join(settingsDir(), 'gridhive-mcp.cjs');
 }
 
 export function mcpConfigPath(consoleId: string): string {
@@ -147,7 +147,7 @@ export function buildMcpConfig(
   token: string,
   electron = isElectron(),
 ): { mcpServers: Record<string, { command: string; args: string[]; env?: Record<string, string> }> } {
-  return { mcpServers: { agentarmy: nodeScriptCommand(script, [baseUrl, consoleId, token], node, electron) } };
+  return { mcpServers: { gridhive: nodeScriptCommand(script, [baseUrl, consoleId, token], node, electron) } };
 }
 
 // One config per console: the console id and token travel as argv to the proxy

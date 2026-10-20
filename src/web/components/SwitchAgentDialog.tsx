@@ -349,7 +349,7 @@ export function SwitchAgentDialog({ ids }: { ids: string[] }) {
             </p>
             {initial.some((c) => c.role === 'Orchestrator') && !isOrchestratorReady(target) && (
               <p className="mt-1 flex items-center gap-1 text-[11.5px] text-needs">
-                <CircleAlert size={12} /> Orchestrator jobs need the agentarmy MCP tools (verified on Claude Code and Codex): limited on {providerShort(target)}.
+                <CircleAlert size={12} /> Orchestrator jobs need the gridhive MCP tools (verified on Claude Code and Codex): limited on {providerShort(target)}.
               </p>
             )}
           </div>

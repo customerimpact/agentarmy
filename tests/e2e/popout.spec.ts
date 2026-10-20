@@ -200,7 +200,7 @@ test('phone notifications: generate a topic, show the QR, send a test and push o
     await row.scrollIntoViewIfNeeded();
     await row.getByTestId('ntfy-generate').click();
     const topic = await row.getByTestId('ntfy-topic-input').inputValue();
-    expect(topic).toMatch(/^agentarmy-[A-Za-z0-9]{16}$/);
+    expect(topic).toMatch(/^gridhive-[A-Za-z0-9]{16}$/);
     await row.getByTestId('ntfy-server-input').fill(`http://127.0.0.1:${port}/`);
     await row.getByTestId('ntfy-save').click();
 

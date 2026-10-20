@@ -1,5 +1,5 @@
 // Tiny QR code encoder (byte mode, versions 1-10, error correction M then L), enough for a
-// subscribe URL like https://ntfy.sh/agentarmy-xxxxxxxxxxxxxxxx. Follows ISO/IEC 18004 and the
+// subscribe URL like https://ntfy.sh/gridhive-xxxxxxxxxxxxxxxx. Follows ISO/IEC 18004 and the
 // structure of Project Nayuki's MIT-licensed qrcodegen. No dependency for a 40-character URL.
 
 type Ecc = 'M' | 'L';

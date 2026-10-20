@@ -75,7 +75,7 @@ describe('parsers', () => {
 
 describe('path guard', () => {
   it('only allows the console repoRoot and worktree', () => {
-    const g = { repoRoot: repo, branch: 'agentarmy/x', baseRef: 'main', worktree: path.join(tmp, 'wt') };
+    const g = { repoRoot: repo, branch: 'gridhive/x', baseRef: 'main', worktree: path.join(tmp, 'wt') };
     expect(assertGitPath(g, repo)).toBe(path.resolve(repo));
     expect(() => assertGitPath(g, tmp)).toThrow(/outside/);
     expect(() => assertGitPath(g, path.join(repo, 'src'))).toThrow(/outside/);
@@ -97,7 +97,7 @@ describe('worktree lifecycle', () => {
 
   it('creates a worktree next to the repo on a new branch, keeping the subfolder', async () => {
     const made = await createWorktree(path.join(repo, 'src'), 'Ada');
-    expect(made.git.branch).toMatch(/^agentarmy\/ada-[0-9a-f]{4}$/);
+    expect(made.git.branch).toMatch(/^gridhive\/ada-[0-9a-f]{4}$/);
     expect(made.git.baseRef).toBe('main');
     expect(path.dirname(made.git.worktree)).toBe(path.join(tmp, 'demo.worktrees'));
     expect(made.cwd).toBe(path.join(made.git.worktree, 'src'));
@@ -193,13 +193,13 @@ describe('worktree lifecycle', () => {
       discardWorktree({ repoRoot: repo, branch: 'main', baseRef: 'main', worktree: path.join(tmp, 'x') }),
     ).rejects.toThrow(/not made by GridHive/);
     await expect(
-      discardWorktree({ repoRoot: repo, branch: 'agentarmy/x', baseRef: 'main', worktree: repo }),
+      discardWorktree({ repoRoot: repo, branch: 'gridhive/x', baseRef: 'main', worktree: repo }),
     ).rejects.toThrow(/main checkout/);
     // A folder git does not list as a worktree is never deleted
     const stray = path.join(tmp, 'stray');
     fs.mkdirSync(stray);
     fs.writeFileSync(path.join(stray, 'keep.txt'), 'keep');
-    await discardWorktree({ repoRoot: repo, branch: 'agentarmy/none', baseRef: 'main', worktree: stray });
+    await discardWorktree({ repoRoot: repo, branch: 'gridhive/none', baseRef: 'main', worktree: stray });
     expect(fs.existsSync(path.join(stray, 'keep.txt'))).toBe(true);
   });
 });

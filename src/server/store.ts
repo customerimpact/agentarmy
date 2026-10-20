@@ -5,8 +5,12 @@ import { DEFAULT_WORKSPACE_ID, STATE_VERSION, type BoardState, type Workspace } 
 
 const SAVE_DEBOUNCE_MS = 300;
 
-export function agentArmyHome(): string {
-  return process.env.AGENTARMY_HOME ?? path.join(os.homedir(), '.agentarmy');
+// ~/.gridhive for new installs; boards from before the rename stay in ~/.agentarmy
+export function agentArmyHome(env: NodeJS.ProcessEnv = process.env, home = os.homedir()): string {
+  const override = env.GRIDHIVE_HOME || env.AGENTARMY_HOME;
+  if (override) return override;
+  const legacy = path.join(home, '.agentarmy');
+  return fs.existsSync(legacy) ? legacy : path.join(home, '.gridhive');
 }
 
 export function emptyState(): BoardState {

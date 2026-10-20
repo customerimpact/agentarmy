@@ -75,7 +75,7 @@ export interface AgentDetection {
   error?: string; // why it was not found
   supportsResume: boolean; // restart continues the conversation
   supportsHooks: boolean; // status from the CLI's own events (else from terminal output)
-  supportsMcp: boolean; // gets the agentarmy MCP tools (list_agents, send_job, ...)
+  supportsMcp: boolean; // gets the gridhive MCP tools (list_agents, send_job, ...)
   notes?: string; // shown in Settings > Agents
 }
 

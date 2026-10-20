@@ -20,7 +20,9 @@ const GIT_TIMEOUT_MS = 60_000;
 const MAX_OUTPUT = 32 * 1024 * 1024;
 const MAX_DIFF_CHARS = 4 * 1024 * 1024;
 const MAX_UNTRACKED_BYTES = 1024 * 1024;
-export const BRANCH_PREFIX = 'agentarmy/';
+export const BRANCH_PREFIX = 'gridhive/';
+// Branches made before the rename to GridHive
+export const LEGACY_BRANCH_PREFIX = 'agentarmy/';
 
 export class GitError extends Error {
   constructor(
@@ -476,11 +478,11 @@ export async function mergeBranch(git: ConsoleGit, agentName: string): Promise<s
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// Removes the worktree folder and deletes the branch. Only for our own agentarmy/* branches and
+// Removes the worktree folder and deletes the branch. Only for our own gridhive/* (or older agentarmy/*) branches and
 // for folders git itself lists as a worktree of repoRoot.
 export async function discardWorktree(git: ConsoleGit): Promise<void> {
   const repoRoot = assertGitPath(git, git.repoRoot);
-  if (!git.branch.startsWith(BRANCH_PREFIX)) throw new GitError(`Refusing to delete a branch not made by GridHive: ${git.branch}`);
+  if (!git.branch.startsWith(BRANCH_PREFIX) && !git.branch.startsWith(LEGACY_BRANCH_PREFIX)) throw new GitError(`Refusing to delete a branch not made by GridHive: ${git.branch}`);
   if (samePath(git.worktree, repoRoot)) throw new GitError('Refusing to remove the main checkout');
   const listed = await runGit(repoRoot, ['worktree', 'list', '--porcelain']);
   const known = listed.stdout

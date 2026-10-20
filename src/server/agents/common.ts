@@ -7,11 +7,11 @@ import { buildMcpConfig, mcpScriptPath, writeMcpConfigFile } from '../mcp-bridge
 import { readVersion, resolveAgentExecutable, type ResolvedExecutable } from './resolve.js';
 import type { DetectResult } from './types.js';
 
-// The agentarmy MCP proxy (stdio) as { command, args, env? }, for CLIs that take MCP servers in their
+// The gridhive MCP proxy (stdio) as { command, args, env? }, for CLIs that take MCP servers in their
 // own config format. Writing the Claude config file also makes sure the proxy script is on disk.
 export function agentarmyMcpServer(consoleId: string, port: number, token: string): { command: string; args: string[]; env?: Record<string, string> } {
   writeMcpConfigFile(consoleId, port, token);
-  return buildMcpConfig(process.execPath, mcpScriptPath(), `http://127.0.0.1:${port}`, consoleId, token).mcpServers.agentarmy;
+  return buildMcpConfig(process.execPath, mcpScriptPath(), `http://127.0.0.1:${port}`, consoleId, token).mcpServers.gridhive;
 }
 
 export function consoleFile(consoleId: string, suffix: string): string {

@@ -19,7 +19,7 @@ describe('JobService', () => {
     expect(typed[0].id).toBe('bex');
     expect(typed[0].text).toBe(
       `[GridHive job ${shortJobId(job.id)} from Ada] Say pong\nReply with pong.\n\n` +
-        `When finished, call the agentarmy report_job tool with job_id "${job.id}" and a short result.`,
+        `When finished, call the gridhive report_job tool with job_id "${job.id}" and a short result.`,
     );
   });
 

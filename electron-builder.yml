@@ -102,6 +102,6 @@ nsis:
 publish:
   provider: github
   owner: customerimpact
-  repo: agentarmy
+  repo: gridhive
   releaseType: draft
   tagNamePrefix: desktop-v # npm releases use v*, desktop releases desktop-v* (see src/desktop/updater.ts)

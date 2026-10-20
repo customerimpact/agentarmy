@@ -213,7 +213,7 @@ The product is called GridHive. Website gridhive.dev, npm package and command `g
 
 **Negative:**
 - Internal identifiers keep the old name so existing installs keep working: the data folder `~/.agentarmy`, `AGENTARMY_*` environment variables, the Windows app id `com.agentarmy.app`, the `agentarmy` MCP server and `agentarmy/*` worktree branches. The desktop app keeps a pre-rename profile folder (`AgentArmy`) when it exists.
-- The GitHub repo is still customerimpact/agentarmy until it is renamed (GitHub redirects the old URL)
+- The GitHub repo is still customerimpact/gridhive until it is renamed (GitHub redirects the old URL)
 
 ## 2026-10-20: Phone Access on the Local Network First
 
