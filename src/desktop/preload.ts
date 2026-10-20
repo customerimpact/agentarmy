@@ -76,6 +76,19 @@ const api: AgentArmyDesktopApi = {
   notificationsPaused() {
     return Date.now() < pausedUntil;
   },
+  async takeRecipe() {
+    const code: unknown = await ipcRenderer.invoke(IPC.takeRecipe);
+    return typeof code === 'string' ? code : null;
+  },
+  onRecipe(listener) {
+    const handler = (_event: unknown, code: unknown) => {
+      if (typeof code === 'string') listener(code);
+    };
+    ipcRenderer.on(IPC.recipe, handler);
+    return () => {
+      ipcRenderer.removeListener(IPC.recipe, handler);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld('agentarmyDesktop', api);

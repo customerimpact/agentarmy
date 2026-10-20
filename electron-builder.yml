@@ -2,6 +2,11 @@
 # macOS (on a Mac): npm run desktop:dist:mac -> release/GridHive-<version>-arm64.dmg and -x64.dmg
 appId: com.agentarmy.app # also the AppUserModelId set in src/desktop/main.ts (native toasts)
 productName: GridHive
+# gridhive://recipe?d=... links from gridhive.dev/r open the recipe in the app (NSIS registry + macOS Info.plist)
+protocols:
+  - name: GridHive recipe
+    schemes:
+      - gridhive
 copyright: Copyright (c) GridHive contributors (MIT)
 directories:
   output: release

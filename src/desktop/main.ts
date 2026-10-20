@@ -24,6 +24,7 @@ import { packageVersion } from '../server/settings';
 import { agentArmyHome } from '../server/store';
 import { tokenFilePath } from '../server/token-file';
 import { DEFAULT_PORT } from '../shared/protocol';
+import { RECIPE_SCHEME } from '../shared/recipes';
 import {
   DESKTOP_TITLE_BAR_HEIGHT,
   IPC,
@@ -31,6 +32,7 @@ import {
   type TitleBarColors,
 } from '../shared/desktop-api';
 import { DesktopTray, needsYouText, type UpdateState } from './tray';
+import { recipeCodeFromArgs, recipeCodeFromUrl } from './recipe-url';
 import { loadShellPath } from './shell-path';
 import { startUpdater, type Updater } from './updater';
 import { DesktopStateFile, restoreBounds } from './window-state';
@@ -76,13 +78,32 @@ let pauseTimer: NodeJS.Timeout | null = null;
 let attentionCount = 0;
 let titleBar: TitleBarColors = DEFAULT_TITLE_BAR;
 const startHidden = process.argv.includes('--hidden');
+// gridhive://recipe link the app was started with; the board asks for it once it has loaded
+let pendingRecipe = recipeCodeFromArgs(process.argv);
 let pendingMaximize = false;
 
 if (!app.requestSingleInstanceLock()) {
   // Another window is already open for this profile; it gets our 'second-instance' and shows itself
   app.exit(0);
 } else {
-  app.on('second-instance', () => showWindow(mainWindow));
+  app.on('second-instance', (_event, argv) => {
+    showWindow(mainWindow);
+    const code = recipeCodeFromArgs(argv);
+    if (code) openRecipe(code);
+  });
+  // macOS delivers gridhive:// links as an event (also before 'ready' when the link launched the app)
+  app.on('open-url', (event, url) => {
+    event.preventDefault();
+    const code = recipeCodeFromUrl(url);
+    if (!code) return;
+    if (mainWindow) {
+      showWindow(mainWindow);
+      openRecipe(code);
+    } else {
+      pendingRecipe = code;
+    }
+  });
+  registerRecipeScheme();
   app.on('window-all-closed', () => {
     // Keep running in the tray: agents live in this process
   });
@@ -327,6 +348,20 @@ function togglePause(): void {
   tray?.update({ pausedUntil });
 }
 
+// Registers gridhive:// for this user (the installer also does; this covers dev runs and moved installs)
+function registerRecipeScheme(): void {
+  if (process.env.AGENTARMY_HOME) return; // tests and second profiles must not take over the scheme
+  if (process.defaultApp && process.argv[1]) {
+    app.setAsDefaultProtocolClient(RECIPE_SCHEME, process.execPath, [path.resolve(process.argv[1])]);
+  } else {
+    app.setAsDefaultProtocolClient(RECIPE_SCHEME);
+  }
+}
+
+function openRecipe(code: string): void {
+  mainWindow?.webContents.send(IPC.recipe, code);
+}
+
 function flyTo(consoleId: string | null): void {
   showWindow(mainWindow);
   mainWindow?.webContents.send(IPC.flyTo, consoleId);
@@ -368,6 +403,12 @@ function registerIpc(): void {
   });
 
   ipcMain.on(IPC.focusWindow, (event) => showWindow(BrowserWindow.fromWebContents(event.sender)));
+  ipcMain.handle(IPC.takeRecipe, (event) => {
+    if (event.sender !== mainWindow?.webContents) return null;
+    const code = pendingRecipe;
+    pendingRecipe = null;
+    return code;
+  });
 }
 
 function loginItemState(): boolean | null {

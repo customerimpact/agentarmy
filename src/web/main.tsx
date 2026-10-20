@@ -9,12 +9,14 @@ import { App } from './App';
 import { DesktopTitleBar } from './components/DesktopTitleBar';
 import { isDesktop, startDesktopChrome } from './lib/desktop';
 import { initToken } from './lib/auth';
+import { captureRecipeHash } from './lib/recipe-link';
 import { installZoomMouseFix } from './lib/zoom-mouse-fix';
 import { initTheme } from './lib/theme';
 import { installThemeShortcut } from './lib/theme-shortcut';
 
 // Must run before anything renders so the token never stays in the address bar
 initToken();
+captureRecipeHash();
 installZoomMouseFix();
 initTheme();
 installThemeShortcut();

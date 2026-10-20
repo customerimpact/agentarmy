@@ -24,6 +24,9 @@ export interface AgentArmyDesktopApi {
   onFlyTo(listener: (consoleId: string | null) => void): () => void;
   // Tray "Pause notifications 1 h"
   notificationsPaused(): boolean;
+  // gridhive://recipe links: the one the app was opened with (asked once at startup), then live ones
+  takeRecipe(): Promise<string | null>;
+  onRecipe(listener: (code: string) => void): () => void;
 }
 
 export const DESKTOP_TITLE_BAR_HEIGHT = 32;
@@ -35,4 +38,6 @@ export const IPC = {
   focusWindow: 'agentarmy:focus-window',
   flyTo: 'agentarmy:flyto',
   notificationsPaused: 'agentarmy:notifications-paused',
+  takeRecipe: 'agentarmy:take-recipe',
+  recipe: 'agentarmy:recipe',
 } as const;

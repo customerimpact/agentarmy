@@ -167,8 +167,8 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 
 ### Should-Have Features
 
-- [ ] Team recipes - Shareable JSON of roles, prompts, agents and loops; import by link `S`
-- [ ] Share links and "Run in GridHive" badge - One click from a README or a post opens the recipe in the app `S`
+- [x] Team recipes - Shareable link of roles, prompts, agents and models (gridhive.dev/r#code); import with a preview `S`
+- [x] Share links and "Run in GridHive" badge - One click from a README or a post opens the recipe in the app `S`
 - [ ] Recipe gallery - Public, community-submitted recipes with ratings, on the website `M`
 
 ### Dependencies

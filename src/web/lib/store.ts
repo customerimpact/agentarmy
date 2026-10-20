@@ -40,6 +40,7 @@ interface BoardStore {
   sidebarTab: SidebarTab;
   missionMapOpen: boolean;
   templatesOpen: boolean;
+  recipeImport: string | null; // recipe link/code to preview when the Templates dialog opens
   viewport: Viewport | null;
   selectedId: string | null;
   socketState: SocketState;
@@ -69,6 +70,7 @@ interface BoardStore {
   setSidebarTab: (tab: SidebarTab) => void;
   setMissionMapOpen: (open: boolean) => void;
   setTemplatesOpen: (open: boolean) => void;
+  openRecipeImport: (code: string) => void;
   upsertConsole: (console: ConsoleInfo) => void;
   removeConsole: (id: string) => void;
   setLayoutLocal: (id: string, layout: Partial<ConsoleLayout>) => void;
@@ -118,6 +120,7 @@ export const useBoard = create<BoardStore>((set, get) => ({
   sidebarTab: getPrefs().defaultSidebarTab === 'settings' ? 'agents' : getPrefs().defaultSidebarTab,
   missionMapOpen: false,
   templatesOpen: false,
+  recipeImport: null,
   viewport: null,
   selectedId: null,
   socketState: 'connecting',
@@ -208,7 +211,8 @@ export const useBoard = create<BoardStore>((set, get) => ({
       ? set({ settingsOpen: true, settingsCategory: null })
       : set({ sidebarTab, sidebarOpen: true }),
   setMissionMapOpen: (missionMapOpen) => set({ missionMapOpen }),
-  setTemplatesOpen: (templatesOpen) => set({ templatesOpen }),
+  setTemplatesOpen: (templatesOpen) => set(templatesOpen ? { templatesOpen } : { templatesOpen, recipeImport: null }),
+  openRecipeImport: (recipeImport) => set({ templatesOpen: true, recipeImport }),
 
   setLayoutLocal: (id, layout) =>
     set((s) => {

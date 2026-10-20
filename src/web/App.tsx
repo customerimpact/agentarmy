@@ -33,6 +33,7 @@ import { JobsPausedBanner } from './components/UsageSection';
 import { TemplatesDialog } from './components/TemplatesDialog';
 import { LoopsHost } from './components/LoopsDialog';
 import { Toolbar } from './components/Toolbar';
+import { openPendingRecipe } from './lib/recipe-link';
 
 // ?view=console|project|focus opens a pop-out window instead of the full board (see lib/views.ts)
 const VIEW = parseView(window.location.search);
@@ -101,6 +102,7 @@ export function App() {
           startNotifications();
           startPopoutTracking();
           startDesktopBoard();
+          openPendingRecipe();
         } else {
           startPopoutPresence(VIEW);
         }

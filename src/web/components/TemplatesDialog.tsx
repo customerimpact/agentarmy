@@ -4,7 +4,7 @@ import { buildTemplateLaunch, defaultChoice, loadChoice, saveChoice, type RunCho
 import { useLoadProviders } from './ProviderPicker';
 import type { ProviderKind } from '../lib/provider-readiness';
 import { useReactFlow } from '@xyflow/react';
-import { ArrowLeft, LayoutTemplate, LoaderCircle, Rocket, Users } from 'lucide-react';
+import { ArrowLeft, Link2, LayoutTemplate, LoaderCircle, Rocket, Users } from 'lucide-react';
 import { PROJECT_COLORS, type Template } from '../../shared/protocol';
 import {
   BUILTIN_TEMPLATES,
@@ -25,6 +25,7 @@ import { WorktreeToggle } from './WorktreeToggle';
 import { AccountPicker } from './settings/AccountsSettings';
 import { CustomTemplateTag, ScratchTemplateCard } from './ComposerDialog';
 import { useLoops } from '../lib/loops';
+import { ImportRecipePanel, ShareRecipePanel, ShareTemplateButton } from './RecipePanels';
 
 export function agentCount(t: Pick<Template, 'orchestrator' | 'teams'>): number {
   return (t.orchestrator ? 1 : 0) + t.teams.reduce((sum, team) => sum + team.count, 0);
@@ -153,6 +154,17 @@ export function TemplatesDialog() {
   const [templates, setTemplates] = useState<Template[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [chosen, setChosen] = useState<Template | null>(null);
+  // Share a template as a link, or import one from a link (opened from gridhive.dev/r or the app link)
+  const [sharing, setSharing] = useState<Template | null>(null);
+  const [importing, setImporting] = useState<string | null>(null);
+  const pendingImport = useBoard((s) => s.recipeImport);
+  useEffect(() => {
+    if (pendingImport === null) return;
+    setChosen(null);
+    setSharing(null);
+    setImporting(pendingImport);
+    useBoard.setState({ recipeImport: null });
+  }, [pendingImport]);
   const [cwd, setCwd] = useState<string | null>(null);
   const [projectName, setProjectName] = useState('');
   const [isolated, setIsolated] = useState(false);
@@ -259,15 +271,19 @@ export function TemplatesDialog() {
     <Modal
       title="Templates"
       onClose={close}
-      width={chosen ? 'max-w-3xl' : 'max-w-4xl'}
+      width={chosen || sharing || importing !== null ? 'max-w-3xl' : 'max-w-4xl'}
       testId="templates-dialog"
     >
       <div className="aa-card-glow flex items-center gap-3 border-b border-line px-5 pt-4 pb-3">
-        {chosen ? (
+        {chosen || sharing || importing !== null ? (
           <button
             type="button"
             aria-label="Back to templates"
-            onClick={() => setChosen(null)}
+            onClick={() => {
+              setChosen(null);
+              setSharing(null);
+              setImporting(null);
+            }}
             className="grid size-7 place-items-center rounded-lg text-fg-muted
                        hover:bg-hover hover:text-fg"
           >
@@ -278,19 +294,49 @@ export function TemplatesDialog() {
             <LayoutTemplate size={15} />
           </span>
         )}
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="text-[15px] font-semibold text-fg">
-            {chosen ? chosen.name : 'Start from a template'}
+            {chosen ? chosen.name : sharing ? `Share ${sharing.name}` : importing !== null ? 'Import a recipe' : 'Start from a template'}
           </h2>
           <p className="mt-0.5 truncate text-fg-muted">
             {chosen
               ? 'Pick the project folder. Every agent starts there with its role and first prompt.'
-              : 'Launch a ready-made team of agents with roles, grouped on the board.'}
+              : sharing
+                ? 'Send the link to a teammate or put the badge in a README.'
+                : importing !== null
+                  ? 'Paste a recipe link someone shared. It is saved as a template; nothing starts yet.'
+                  : 'Launch a ready-made team of agents with roles, grouped on the board.'}
           </p>
         </div>
+        {!chosen && !sharing && importing === null && (
+          <button
+            type="button"
+            data-testid="recipe-import-open"
+            onClick={() => setImporting('')}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-strong px-2.5 py-1 text-[12px] font-medium text-fg
+                       hover:border-accent/60 hover:text-accent"
+          >
+            <Link2 size={13} />
+            Import link
+          </button>
+        )}
       </div>
 
-      {!chosen && (
+      {sharing && <ShareRecipePanel template={sharing} />}
+
+      {importing !== null && (
+        <ImportRecipePanel
+          initial={importing}
+          onCancel={() => setImporting(null)}
+          onImported={(template) => {
+            setTemplates((list) => [...(list ?? []).filter((t) => t.id !== template.id), template]);
+            setImporting(null);
+            choose(template);
+          }}
+        />
+      )}
+
+      {!chosen && !sharing && importing === null && (
         <div className="aa-scroll max-h-[64vh] overflow-y-auto p-4">
           {!templates && !loadError && (
             <div className="flex items-center justify-center gap-2 py-16 text-fg-subtle">
@@ -332,6 +378,7 @@ export function TemplatesDialog() {
                   <div className="flex flex-1 flex-col gap-1 p-3">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-fg group-hover:text-accent">{t.name}</span>
+                      <ShareTemplateButton name={t.name} onShare={() => setSharing(t)} />
                       {t.custom && (
                         <CustomTemplateTag
                           id={t.id}
