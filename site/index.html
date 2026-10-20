@@ -30,7 +30,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="/styles.css?v=789682af2e">
+  <link rel="stylesheet" href="/styles.css?v=53b5a73a0d">
 
   <script type="application/ld+json">
   {
@@ -51,7 +51,7 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <div class="bg" aria-hidden="true"><div class="glow g1"></div><div class="glow g2"></div></div>
+  <div class="bg" aria-hidden="true"><div class="bg-grid"></div><div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div><div class="sweep"></div></div>
 
   <header class="nav" id="top">
     <div class="wrap nav-in">
@@ -103,58 +103,160 @@
       </div>
 
       <div class="wrap wide">
-        <figure class="frame hero-shot hero-demo" id="demo" data-step="0" aria-label="Animated demo: start a session, spawn a team of agents, jobs fly between them, answer what needs you from your phone, and the work continues.">
+        <figure class="frame hero-shot hero-demo" id="demo" data-step="0" data-tab="agents" aria-label="Animated demo of the GridHive app: start a session, spawn a team of agents, jobs fly between them, answer what needs you from your phone, and the work continues.">
           <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>GridHive · Shop</span></div>
           <div class="demo-stage" aria-hidden="true">
-            <aside class="d-side">
-              <p class="d-side-title">Agents <b class="d-count">0</b></p>
-              <ul>
-                <li class="d-row" data-a="ada"><i class="d-dot"></i><span>Ada</span><em>Orchestrator</em></li>
-                <li class="d-row" data-a="bex"><i class="d-dot"></i><span>Bex</span><em>Claude</em></li>
-                <li class="d-row" data-a="cy"><i class="d-dot"></i><span>Cy</span><em>Codex</em></li>
-                <li class="d-row" data-a="dax"><i class="d-dot"></i><span>Dax</span><em>Gemini</em></li>
-              </ul>
-              <p class="d-inbox"><span>Needs you</span><b>1</b></p>
+            <!-- Sidebar, like the app's: tabs Agents / Actions / Progress -->
+            <aside class="x-side">
+              <div class="x-brand"><span class="x-logo">&gt;_</span><b>GridHive</b><span class="x-chip">Map</span></div>
+              <div class="x-tabs">
+                <span class="x-tab" data-t="agents">Agents <em class="x-count">0</em></span>
+                <span class="x-tab" data-t="actions">Actions <em class="x-badge">1</em></span>
+                <span class="x-tab" data-t="progress">Progress</span>
+              </div>
+
+              <div class="x-pane x-pane-agents">
+                <p class="x-empty">No agents yet. Type a goal below.</p>
+                <div class="x-group" data-g="orch">
+                  <p class="x-ghead"><i style="--c: var(--p-violet)"></i>SHOP · ORCHESTRATOR <span class="x-gsum">1 working</span></p>
+                  <div class="x-row" data-a="ada"><span class="x-av" style="--c: var(--p-violet)">A</span><span class="x-who"><b>Ada</b><small>Orchestrator · Sonnet 5.5</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                </div>
+                <div class="x-group" data-g="team">
+                  <p class="x-ghead"><i style="--c: var(--p-orange)"></i>SHOP · TEAM <span class="x-gsum">0/3 working</span><span class="x-needs-tag">1 needs you</span></p>
+                  <div class="x-row" data-a="bex"><span class="x-av" style="--c: var(--p-orange)">B</span><span class="x-who"><b>Bex</b><small>Frontend · Claude</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                  <div class="x-row" data-a="cy"><span class="x-av" style="--c: var(--p-orange)">C</span><span class="x-who"><b>Cy</b><small class="x-sub">Backend · Codex</small><small class="x-why">Codex needs your permission to run npm test</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                  <div class="x-row" data-a="dax"><span class="x-av" style="--c: var(--p-orange)">D</span><span class="x-who"><b>Dax</b><small>Reviewer · Gemini</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                </div>
+              </div>
+
+              <div class="x-pane x-pane-actions">
+                <p class="x-ptitle"><b>Action inbox</b><small class="x-inbox-sub">1 waiting on you</small></p>
+                <div class="x-act">
+                  <p class="x-act-head"><span class="x-hand">✋</span><b>Cy needs you</b><small>just now</small></p>
+                  <small class="x-act-meta">Cy · Shop · Team</small>
+                  <p class="x-act-q">Codex wants to run <code>npm test</code>. Do you want to proceed?</p>
+                  <span class="x-opt x-opt-yes"><i>1</i>Yes</span>
+                  <span class="x-opt"><i>2</i>Yes, and don't ask again</span>
+                  <span class="x-opt x-opt-no"><i>3</i>No, and tell Codex what to do</span>
+                  <p class="x-act-done">✓ Answered "Yes" from your phone</p>
+                </div>
+              </div>
+
+              <div class="x-pane x-pane-progress">
+                <p class="x-ptitle"><b>Progress</b><small>Shop · Team</small></p>
+                <div class="x-prog" data-a="bex"><p><b>Bex</b><span class="x-pn">0/3</span></p><i><u></u></i></div>
+                <div class="x-prog" data-a="cy"><p><b>Cy</b><span class="x-pn">0/3</span></p><i><u></u></i></div>
+                <div class="x-prog" data-a="dax"><p><b>Dax</b><span class="x-pn">0/2</span></p><i><u></u></i></div>
+                <div class="x-prog x-prog-all"><p><b>Team</b><span class="x-pn">0/8 tasks</span></p><i><u></u></i></div>
+              </div>
             </aside>
 
-            <div class="d-board">
-              <svg class="d-wires" viewBox="0 0 800 560" preserveAspectRatio="none">
-                <path id="w-bex" d="M400 168 C 400 240, 140 240, 140 300"/>
-                <path id="w-cy" d="M400 168 L 400 300"/>
-                <path id="w-dax" d="M400 168 C 400 240, 660 240, 660 300"/>
+            <!-- Board -->
+            <div class="x-board">
+              <div class="x-top">
+                <span class="x-zoom">+</span><span class="x-ws">Main <em class="x-ws-badge">1</em></span><span class="x-ws-add">+</span>
+                <span class="x-spacer"></span>
+                <span class="x-btn x-btn-primary">+ New agent</span><span class="x-btn">+ Add</span><span class="x-btn">Arrange</span>
+              </div>
+
+              <svg class="x-edges" viewBox="0 0 1248 1000">
+                <defs>
+                  <linearGradient id="xflow" gradientUnits="userSpaceOnUse" x1="0" y1="368" x2="0" y2="556"><stop offset="0" stop-color="#2f7bff"/><stop offset="1" stop-color="#3ce0ff"/></linearGradient>
+                  <filter id="xglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
+                </defs>
+                <g class="x-edge" data-w="bex">
+                  <path class="x-halo" d="M624 368 C 624 470, 243 450, 243 556"/>
+                  <path class="x-line" d="M624 368 C 624 470, 243 450, 243 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.6s" repeatCount="indefinite" path="M624 368 C 624 470, 243 450, 243 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.4s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 C 624 470, 243 450, 243 556"/></circle>
+                </g>
+                <g class="x-edge" data-w="cy">
+                  <path class="x-halo" d="M624 368 L 624 556"/>
+                  <path class="x-line" d="M624 368 L 624 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.2s" begin="0.3s" repeatCount="indefinite" path="M624 368 L 624 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.1s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 L 624 556"/></circle>
+                </g>
+                <g class="x-edge" data-w="dax">
+                  <path class="x-halo" d="M624 368 C 624 470, 1005 450, 1005 556"/>
+                  <path class="x-line" d="M624 368 C 624 470, 1005 450, 1005 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.6s" begin="0.6s" repeatCount="indefinite" path="M624 368 C 624 470, 1005 450, 1005 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.4s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 C 624 470, 1005 450, 1005 556"/></circle>
+                </g>
               </svg>
-              <span class="d-job" data-w="bex">Checkout UI</span>
-              <span class="d-job" data-w="cy">Payments API</span>
-              <span class="d-job" data-w="dax">Review</span>
+              <span class="x-label" data-w="bex"><i></i>Checkout UI</span>
+              <span class="x-label" data-w="cy"><i></i>Payments API</span>
+              <span class="x-label" data-w="dax"><i></i>Review changes</span>
 
-              <div class="d-node d-orch" data-a="ada">
-                <header><i class="d-dot"></i><b>Ada</b><small>Orchestrator</small><span class="d-pill"></span></header>
-                <pre class="d-term"></pre>
+              <!-- Orchestrator project frame -->
+              <div class="x-frame x-frame-orch" style="--c: var(--p-violet)">
+                <p class="x-ftitle"><i></i>SHOP · ORCHESTRATOR <span class="x-fsum">1</span></p>
               </div>
-              <div class="d-node" data-a="bex">
-                <header><i class="d-dot"></i><b>Bex</b><small>Claude Code</small><span class="d-pill"></span></header>
-                <pre class="d-term"></pre>
-              </div>
-              <div class="d-node" data-a="cy">
-                <header><i class="d-dot"></i><b>Cy</b><small>Codex</small><span class="d-pill"></span></header>
-                <pre class="d-term"></pre>
-              </div>
-              <div class="d-node" data-a="dax">
-                <header><i class="d-dot"></i><b>Dax</b><small>Gemini CLI</small><span class="d-pill"></span></header>
-                <pre class="d-term"></pre>
+              <!-- Team project frame -->
+              <div class="x-frame x-frame-team" style="--c: var(--p-orange)">
+                <p class="x-ftitle"><i></i>SHOP · TEAM <span class="x-fsum">3 · 0 working</span><span class="x-fneeds">1 needs you</span></p>
               </div>
 
-              <div class="d-cmd"><span class="d-caret">›</span><span class="d-cmd-text"></span></div>
+              <div class="x-node" data-a="ada" style="--c: var(--p-violet)">
+                <header>
+                  <span class="x-nav">A</span><b>Ada</b>
+                  <span class="x-agent"><i class="x-ic-claude">✱</i>CLAUDE</span>
+                  <span class="x-role">ORCHESTRATOR</span>
+                  <span class="x-model">Sonnet 5.5</span><span class="x-cwd">· shop</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="bex" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">B</span><b>Bex</b>
+                  <span class="x-agent"><i class="x-ic-claude">✱</i>CLAUDE</span>
+                  <span class="x-role">FRONTEND</span>
+                  <span class="x-model">Sonnet 5.5</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="cy" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">C</span><b>Cy</b>
+                  <span class="x-agent"><i class="x-ic-codex">&gt;_</i>CODEX</span>
+                  <span class="x-role">BACKEND</span>
+                  <span class="x-model">gpt-5</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="dax" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">D</span><b>Dax</b>
+                  <span class="x-agent"><i class="x-ic-gemini">✦</i>GEMINI</span>
+                  <span class="x-role">REVIEWER</span>
+                  <span class="x-model">2.5 Pro</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
 
-              <div class="d-phone">
-                <div class="d-phone-screen">
-                  <p class="d-phone-top">GridHive</p>
-                  <div class="d-ask">
-                    <b>Cy needs you</b>
+              <!-- Command bar, like the app's -->
+              <div class="x-cmd">
+                <div class="x-chips"><span>+ New agent</span><span>Templates</span><span>Compose team</span><span>Spawn 4</span><span>Group</span></div>
+                <div class="x-input"><span class="x-target"><i></i><b class="x-target-name">Board</b></span><span class="x-typed"></span><span class="x-ph">Message the selected agent · @ to direct · @all or a team for many</span><span class="x-send">➤</span></div>
+              </div>
+
+              <!-- The phone page (src/web/phone) -->
+              <div class="x-phone">
+                <div class="x-ph-screen">
+                  <p class="x-ph-head"><span class="x-ph-back">←</span><b>Cy</b><i class="x-ph-dot"></i><span class="x-ph-btn">On computer</span></p>
+                  <p class="x-ph-status"><span class="x-ph-pill">Needs you</span>shop</p>
+                  <pre class="x-ph-term">● Write api/pay.ts
+● Stripe webhook
+? Run npm test</pre>
+                  <div class="x-ph-card">
+                    <b>Cy: Bash command</b>
                     <span>Run <code>npm test</code>?</span>
-                    <div class="d-ask-btns"><i class="d-yes">Yes</i><i>No</i></div>
+                    <div class="x-ph-opts"><i class="x-ph-yes">Yes</i><i>Always</i><i>No</i></div>
                   </div>
-                  <i class="d-tap"></i>
+                  <i class="x-tap"></i>
                 </div>
               </div>
             </div>
@@ -177,7 +279,7 @@
     </section>
 
     <!-- How it works -->
-    <section class="section" id="how">
+    <section class="section grid-soft" id="how">
       <div class="wrap split">
         <div class="copy">
           <p class="eyebrow">How it works</p>
@@ -250,7 +352,7 @@
     </section>
 
     <!-- Features -->
-    <section class="section" id="features">
+    <section class="section grid-soft" id="features">
       <div class="wrap">
         <div class="head">
           <p class="eyebrow">Features</p>
@@ -405,7 +507,7 @@
     </section>
 
     <!-- Install -->
-    <section class="section" id="install">
+    <section class="section grid-soft" id="install">
       <div class="wrap">
         <div class="head">
           <p class="eyebrow">Get started</p>
@@ -466,7 +568,7 @@
     </section>
 
     <!-- FAQ -->
-    <section class="section" id="faq">
+    <section class="section grid-soft" id="faq">
       <div class="wrap narrow">
         <div class="head">
           <p class="eyebrow">FAQ</p>
@@ -564,6 +666,6 @@
   </footer>
 
   <script src="/main.js?v=ea66fb5564" defer></script>
-  <script src="/hero-demo.js?v=f550b364d1" defer></script>
+  <script src="/hero-demo.js?v=0579434e29" defer></script>
 </body>
 </html>
