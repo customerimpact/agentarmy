@@ -20,9 +20,13 @@
     .then(function (res) { return res.ok ? res.json() : { user: null }; })
     .then(function (data) {
       if (data.user) {
-        $('sub').textContent = 'Signed in as ' + data.user.email + '. Check that this code matches the one in the GridHive app.';
+        $('title').textContent = 'Link this computer to your account';
+        $('sub').textContent = 'Signed in as ' + (data.user.name ? data.user.name + ' (' + data.user.email + ')' : data.user.email) + '. Check that this code matches the one in the GridHive app.';
+        $('link').textContent = 'Link this computer to ' + data.user.email;
         $('confirm').hidden = false;
       } else {
+        $('title').textContent = 'Sign in to link your computer';
+        $('sub').textContent = 'Sign in or create your free account with GitHub or Google. Then you link this computer to it.';
         $('signin').hidden = false;
       }
     })

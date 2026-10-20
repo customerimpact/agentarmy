@@ -40,7 +40,7 @@ describe('ShareService (Viewer)', () => {
   beforeAll(async () => {
     relay = await startRelay();
     manager = new ConsoleManager({ port: 1, token: 't', onChange: () => {} });
-    consoleId = manager.create({ cwd: os.tmpdir(), name: 'Ada', agent: 'custom', command: 'node -e "console.log(\'hello from Ada\');setInterval(()=>{},1000)"' }).id;
+    consoleId = manager.create({ cwd: os.tmpdir(), name: 'Ada', agent: 'custom', command: 'node -e "process.stdin.on(\'data\',(d)=>console.log(\'GOT:\'+d));console.log(\'hello from Ada\')"' }).id;
     const cloud = { credentials: () => ({ deviceId: 'pc1', deviceSecret: 's' }), status: () => ({ user: { email: 'owner@x.io', name: 'Owner' } }) } as unknown as CloudLink;
     const fetchImpl = (async (url: string, init?: RequestInit) => {
       const u = new URL(String(url));
@@ -102,12 +102,14 @@ describe('ShareService (Viewer)', () => {
     await say({ t: 'cursor', c: { x: 10, y: 20 } });
     await expect.poll(() => cursors.at(-1), { timeout: 10_000 }).toMatchObject({ dev: 'g_tim', name: 'Tim', c: { x: 10, y: 20 } });
 
-    // Typing is not something a viewer can do: nothing reaches the console
-    const before = manager.get(consoleId)!.status;
+    // Typing is not something a viewer can do: nothing reaches the console (it echoes what it gets)
+    let typed = '';
+    manager.attach(consoleId, (data) => (typed += data));
     await say({ t: 'input', id: consoleId, data: 'exit\r' });
     service.localCursor({ x: 5, y: 6 });
     await expect.poll(() => inbox.find((m) => m.t === 'cursor'), { timeout: 10_000 }).toMatchObject({ t: 'cursor', dev: 'pc1', c: { x: 5, y: 6 } });
-    expect(manager.get(consoleId)!.status).toBe(before);
+    await new Promise((r) => setTimeout(r, 500));
+    expect(typed).not.toContain('GOT:');
     guest.close();
     await expect.poll(() => service.status().shares[0].guests, { timeout: 10_000 }).toEqual([]);
   });
