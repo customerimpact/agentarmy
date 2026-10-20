@@ -1,4 +1,4 @@
-// AgentArmy desktop app (Electron main process). It runs the same Fastify server as `npx agentarmy`
+// GridHive desktop app (Electron main process). It runs the same Fastify server as `npx gridhive`
 // in-process (or attaches to a CLI server that is already running) and shows its UI in a window.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,6 +24,7 @@ import { packageVersion } from '../server/settings';
 import { agentArmyHome } from '../server/store';
 import { tokenFilePath } from '../server/token-file';
 import { DEFAULT_PORT } from '../shared/protocol';
+import { RECIPE_SCHEME } from '../shared/recipes';
 import {
   DESKTOP_TITLE_BAR_HEIGHT,
   IPC,
@@ -31,6 +32,7 @@ import {
   type TitleBarColors,
 } from '../shared/desktop-api';
 import { DesktopTray, needsYouText, type UpdateState } from './tray';
+import { recipeCodeFromArgs, recipeCodeFromUrl } from './recipe-url';
 import { loadShellPath } from './shell-path';
 import { startUpdater, type Updater } from './updater';
 import { DesktopStateFile, restoreBounds } from './window-state';
@@ -49,10 +51,14 @@ const SHORTCUT_LABEL = IS_MAC ? 'Cmd+Option+A' : 'Ctrl+Alt+A';
 // Started from the Finder or the Dock, the app would not find claude, codex, node or git
 if (process.platform !== 'win32') loadShellPath();
 
-app.setName('AgentArmy');
+app.setName('GridHive');
 // A custom AGENTARMY_HOME (tests, second profiles) also gets its own Chromium profile and instance lock
 if (process.env.AGENTARMY_HOME) {
   app.setPath('userData', path.join(process.env.AGENTARMY_HOME, 'desktop-profile'));
+} else {
+  // Installs from before the rename keep their profile (window size, login item, single-instance lock)
+  const legacy = path.join(app.getPath('appData'), 'AgentArmy');
+  if (fs.existsSync(legacy)) app.setPath('userData', legacy);
 }
 
 interface Backend {
@@ -72,13 +78,32 @@ let pauseTimer: NodeJS.Timeout | null = null;
 let attentionCount = 0;
 let titleBar: TitleBarColors = DEFAULT_TITLE_BAR;
 const startHidden = process.argv.includes('--hidden');
+// gridhive://recipe link the app was started with; the board asks for it once it has loaded
+let pendingRecipe = recipeCodeFromArgs(process.argv);
 let pendingMaximize = false;
 
 if (!app.requestSingleInstanceLock()) {
   // Another window is already open for this profile; it gets our 'second-instance' and shows itself
   app.exit(0);
 } else {
-  app.on('second-instance', () => showWindow(mainWindow));
+  app.on('second-instance', (_event, argv) => {
+    showWindow(mainWindow);
+    const code = recipeCodeFromArgs(argv);
+    if (code) openRecipe(code);
+  });
+  // macOS delivers gridhive:// links as an event (also before 'ready' when the link launched the app)
+  app.on('open-url', (event, url) => {
+    event.preventDefault();
+    const code = recipeCodeFromUrl(url);
+    if (!code) return;
+    if (mainWindow) {
+      showWindow(mainWindow);
+      openRecipe(code);
+    } else {
+      pendingRecipe = code;
+    }
+  });
+  registerRecipeScheme();
   app.on('window-all-closed', () => {
     // Keep running in the tray: agents live in this process
   });
@@ -113,20 +138,20 @@ async function answers(origin: string, token: string): Promise<boolean> {
 }
 
 async function connectBackend(): Promise<Backend> {
-  // `npx agentarmy` already runs on this data folder: show its board instead of fighting over state.json
+  // `npx gridhive` already runs on this data folder: show its board instead of fighting over state.json
   const lock = readLiveInstanceLock();
   if (lock) {
     const origin = `http://127.0.0.1:${lock.port}`;
     const token = readToken();
     if (token && (await answers(origin, token))) {
-      console.log(`[agentarmy] attached to the running server (pid ${lock.pid}) at ${origin}`);
+      console.log(`[gridhive] attached to the running server (pid ${lock.pid}) at ${origin}`);
       return { url: `${origin}/?token=${token}`, origin, owned: null };
     }
     const { response } = await dialog.showMessageBox({
       type: 'warning',
-      title: 'AgentArmy',
-      message: 'Another AgentArmy server seems to be running, but it does not answer.',
-      detail: `Process ${lock.pid} holds ${lockFilePath()}. Start a new server anyway? Only do this if that process is not AgentArmy.`,
+      title: 'GridHive',
+      message: 'Another GridHive server seems to be running, but it does not answer.',
+      detail: `Process ${lock.pid} holds ${lockFilePath()}. Start a new server anyway? Only do this if that process is not GridHive.`,
       buttons: ['Start a new server', 'Quit'],
       defaultId: 1,
       cancelId: 1,
@@ -136,7 +161,7 @@ async function connectBackend(): Promise<Backend> {
   }
   const port = Number(process.env.AGENTARMY_PORT) || DEFAULT_PORT;
   const handle = await startAgentArmy({ port, open: false, resumeAll: process.argv.includes('--resume-all') });
-  console.log(`AgentArmy is running: ${handle.url}`);
+  console.log(`GridHive is running: ${handle.url}`);
   return { url: handle.url, origin: new URL(handle.url).origin, owned: handle };
 }
 
@@ -212,7 +237,7 @@ function wireContents(contents: WebContents): void {
   });
   contents.on('render-process-gone', (_event, details) => {
     if (details.reason === 'clean-exit') return;
-    console.warn(`[agentarmy] renderer gone (${details.reason}), reloading`);
+    console.warn(`[gridhive] renderer gone (${details.reason}), reloading`);
     setTimeout(() => {
       if (!contents.isDestroyed()) contents.reload();
     }, 1000);
@@ -256,7 +281,7 @@ function createMainWindow(url: string): BrowserWindow {
     minWidth: 720,
     minHeight: 480,
     show: false,
-    title: 'AgentArmy',
+    title: 'GridHive',
   });
   wireContents(win.webContents);
   win.once('ready-to-show', () => {
@@ -294,8 +319,8 @@ function showCloseNoticeOnce(): void {
   desktopState.update({ closeNoticeShown: true }, { now: true });
   if (!Notification.isSupported()) return;
   new Notification({
-    title: 'AgentArmy is still running',
-    body: `Your agents keep working in the background. Open AgentArmy from the ${IS_MAC ? 'menu bar icon or the Dock' : 'tray icon'} or press ${SHORTCUT_LABEL}.`,
+    title: 'GridHive is still running',
+    body: `Your agents keep working in the background. Open GridHive from the ${IS_MAC ? 'menu bar icon or the Dock' : 'tray icon'} or press ${SHORTCUT_LABEL}.`,
     icon: path.join(ICON_DIR, 'icon.png'),
   }).show();
 }
@@ -321,6 +346,20 @@ function togglePause(): void {
   }
   broadcastPause();
   tray?.update({ pausedUntil });
+}
+
+// Registers gridhive:// for this user (the installer also does; this covers dev runs and moved installs)
+function registerRecipeScheme(): void {
+  if (process.env.AGENTARMY_HOME) return; // tests and second profiles must not take over the scheme
+  if (process.defaultApp && process.argv[1]) {
+    app.setAsDefaultProtocolClient(RECIPE_SCHEME, process.execPath, [path.resolve(process.argv[1])]);
+  } else {
+    app.setAsDefaultProtocolClient(RECIPE_SCHEME);
+  }
+}
+
+function openRecipe(code: string): void {
+  mainWindow?.webContents.send(IPC.recipe, code);
 }
 
 function flyTo(consoleId: string | null): void {
@@ -364,6 +403,12 @@ function registerIpc(): void {
   });
 
   ipcMain.on(IPC.focusWindow, (event) => showWindow(BrowserWindow.fromWebContents(event.sender)));
+  ipcMain.handle(IPC.takeRecipe, (event) => {
+    if (event.sender !== mainWindow?.webContents) return null;
+    const code = pendingRecipe;
+    pendingRecipe = null;
+    return code;
+  });
 }
 
 function loginItemState(): boolean | null {
@@ -395,7 +440,7 @@ function setUpdateState(update: UpdateState): void {
   tray?.update({ update });
   if (update.kind === 'ready' && Notification.isSupported()) {
     new Notification({
-      title: `AgentArmy ${update.version} is ready`,
+      title: `GridHive ${update.version} is ready`,
       body: 'Choose "Restart to update" in the tray menu, or it installs when you quit.',
       icon: path.join(ICON_DIR, 'icon.png'),
     }).show();
@@ -423,8 +468,8 @@ async function requestQuit(): Promise<void> {
     if (mainWindow && !mainWindow.isVisible()) showWindow(mainWindow);
     const options = {
       type: 'question' as const,
-      title: 'Quit AgentArmy',
-      message: `Quit AgentArmy? ${running} ${running === 1 ? 'agent is' : 'agents are'} running.`,
+      title: 'Quit GridHive',
+      message: `Quit GridHive? ${running} ${running === 1 ? 'agent is' : 'agents are'} running.`,
       detail: 'Agents stop and can be resumed next time.',
       buttons: ['Quit', 'Cancel'],
       defaultId: 0,
@@ -472,7 +517,7 @@ async function boot(): Promise<void> {
     backend = await connectBackend();
   } catch (err) {
     if ((err as Error).message !== 'cancelled') {
-      dialog.showErrorBox('AgentArmy could not start', `${(err as Error).message}\n\nData folder: ${agentArmyHome()}`);
+      dialog.showErrorBox('GridHive could not start', `${(err as Error).message}\n\nData folder: ${agentArmyHome()}`);
     }
     quitting = true;
     app.exit(1);
@@ -484,7 +529,7 @@ async function boot(): Promise<void> {
   mainWindow = createMainWindow(backend.url);
   createTray();
   if (!globalShortcut.register('CommandOrControl+Alt+A', toggleMainWindow)) {
-    console.warn(`[agentarmy] ${SHORTCUT_LABEL} is taken by another app; the show/hide shortcut is off`);
+    console.warn(`[gridhive] ${SHORTCUT_LABEL} is taken by another app; the show/hide shortcut is off`);
   }
   updater = startUpdater({
     onState: setUpdateState,
@@ -495,7 +540,7 @@ async function boot(): Promise<void> {
   });
 }
 
-process.on('uncaughtException', (err) => console.error('[agentarmy] uncaught exception', err));
+process.on('uncaughtException', (err) => console.error('[gridhive] uncaught exception', err));
 
 // Read-only peek for the Playwright smoke test (tests/desktop): tray state and the tray's fly-to action
 (globalThis as { __agentarmyDesktop?: unknown }).__agentarmyDesktop = {

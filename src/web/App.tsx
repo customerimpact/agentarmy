@@ -33,6 +33,8 @@ import { JobsPausedBanner } from './components/UsageSection';
 import { TemplatesDialog } from './components/TemplatesDialog';
 import { LoopsHost } from './components/LoopsDialog';
 import { Toolbar } from './components/Toolbar';
+import { openPendingRecipe } from './lib/recipe-link';
+import { usePhoneAccess } from './lib/phone-access';
 
 // ?view=console|project|focus opens a pop-out window instead of the full board (see lib/views.ts)
 const VIEW = parseView(window.location.search);
@@ -101,6 +103,8 @@ export function App() {
           startNotifications();
           startPopoutTracking();
           startDesktopBoard();
+          openPendingRecipe();
+          void usePhoneAccess.getState().load();
         } else {
           startPopoutPresence(VIEW);
         }
@@ -129,7 +133,7 @@ export function App() {
     return (
       <div className="grid h-full place-items-center p-6 text-center">
         <div>
-          <p className="text-[15px] font-semibold text-fg">Could not reach the AgentArmy server</p>
+          <p className="text-[15px] font-semibold text-fg">Could not reach the GridHive server</p>
           <p className="mt-1 text-fg-muted">{error}</p>
           <button
             type="button"

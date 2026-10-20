@@ -51,7 +51,7 @@ export function registerBrowserTools(service: BrowserServiceImpl): void {
 
   tool(
     'browser_open',
-    'Open a URL in your own live browser tile on the AgentArmy board (a real Chromium the user watches, next to your terminal). ' +
+    'Open a URL in your own live browser tile on the GridHive board (a real Chromium the user watches, next to your terminal). ' +
       'Creates the tile the first time, then reuses it. Use this instead of other browser tools when the user asks you to open, check or test a web page. ' +
       'Then use browser_screenshot to see it, browser_read for its text, and browser_click / browser_type / browser_press / browser_scroll to interact.',
     { url: { type: 'string', description: 'Full URL or bare domain (example.com, localhost:3000)' } },

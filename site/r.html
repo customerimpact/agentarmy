@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GridHive recipe</title>
+  <meta name="description" content="A team of coding agents someone shared. Open it in GridHive, the free control room for terminal agents.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#08061a">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GridHive">
+  <meta property="og:title" content="A GridHive recipe: a team of coding agents">
+  <meta property="og:description" content="Open this team in GridHive: Claude Code, Codex, Gemini and more, side by side on one board.">
+  <meta property="og:image" content="https://gridhive.dev/assets/og.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .recipe { padding: 48px 0 80px; }
+    .recipe h1 { font-size: clamp(28px, 5vw, 44px); font-weight: 500; margin: 6px 0 8px; letter-spacing: -0.035em; }
+    .recipe .kicker { font-size: 12.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--lav); }
+    .recipe .lead { color: var(--fg-2); margin: 0 0 24px; }
+    .recipe .actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 12px; }
+    .recipe .hint { color: var(--fg-3); font-size: 14px; margin: 0 0 28px; }
+    .recipe .hint a { color: var(--cyan); }
+    .recipe .warn { border: 1px solid rgba(244, 166, 215, 0.4); background: rgba(244, 166, 215, 0.08); border-radius: 12px; padding: 12px 14px; color: var(--fg-2); font-size: 14px; margin: 0 0 20px; }
+    .recipe ol { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+    .recipe li { border: 1px solid var(--line); background: var(--card); border-radius: 14px; padding: 14px 16px; }
+    .recipe .row-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; }
+    .recipe .row-head b { font-size: 16px; }
+    .recipe .tag { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--fg-2); border: 1px solid var(--line-2); border-radius: 8px; padding: 1px 7px; }
+    .recipe pre { margin: 10px 0 0; white-space: pre-wrap; word-break: break-word; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--fg-2); background: rgba(0, 0, 0, 0.25); border-radius: 10px; padding: 10px 12px; max-height: 260px; overflow: auto; }
+    .recipe .error { color: #ff8f8f; }
+    .recipe .copied { color: var(--cyan); font-size: 14px; align-self: center; }
+  </style>
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-in">
+      <a class="brand" href="/" aria-label="GridHive home">
+        <img src="/assets/icon.svg" width="30" height="30" alt="">
+        <span>GridHive</span>
+      </a>
+      <div class="nav-cta">
+        <a class="btn primary sm" href="/#install">Download GridHive</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="recipe wrap narrow" id="main">
+    <p class="kicker">GridHive recipe</p>
+    <h1 id="name">Loading recipe…</h1>
+    <p class="lead" id="description"></p>
+
+    <div id="ready" hidden>
+      <div class="actions">
+        <a class="btn primary" id="open-app" href="#">Open in the GridHive app</a>
+        <a class="btn ghost" id="open-local" href="#">Open in npx gridhive</a>
+        <button class="btn ghost" id="copy" type="button">Copy link</button>
+        <span class="copied" id="copied" hidden>Copied</span>
+      </div>
+      <p class="hint">
+        Opening adds this team to your templates. Nothing starts until you pick a folder and press Launch.
+        No GridHive yet? <a href="/#install">Install it</a> (free, Windows and Mac), then come back to this page.
+        Using <code>npx gridhive</code>? Keep it running, then click "Open in npx gridhive".
+      </p>
+      <p class="warn">
+        Each agent gets the prompt below as its first message. Read them before you launch, and only use recipes from people you trust.
+      </p>
+      <ol id="rows"></ol>
+    </div>
+  </main>
+
+  <script src="/r.js" defer></script>
+</body>
+</html>

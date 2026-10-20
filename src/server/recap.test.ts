@@ -60,7 +60,7 @@ describe('buildRecap (past day)', () => {
 
   it('renders Markdown', () => {
     const md = recapMarkdown(recap);
-    expect(md).toContain('# AgentArmy recap · Sun 18 Oct 2026');
+    expect(md).toContain('# GridHive recap · Sun 18 Oct 2026');
     expect(md).toContain('2 agents · 1 prompt · 1 job done · 1 todo completed · 2 files touched · 1 needs-you');
     expect(md).toContain('## Shop (`C:/dev/shop`)');
     expect(md).toContain('### Ada (Frontend)');
@@ -208,7 +208,7 @@ describe('RecapScheduler', () => {
     now = at(18, 0);
     expect(await scheduler.tick()).toBe(true);
     expect(fetchImpl).toHaveBeenCalledTimes(1);
-    expect(JSON.parse((fetchImpl.mock.calls[0] as unknown as [string, { body: string }])[1].body).content).toContain('AgentArmy recap');
+    expect(JSON.parse((fetchImpl.mock.calls[0] as unknown as [string, { body: string }])[1].body).content).toContain('GridHive recap');
     expect(await scheduler.tick()).toBe(false); // already sent today
     expect(localDate(now)).toBe(DAY);
   });

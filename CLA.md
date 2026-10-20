@@ -1,6 +1,6 @@
 # Contributor License Agreement
 
-Thank you for contributing to AgentArmy. This agreement lets the project keep your contribution and change the license of future versions if needed. You keep the copyright of your contribution.
+Thank you for contributing to GridHive. This agreement lets the project keep your contribution and change the license of future versions if needed. You keep the copyright of your contribution.
 
 By signing (commenting on your pull request as the CLA bot asks), you agree to the following for every contribution you submit to this project:
 

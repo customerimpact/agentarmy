@@ -49,7 +49,7 @@ function AccountRow({ provider, account }: { provider: ProviderStatus; account: 
   const remove = () =>
     useBoard.getState().askConfirm({
       title: `Remove ${account.name}?`,
-      message: `AgentArmy forgets this ${provider.label} account and deletes its config folder, including its login.`,
+      message: `GridHive forgets this ${provider.label} account and deletes its config folder, including its login.`,
       confirmLabel: 'Remove account',
       danger: true,
       onConfirm: async () => {
@@ -340,8 +340,8 @@ export function ProvidersHubBelow() {
         </ul>
       )}
       <Note>
-        Logins happen in a terminal on the board, in the CLI itself: AgentArmy never sees your passwords or keys. Extra accounts get
-        their own config folder in AgentArmy’s data folder.
+        Logins happen in a terminal on the board, in the CLI itself: GridHive never sees your passwords or keys. Extra accounts get
+        their own config folder in GridHive’s data folder.
       </Note>
     </div>
   );

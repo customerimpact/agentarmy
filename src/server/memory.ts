@@ -19,7 +19,7 @@ import { registerBridgeTool, textResult } from './bridge-tools.js';
 // <dir>/global.md, <dir>/<folderKey>.md (first line: a header with the folder path),
 // <dir>/memory.json { autoPush: { global?: true, <folderKey>?: true } }.
 
-export const PUSH_PREFIX = 'Project memory (from AgentArmy):';
+export const PUSH_PREFIX = 'Project memory (from GridHive):';
 const MAX_CONTENT = 200_000;
 const MAX_APPEND = 4000;
 const AUTO_PUSH_DELAY_MS = 1500; // after a template's first prompt (sent 800 ms after the first idle)
@@ -263,7 +263,7 @@ function registerMemoryTools(manager: ConsoleManager, store: MemoryStore): void 
   registerBridgeTool({
     name: 'read_memory',
     description:
-      "Read the user's AgentArmy project memory: notes, conventions and learnings kept for this project folder " +
+      "Read the user's GridHive project memory: notes, conventions and learnings kept for this project folder " +
       '(scope "project") and for every project (scope "global"). Read it before starting unfamiliar work.',
     inputSchema: {
       type: 'object',
@@ -285,7 +285,7 @@ function registerMemoryTools(manager: ConsoleManager, store: MemoryStore): void 
   registerBridgeTool({
     name: 'append_memory',
     description:
-      "Record a durable learning in the user's AgentArmy project memory so future agents get it: a convention, " +
+      "Record a durable learning in the user's GridHive project memory so future agents get it: a convention, " +
       'a command that works, a gotcha, a decision. One or two sentences; not progress updates. Scope "project" ' +
       '(default) is this folder; "global" applies to every project.',
     inputSchema: {

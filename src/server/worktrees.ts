@@ -480,7 +480,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // for folders git itself lists as a worktree of repoRoot.
 export async function discardWorktree(git: ConsoleGit): Promise<void> {
   const repoRoot = assertGitPath(git, git.repoRoot);
-  if (!git.branch.startsWith(BRANCH_PREFIX)) throw new GitError(`Refusing to delete a branch not made by AgentArmy: ${git.branch}`);
+  if (!git.branch.startsWith(BRANCH_PREFIX)) throw new GitError(`Refusing to delete a branch not made by GridHive: ${git.branch}`);
   if (samePath(git.worktree, repoRoot)) throw new GitError('Refusing to remove the main checkout');
   const listed = await runGit(repoRoot, ['worktree', 'list', '--porcelain']);
   const known = listed.stdout

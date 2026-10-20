@@ -1,5 +1,5 @@
 // How child processes (Claude Code's SessionStart hook, the MCP bridge) run our small Node scripts.
-// Under the CLI process.execPath is node. Inside the desktop app it is AgentArmy.exe (Electron), which
+// Under the CLI process.execPath is node. Inside the desktop app it is GridHive.exe (Electron), which
 // only behaves like node with ELECTRON_RUN_AS_NODE=1. That variable must never reach the console's own
 // environment: it would break any Electron app the user or the agent starts from that terminal.
 
@@ -21,7 +21,7 @@ export function nodeScriptCommand(script: string, args: string[], execPath = pro
 }
 
 // PowerShell forwarder for the desktop app on Windows: command hooks cannot set env vars, and
-// AgentArmy.exe without ELECTRON_RUN_AS_NODE would start the app instead of running the script.
+// GridHive.exe without ELECTRON_RUN_AS_NODE would start the app instead of running the script.
 // Reads stdin as raw bytes (no codepage mangling), posts it, retries once, never prints, always exits 0.
 export const POWERSHELL_FORWARDER_SOURCE = `$ErrorActionPreference = 'SilentlyContinue'
 $ProgressPreference = 'SilentlyContinue'

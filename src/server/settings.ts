@@ -65,7 +65,7 @@ export class SettingsError extends Error {}
 
 const PERMISSION_MODES: PermissionModeSetting[] = ['', 'default', 'acceptEdits', 'plan', 'bypassPermissions'];
 const STARTUP_MODES: StartupResume[] = ['ask', 'always', 'never'];
-// Flags AgentArmy sets itself; letting the user pass them would break resume, hooks or the bridge
+// Flags GridHive sets itself; letting the user pass them would break resume, hooks or the bridge
 const RESERVED_FLAGS = ['--session-id', '--resume', '-r', '--continue', '-c', '--settings', '--mcp-config', '--print', '-p'];
 const MODEL_RE = /^[A-Za-z0-9._:\-[\]]{1,100}$/;
 const MAX_TEXT = 1000;
@@ -108,7 +108,7 @@ function validateExtraArgs(value: string): void {
   for (const arg of args) {
     const flag = arg.split('=')[0];
     if (RESERVED_FLAGS.includes(flag)) {
-      throw new SettingsError(`${flag} is managed by AgentArmy and cannot be set here`);
+      throw new SettingsError(`${flag} is managed by GridHive and cannot be set here`);
     }
     // cmd.exe (used for .cmd shims on Windows) cannot pass a literal double quote safely
     if (arg.includes('"')) throw new SettingsError('Extra flags cannot contain a literal double quote');
@@ -308,7 +308,7 @@ export function packageVersion(): string {
   for (let i = 0; i < 4; i++) {
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8')) as { name?: string; version?: string };
-      if (pkg.name === 'agentarmy' && pkg.version) return (cachedVersion = pkg.version);
+      if ((pkg.name === 'gridhive' || pkg.name === 'agentarmy') && pkg.version) return (cachedVersion = pkg.version);
     } catch {
       // keep walking up
     }
@@ -400,7 +400,7 @@ export class SettingsStore extends EventEmitter<SettingsEvents> {
       } catch {
         // ignore
       }
-      console.warn(`[agentarmy] Could not read ${this.filePath}; saved as ${backup} and using defaults`);
+      console.warn(`[gridhive] Could not read ${this.filePath}; saved as ${backup} and using defaults`);
       return { ...DEFAULT_SETTINGS };
     }
   }

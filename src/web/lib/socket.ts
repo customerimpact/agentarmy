@@ -11,6 +11,7 @@ import { receiveItem, useItems } from './items';
 import { useDrawings } from './drawing/store';
 import { receiveProviderEvent, useProviderHub } from './providers-hub';
 import { useProviders } from './provider-store';
+import { receiveDeviceHandoff, usePhoneAccess } from './phone-access';
 
 export type TerminalStreamListener = (kind: 'replay' | 'output', data: string) => void;
 export type BrowserFrameListener = (
@@ -232,6 +233,12 @@ class BoardSocket {
       case 'provider-event':
         receiveProviderEvent(message.event);
         void useProviders.getState().load(true);
+        break;
+      case 'phone':
+        usePhoneAccess.getState().receive(message.phone);
+        break;
+      case 'device-handoff':
+        receiveDeviceHandoff(message.consoleId, message.to);
         break;
       case 'account-switch': {
         const e = message.event;

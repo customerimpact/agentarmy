@@ -99,7 +99,7 @@ function Editor({ initialServer, onDone, onCancel }: { initialServer: string; on
           aria-label="ntfy topic"
           data-testid="ntfy-topic-input"
           value={topic}
-          placeholder="Topic, e.g. agentarmy-…"
+          placeholder="Topic, e.g. gridhive-…"
           spellCheck={false}
           autoComplete="off"
           onChange={(e) => setTopic(e.target.value)}

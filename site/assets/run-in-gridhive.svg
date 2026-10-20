@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="148" height="20" role="img" aria-label="Run in GridHive">
+  <title>Run in GridHive</title>
+  <linearGradient id="s" x2="0" y2="100%">
+    <stop offset="0" stop-color="#fff" stop-opacity=".12"/>
+    <stop offset="1" stop-opacity=".12"/>
+  </linearGradient>
+  <clipPath id="r"><rect width="148" height="20" rx="4" fill="#fff"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="34" height="20" fill="#1a1614"/>
+    <rect x="34" width="114" height="20" fill="#e8774a"/>
+    <rect width="148" height="20" fill="url(#s)"/>
+  </g>
+  <g fill="none" stroke="#ff9a63" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 7l3 3-3 3"/>
+    <path d="M16 13h5"/>
+  </g>
+  <g fill="#1a0d06" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11" font-weight="bold">
+    <text x="91" y="14" text-anchor="middle">Run in GridHive</text>
+  </g>
+</svg>

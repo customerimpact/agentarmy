@@ -48,7 +48,7 @@ The core value (supervising many agents at once) needs only local mechanisms, so
 
 ### Decision
 
-Ship as an npm package (`npx agentarmy`) that runs a local Node server (node-pty) and serves a React + xterm.js + React Flow UI in the user's browser. No hosted website, no desktop installer.
+Ship as an npm package (`npx gridhive`) that runs a local Node server (node-pty) and serves a React + xterm.js + React Flow UI in the user's browser. No hosted website, no desktop installer.
 
 ### Context
 
@@ -90,7 +90,7 @@ One-command install, no signing, cross-platform for free, and the same node-pty 
 
 ### Decision
 
-Ship a Windows desktop app (Electron, NSIS per-user installer) next to `npx agentarmy`. The Electron main process runs the same Fastify server in-process through `startAgentArmy()` (src/server/app.ts) and shows the same React UI in a BrowserWindow, adding a tray icon, taskbar badge, close-to-tray, a global show/hide shortcut and auto-update from GitHub Releases (`desktop-v*` tags). The npm package is unchanged; Electron and its tooling are devDependencies.
+Ship a Windows desktop app (Electron, NSIS per-user installer) next to `npx gridhive`. The Electron main process runs the same Fastify server in-process through `startAgentArmy()` (src/server/app.ts) and shows the same React UI in a BrowserWindow, adding a tray icon, taskbar badge, close-to-tray, a global show/hide shortcut and auto-update from GitHub Releases (`desktop-v*` tags). The npm package is unchanged; Electron and its tooling are devDependencies.
 
 ### Context
 
@@ -112,13 +112,13 @@ Electron runs Node in the main process, so the existing server, node-pty (N-API 
 ### Consequences
 
 **Positive:**
-- One code base for CLI and app; the app can also attach to a running `npx agentarmy` server
+- One code base for CLI and app; the app can also attach to a running `npx gridhive` server
 - Native toasts, tray, taskbar badge and auto-update on Windows
 
 **Negative:**
 - ~100 MB installer (Electron runtime)
 - Unsigned for now: SmartScreen warns until we buy a code-signing certificate (CSC_LINK / CSC_KEY_PASSWORD)
-- Inside the app, Node child scripts need care: AgentArmy.exe only acts as Node with ELECTRON_RUN_AS_NODE (set for the MCP bridge only); the SessionStart hook relay uses PowerShell on Windows
+- Inside the app, Node child scripts need care: GridHive.exe only acts as Node with ELECTRON_RUN_AS_NODE (set for the MCP bridge only); the SessionStart hook relay uses PowerShell on Windows
 - macOS needs an Apple Developer account (USD 99/year, notarization) and a Mac to test
 
 ## 2026-10-20: Positioning as the Control Room for Terminal Agents
@@ -130,7 +130,7 @@ Electron runs Node in the main process, so the existing server, node-pty (N-API 
 
 ### Decision
 
-AgentArmy is the vendor-neutral, local-first control room for terminal coding agents (Claude Code, Codex, Gemini CLI, Grok Build, OpenCode), on the subscriptions users already have. We do not build a code editor and do not resell model usage. Details: @.agent-os/product/vision.md.
+GridHive is the vendor-neutral, local-first control room for terminal coding agents (Claude Code, Codex, Gemini CLI, Grok Build, OpenCode), on the subscriptions users already have. We do not build a code editor and do not resell model usage. Details: @.agent-os/product/vision.md.
 
 ### Context
 
@@ -190,3 +190,76 @@ Signing and notarization need an Apple Developer ID (USD 99/year). Squirrel.Mac 
 **Negative:**
 - A Gatekeeper step on first launch and manual updates until we sign
 
+
+## 2026-10-20: Brand Name GridHive
+
+**ID:** DEC-007
+**Status:** Accepted
+**Category:** Business
+**Stakeholders:** Product Owner
+
+### Decision
+
+The product is called GridHive. Website gridhive.dev, npm package and command `gridhive` (`npx gridhive`), desktop app GridHive. Everything users see uses the new name.
+
+### Context
+
+"AgentArmy" was a working name and agentarmy.com was taken (vision.md, challenge 7). The name has to be final before npm publish and share links, which carry it.
+
+### Consequences
+
+**Positive:**
+- One name on the site, npm, the app and future recipe links
+
+**Negative:**
+- Internal identifiers keep the old name so existing installs keep working: the data folder `~/.agentarmy`, `AGENTARMY_*` environment variables, the Windows app id `com.agentarmy.app`, the `agentarmy` MCP server and `agentarmy/*` worktree branches. The desktop app keeps a pre-rename profile folder (`AgentArmy`) when it exists.
+- The GitHub repo is still customerimpact/agentarmy until it is renamed (GitHub redirects the old URL)
+
+## 2026-10-20: Phone Access on the Local Network First
+
+**ID:** DEC-008
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Product Owner
+
+### Decision
+
+Ship phone control before the account and relay: an opt-in second listener (0.0.0.0, default port 4318) serves a phone page and an allow-list of the board API. Phones pair by scanning a QR code with a single-use, 10-minute code and get their own revocable token (stored hashed in `phone.json`). The board server itself stays on 127.0.0.1.
+
+### Context
+
+The owner wants to launch and follow agents from the phone and hand sessions both ways. The relay (Phase 6) needs a hosted service and an account provider that are not chosen yet; the same screens work on home Wi-Fi without either.
+
+### Consequences
+
+**Positive:**
+- Usable today, no server costs; the phone UI and the handoff protocol carry over to the relay
+
+**Negative:**
+- Plain HTTP on the local network (no TLS yet): the UI tells users to use it on trusted Wi-Fi only or over a VPN
+- No lock-screen push from the page itself (needs HTTPS); ntfy covers alerts until the relay ships
+- Windows Firewall asks once to allow the app on private networks
+
+## 2026-10-20: Cloud Stack for Accounts and the Relay
+
+**ID:** DEC-009
+**Status:** Accepted
+**Category:** Technical
+**Stakeholders:** Product Owner
+**Related Spec:** @.agent-os/specs/2026-10-20-accounts-and-relay/
+
+### Decision
+
+Vercel hosts gridhive.dev and the account API (Auth.js: GitHub, Google, email link via Resend). Neon Postgres stores the waitlist, users, sessions and linked devices. A Cloudflare Worker with one Durable Object per account is the end-to-end encrypted relay between a user's computers and phones. A waitlist goes live first.
+
+### Context
+
+The owner picked Vercel + Neon and Cloudflare for the relay (Vercel functions cannot hold WebSockets; live terminals need them).
+
+### Consequences
+
+**Positive:**
+- Free tiers to start; the relay never sees plaintext and needs no database calls per frame
+
+**Negative:**
+- Three providers to operate; a privacy notice update for account data and waitlist emails

@@ -21,13 +21,13 @@ by side on one board, on your own login, with approvals that follow you to your 
                        │ launch team · approve · read · hand back │
                        └───────────────▲──────────────────────────┘
                                        │ end-to-end encrypted relay (optional account)
-┌──────────────────────── AgentArmy on your computer ────────────────────────┐
+┌──────────────────────── GridHive on your computer ────────────────────────┐
 │  board · orchestrator · loops · review lane · project memory · recipes     │
 │     │              │              │              │              │          │
 │  Claude Code     Codex        Gemini CLI     Grok Build     OpenCode       │
 │  (your login)  (your login)  (your login)  (your login)   (your keys)      │
 └────────────────────────────────────────────────────────────────────────────┘
-        ▲ recipes / "Run in AgentArmy" links          ▲ triggers: GitHub, Slack, schedule
+        ▲ recipes / "Run in GridHive" links          ▲ triggers: GitHub, Slack, schedule
 ```
 
 ## What we take from Cursor (Sep-Oct 2026 changelog)
@@ -60,13 +60,13 @@ subscriptions they have, which is why terminal users can pick us without giving 
 5. **Review bottleneck.** Ten agents make ten diffs. Answer: the review lane.
 6. **Paying the bills while staying free.** Answer: open core. The local app stays MIT and free;
    hosted parts (relay at scale, team sync, gallery features) become a paid Team plan.
-7. **Name.** agentarmy.com is taken; pick the final brand before spending on growth.
+7. **Name.** Settled: GridHive on gridhive.dev (DEC-007). Register the npm name and social handles early.
 
 ## Ecosystem-led growth
 
-- **Meet terminal users where they are:** `npx agentarmy`, a Claude Code plugin/skill that opens the
+- **Meet terminal users where they are:** `npx gridhive`, a Claude Code plugin/skill that opens the
   current session on the board, and our MCP server so any agent can spawn and brief teammates.
-- **Recipes are the growth loop:** people share team setups as links and "Run in AgentArmy" badges
+- **Recipes are the growth loop:** people share team setups as links and "Run in GridHive" badges
   in READMEs; every share is an install.
 - **Community adapters:** a documented adapter interface so new CLIs get support from the community
   the week they launch.

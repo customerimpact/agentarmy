@@ -36,7 +36,7 @@ export function needsYouText(count: number): string {
 }
 
 export function trayTooltip(count: number): string {
-  return count > 0 ? `AgentArmy — ${needsYouText(count)}` : 'AgentArmy';
+  return count > 0 ? `GridHive — ${needsYouText(count)}` : 'GridHive';
 }
 
 function clock(ms: number): string {
@@ -50,7 +50,7 @@ export function trayMenuTemplate(
   now = Date.now(),
   platform: NodeJS.Platform = 'win32',
 ): MenuItemConstructorOptions[] {
-  const template: MenuItemConstructorOptions[] = [{ label: 'Open AgentArmy', click: () => actions.open() }];
+  const template: MenuItemConstructorOptions[] = [{ label: 'Open GridHive', click: () => actions.open() }];
 
   if (state.count > 0) {
     template.push({ type: 'separator' }, { label: needsYouText(state.count), enabled: false });
@@ -94,6 +94,6 @@ export function trayMenuTemplate(
       click: () => actions.checkForUpdates(),
     });
   }
-  template.push({ type: 'separator' }, { label: 'Quit AgentArmy', click: () => actions.quit() });
+  template.push({ type: 'separator' }, { label: 'Quit GridHive', click: () => actions.quit() });
   return template;
 }

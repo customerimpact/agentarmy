@@ -4,7 +4,7 @@ import path from 'node:path';
 import { _electron as electron, expect, test } from '@playwright/test';
 import { AgentArmyServer, FAKE_CLAUDE_SHIM, REPO_ROOT } from '../e2e/helpers/server';
 
-// `npx agentarmy` already runs on the same data folder: the app shows that board instead of starting
+// `npx gridhive` already runs on the same data folder: the app shows that board instead of starting
 // a second server, and quitting the app leaves the CLI server alone.
 test('the app attaches to a running CLI server and leaves it running on quit', async () => {
   const root = path.join(os.tmpdir(), 'agentarmy-desktop-test');

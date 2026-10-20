@@ -41,7 +41,7 @@ interface UpdaterOptions {
 // Newest published desktop-v* release that has a build for this platform
 async function latestDesktopTag(): Promise<string | null> {
   const res = await fetch(`https://api.github.com/repos/${UPDATE_REPO}/releases?per_page=30`, {
-    headers: { accept: 'application/vnd.github+json', 'user-agent': `AgentArmy/${app.getVersion()}` },
+    headers: { accept: 'application/vnd.github+json', 'user-agent': `GridHive/${app.getVersion()}` },
     signal: AbortSignal.timeout(15_000),
   });
   if (!res.ok) throw new Error(`GitHub answered ${res.status}`);
@@ -77,9 +77,9 @@ function startDownloadNotifier(options: UpdaterOptions): Updater {
         return;
       }
       set({ kind: 'idle' });
-      if (manual) options.onMessage('Updates', `AgentArmy ${app.getVersion()} is the latest version.`);
+      if (manual) options.onMessage('Updates', `GridHive ${app.getVersion()} is the latest version.`);
     } catch (err) {
-      console.warn(`[agentarmy] update check failed: ${String(err)}`);
+      console.warn(`[gridhive] update check failed: ${String(err)}`);
       set(before.kind === 'available' ? before : { kind: 'idle' });
       if (manual) options.onMessage('Updates', `Could not check for updates: ${(err as Error).message}`);
     }
@@ -104,7 +104,7 @@ export function startUpdater(options: UpdaterOptions): Updater {
           options.onMessage(
             'Updates',
             app.isPackaged
-              ? 'This copy was not installed with the AgentArmy installer, so it cannot update itself.'
+              ? 'This copy was not installed with the GridHive installer, so it cannot update itself.'
               : 'Updates are disabled in development runs.',
           );
         }
@@ -129,11 +129,11 @@ export function startUpdater(options: UpdaterOptions): Updater {
   autoUpdater.on('update-available', (info) => set({ kind: 'downloading', version: info.version }));
   autoUpdater.on('update-not-available', () => {
     set({ kind: 'idle' });
-    if (manualCheck) options.onMessage('Updates', `AgentArmy ${app.getVersion()} is the latest version.`);
+    if (manualCheck) options.onMessage('Updates', `GridHive ${app.getVersion()} is the latest version.`);
   });
   autoUpdater.on('update-downloaded', (info) => set({ kind: 'ready', version: info.version }));
   autoUpdater.on('error', (err) => {
-    console.warn(`[agentarmy] update check failed: ${String(err)}`);
+    console.warn(`[gridhive] update check failed: ${String(err)}`);
     if (state.kind !== 'ready') set({ kind: 'idle' });
     if (manualCheck) options.onMessage('Updates', `Could not check for updates: ${err.message}`);
   });
@@ -155,7 +155,7 @@ export function startUpdater(options: UpdaterOptions): Updater {
       });
       await autoUpdater.checkForUpdates();
     } catch (err) {
-      console.warn(`[agentarmy] update check failed: ${String(err)}`);
+      console.warn(`[gridhive] update check failed: ${String(err)}`);
       set({ kind: 'idle' });
       if (manual) options.onMessage('Updates', `Could not check for updates: ${(err as Error).message}`);
     }

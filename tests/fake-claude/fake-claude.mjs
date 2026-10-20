@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Fake Claude Code CLI for deterministic end-to-end tests. It understands the flags AgentArmy
+// Fake Claude Code CLI for deterministic end-to-end tests. It understands the flags GridHive
 // passes (--session-id, --resume, --settings), fires the hooks from the settings file like
 // Claude Code does, and offers a tiny line editor with a few magic prompts:
 //   ask   -> Notification(permission_prompt) and a numbered permission dialog like Claude Code's;

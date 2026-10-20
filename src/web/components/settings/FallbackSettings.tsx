@@ -98,7 +98,7 @@ export function ProviderKeyField({ id, envVar, vendor }: { id: ProviderKeyId; en
       </div>
       <div className="mt-1 text-[11.5px] text-fg-subtle">
         Optional. Without it, the CLI uses its own sign-in (subscription). With it, {vendor} bills each token to your API account. Stored in
-        AgentArmy’s settings.json and given only to these consoles as {envVar}; it is never shown again.
+        GridHive’s settings.json and given only to these consoles as {envVar}; it is never shown again.
       </div>
     </div>
   );

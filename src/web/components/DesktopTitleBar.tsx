@@ -34,7 +34,7 @@ export function DesktopTitleBar() {
       onDoubleClick={(e) => e.preventDefault()}
     >
       <img src="/icon.svg" alt="" className="size-4" draggable={false} />
-      <span className="truncate text-[12px] font-medium text-fg-muted">{title || 'AgentArmy'}</span>
+      <span className="truncate text-[12px] font-medium text-fg-muted">{title || 'GridHive'}</span>
       {count > 0 && (
         <button
           type="button"

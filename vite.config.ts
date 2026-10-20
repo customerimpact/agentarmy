@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
@@ -9,6 +10,13 @@ export default defineConfig({
   build: {
     outDir: '../../dist/web',
     emptyOutDir: true,
+    // The board (index.html) and the phone page (phone.html, served by the phone server)
+    rollupOptions: {
+      input: {
+        main: path.resolve(import.meta.dirname, 'src/web/index.html'),
+        phone: path.resolve(import.meta.dirname, 'src/web/phone.html'),
+      },
+    },
   },
   server: {
     port: 5173,

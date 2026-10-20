@@ -69,7 +69,7 @@ test('quick handoff from Ada to Bex types the brief and draws a job line', async
   await dialog.getByTestId('handoff-build').click();
 
   const brief = dialog.getByTestId('handoff-brief');
-  await expect(brief).toHaveValue(/^\[AgentArmy handoff from Ada\]/);
+  await expect(brief).toHaveValue(/^\[GridHive handoff from Ada\]/);
   const text = await brief.inputValue();
   expect(text).toContain('Finish the tests next.');
   expect(text).toContain('- plan');
@@ -83,7 +83,7 @@ test('quick handoff from Ada to Bex types the brief and draws a job line', async
   await expect(dialog).toBeHidden();
 
   // Bex got it (the fake CLI submits the first line of a paste) and the board shows the job line
-  await expectTerminalToContain(page, bex.id, 'Done: [AgentArmy handoff from Ada]');
+  await expectTerminalToContain(page, bex.id, 'Done: [GridHive handoff from Ada]');
   const job = await waitFor(async () => {
     const state = await server.api<BoardState>('GET', '/api/state');
     return state.jobs.find((j) => j.kind === 'handoff' && j.fromId === ada.id && j.toId === bex.id && j.status === 'done');
@@ -93,14 +93,14 @@ test('quick handoff from Ada to Bex types the brief and draws a job line', async
   await expect(page.locator(`[data-testid="flow-edge"][data-source="${ada.id}"][data-target="${bex.id}"]`)).toHaveCount(1);
   // The handoff never types a "finished" note back into Ada
   await page.waitForTimeout(500);
-  expect(await consoleNode(page, ada.id).locator('.xterm-rows').textContent()).not.toContain('AgentArmy]');
+  expect(await consoleNode(page, ada.id).locator('.xterm-rows').textContent()).not.toContain('GridHive]');
 });
 
 test('smart mode runs claude -p (fake) through the .cmd shim and uses its output', async () => {
   const p = await server.api<{ brief: string; mode: string; warning?: string }>('POST', '/api/handoffs', { fromId: ada.id, toId: bex.id, mode: 'smart' });
   expect(p.warning).toBeUndefined();
   expect(p.mode).toBe('smart');
-  expect(p.brief).toMatch(/^\[AgentArmy handoff from Ada\]/);
+  expect(p.brief).toMatch(/^\[GridHive handoff from Ada\]/);
   expect(p.brief).toContain('Goal: fake smart brief');
   // --settings is consumed by the fake itself; the empty --tools value survives cmd.exe quoting
   expect(p.brief).toContain('Args: -p --model haiku --output-format text --strict-mcp-config --tools  --no-session-persistence');
@@ -148,12 +148,12 @@ test('memory panel: edit project memory and push it to agents', async () => {
   await page.keyboard.press('Escape');
   await expect(panel).toBeHidden();
   await flyToConsole(page, cy.id);
-  await expectTerminalToContain(page, cy.id, 'Done: Project memory (from AgentArmy):');
+  await expectTerminalToContain(page, cy.id, 'Done: Project memory (from GridHive):');
 });
 
 test('memory is pushed automatically into a new agent in the folder', async () => {
   const eve = await server.api<ConsoleInfo>('POST', '/api/consoles', { cwd: dir, name: 'Eve', layout: { x: 760, y: 520, width: 640, height: 400 } });
   await expect(page.locator(`[data-testid="mission-item"][data-console-id="${eve.id}"]`)).toBeVisible();
   await flyToConsole(page, eve.id);
-  await expectTerminalToContain(page, eve.id, 'Done: Project memory (from AgentArmy):', 20_000);
+  await expectTerminalToContain(page, eve.id, 'Done: Project memory (from GridHive):', 20_000);
 });

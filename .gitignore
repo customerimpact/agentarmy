@@ -6,3 +6,6 @@ test-results/
 playwright-report/
 build/icons/
 release/
+
+# Agent worktrees (Claude Code)
+.claude/worktrees/

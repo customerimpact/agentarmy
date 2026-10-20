@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Fake xAI Grok Build CLI (`grok`) for tests. Understands what AgentArmy passes (`--continue`,
+// Fake xAI Grok Build CLI (`grok`) for tests. Understands what GridHive passes (`--continue`,
 // `-m <model>`) and draws a tiny TUI:
 //   limit -> prints a rate-limit error (for the cross-provider fallback heuristics)
 //   exit  -> exit 0

@@ -80,4 +80,9 @@ export function startDesktopBoard(): void {
     if (consoleId && useBoard.getState().consoles[consoleId]) void flyTo(consoleId);
     else useBoard.getState().setSidebarTab('actions');
   });
+  // gridhive://recipe links (an older app build has no recipe bridge)
+  if (typeof desktop.takeRecipe === 'function') {
+    desktop.onRecipe((code) => useBoard.getState().openRecipeImport(code));
+    void desktop.takeRecipe().then((code) => code && useBoard.getState().openRecipeImport(code));
+  }
 }

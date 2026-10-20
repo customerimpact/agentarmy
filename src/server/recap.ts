@@ -97,7 +97,7 @@ export class RecapLog {
     this.writes = this.writes
       .then(() => fs.promises.mkdir(this.dir!, { recursive: true }))
       .then(() => fs.promises.appendFile(file, line))
-      .catch((err: unknown) => console.warn(`[agentarmy] Could not write the recap log: ${String(err)}`));
+      .catch((err: unknown) => console.warn(`[gridhive] Could not write the recap log: ${String(err)}`));
     return ev;
   }
 
@@ -270,7 +270,7 @@ export class RecapScheduler {
       this.writeMarker(today);
       return true;
     } catch (err) {
-      console.warn(`[agentarmy] Daily recap not sent: ${(err as Error).message}`);
+      console.warn(`[gridhive] Daily recap not sent: ${(err as Error).message}`);
       this.lastSent = today; // one attempt a day; a broken webhook should not post every 30 s
       return false;
     } finally {

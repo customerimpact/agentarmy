@@ -6,7 +6,7 @@ Please report vulnerabilities privately through GitHub: open the repository's **
 
 Include:
 
-- AgentArmy version, OS and Node version
+- GridHive version, OS and Node version
 - Steps to reproduce or a proof of concept
 - What an attacker can achieve
 
@@ -18,7 +18,7 @@ Only the latest published version receives security fixes while the project is i
 
 ## Scope
 
-AgentArmy runs a local server that can start processes and send keystrokes to terminals on your machine. Its protections are:
+GridHive runs a local server that can start processes and send keystrokes to terminals on your machine. Its protections are:
 
 - binding to `127.0.0.1` only
 - a random per-run token required by the UI, the WebSocket and the hook endpoints
@@ -30,7 +30,7 @@ In scope, for example:
 - Bypassing or leaking the token (logs, referrers, error pages, files with loose permissions)
 - Path traversal or arbitrary file access through the API (for example the folder picker)
 - Command or argument injection when spawning `claude`
-- AgentArmy writing to the user's Claude Code settings
+- GridHive writing to the user's Claude Code settings
 
 Out of scope:
 

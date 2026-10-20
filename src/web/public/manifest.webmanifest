@@ -1,6 +1,6 @@
 {
-  "name": "AgentArmy",
-  "short_name": "AgentArmy",
+  "name": "GridHive",
+  "short_name": "GridHive",
   "description": "A board of live Claude Code terminals.",
   "start_url": "/",
   "scope": "/",

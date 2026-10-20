@@ -34,7 +34,7 @@ export function formatActionMessage(
       : action.kind === 'stuck'
         ? (action.detail ?? action.title)
       : [action.question, action.detail].filter(Boolean).join(' — ');
-  const parts = ['AgentArmy', info.projectName, `${who} ${verb}`].filter(Boolean).join(' · ');
+  const parts = ['GridHive', info.projectName, `${who} ${verb}`].filter(Boolean).join(' · ');
   const body = detail ? `${parts}: ${clip(detail, MAX_DETAIL)}` : parts;
   return `${body}\nhttp://127.0.0.1:${info.port}/`;
 }
@@ -87,7 +87,7 @@ export class WebhookNotifier {
     const text = this.messageFor(action);
     for (const kind of kinds) {
       postWebhook(kind, urlFor(s, kind), text, this.fetchImpl).catch((err: unknown) => {
-        console.warn(`[agentarmy] ${(err as Error).message}`);
+        console.warn(`[gridhive] ${(err as Error).message}`);
       });
     }
   }
@@ -95,7 +95,7 @@ export class WebhookNotifier {
   async sendTest(kind: WebhookKind): Promise<void> {
     const url = urlFor(this.settings.get(), kind);
     if (!url) throw new Error(`No ${kind === 'slack' ? 'Slack' : 'Discord'} webhook is set`);
-    await postWebhook(kind, url, `AgentArmy · test message. Notifications will arrive here.\nhttp://127.0.0.1:${this.port}/`, this.fetchImpl);
+    await postWebhook(kind, url, `GridHive · test message. Notifications will arrive here.\nhttp://127.0.0.1:${this.port}/`, this.fetchImpl);
   }
 
   private messageFor(action: ActionItem): string {

@@ -44,7 +44,7 @@ export interface GitRepoStatus {
   untracked: GitRepoChange[];
   conflicted: GitRepoChange[];
   operation: 'merge' | 'rebase' | null; // an unfinished merge/rebase in progress
-  isWorktreeConsole: boolean; // the console runs in an AgentArmy worktree (Review panel exists)
+  isWorktreeConsole: boolean; // the console runs in an GridHive worktree (Review panel exists)
 }
 
 export interface GitBranchList {

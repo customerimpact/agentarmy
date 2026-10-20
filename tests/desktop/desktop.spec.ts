@@ -67,7 +67,7 @@ test.beforeAll(async () => {
     env,
     cwd: home,
   });
-  // The app's own log ([agentarmy] ...) ends up in the test output, which is all CI gives us on failure
+  // The app's own log ([gridhive] ...) ends up in the test output, which is all CI gives us on failure
   app.process().stdout?.on('data', (d: Buffer) => process.stdout.write(`[app] ${d}`));
   app.process().stderr?.on('data', (d: Buffer) => process.stdout.write(`[app:err] ${d}`));
   page = await app.firstWindow();

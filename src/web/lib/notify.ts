@@ -6,7 +6,7 @@ import { attentionCount, projectOf } from './fleet';
 import { getPrefs } from './prefs';
 import { useBoard } from './store';
 
-const BASE_TITLE = 'AgentArmy';
+const BASE_TITLE = 'GridHive';
 
 // Browsers only show the permission prompt reliably from a user gesture, and asking on load is rude
 function requestPermissionOnFirstGesture(): void {
@@ -171,7 +171,7 @@ function notifyAction(action: ActionItem): void {
   ping(
     action.consoleId,
     title,
-    body || 'Open AgentArmy to take a look.',
+    body || 'Open GridHive to take a look.',
     `agentarmy-${action.consoleId ?? action.id}`,
   );
 }

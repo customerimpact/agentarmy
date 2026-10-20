@@ -52,9 +52,9 @@ describe('validatePatch', () => {
     expect(() => validatePatch({ model: 'opus; rm -rf /' })).toThrow(/Model/);
   });
 
-  it('rejects flags AgentArmy manages itself', () => {
-    expect(() => validatePatch({ extraArgs: '--resume abc' })).toThrow(/managed by AgentArmy/);
-    expect(() => validatePatch({ extraArgs: '--settings=x.json' })).toThrow(/managed by AgentArmy/);
+  it('rejects flags GridHive manages itself', () => {
+    expect(() => validatePatch({ extraArgs: '--resume abc' })).toThrow(/managed by GridHive/);
+    expect(() => validatePatch({ extraArgs: '--settings=x.json' })).toThrow(/managed by GridHive/);
     expect(validatePatch({ extraArgs: '--verbose --add-dir "../shared lib"' }).extraArgs).toBe(
       '--verbose --add-dir "../shared lib"',
     );

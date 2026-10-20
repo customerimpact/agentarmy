@@ -17,9 +17,9 @@ const base: TrayState = { count: 0, items: [], pausedUntil: 0, openAtLogin: fals
 
 describe('tray', () => {
   it('tooltip counts who needs you', () => {
-    expect(trayTooltip(0)).toBe('AgentArmy');
-    expect(trayTooltip(1)).toBe('AgentArmy — 1 needs you');
-    expect(trayTooltip(3)).toBe('AgentArmy — 3 need you');
+    expect(trayTooltip(0)).toBe('GridHive');
+    expect(trayTooltip(1)).toBe('GridHive — 1 needs you');
+    expect(trayTooltip(3)).toBe('GridHive — 3 need you');
   });
 
   it('lists up to 8 consoles that need you and flies to the clicked one', () => {
@@ -47,7 +47,7 @@ describe('tray', () => {
     expect(trayMenuTemplate({ ...base, update: { kind: 'ready', version: '1.2.3' } }, actions()).map((m) => m.label)).toContain(
       'Restart to update (v1.2.3)',
     );
-    expect(idle.at(-1)?.label).toBe('Quit AgentArmy');
+    expect(idle.at(-1)?.label).toBe('Quit GridHive');
   });
 
   it('says "Open at login" on macOS and offers a newer download there', () => {
@@ -107,7 +107,7 @@ describe('pickDesktopRelease', () => {
   it('on macOS takes the newest release that has a disk image', () => {
     const releases = [
       { tag_name: 'desktop-v0.0.3', draft: false, prerelease: false, assets: [{ name: 'latest.yml' }] },
-      { tag_name: 'desktop-v0.0.2', draft: false, prerelease: false, assets: [{ name: 'AgentArmy-0.0.2-arm64.dmg' }] },
+      { tag_name: 'desktop-v0.0.2', draft: false, prerelease: false, assets: [{ name: 'GridHive-0.0.2-arm64.dmg' }] },
     ];
     expect(pickDesktopRelease(releases, 'darwin')).toBe('desktop-v0.0.2');
     expect(pickDesktopRelease(releases, 'win32')).toBe('desktop-v0.0.3');

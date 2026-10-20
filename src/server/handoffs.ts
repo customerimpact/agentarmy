@@ -316,7 +316,7 @@ function registerHandoffTool(manager: ConsoleManager, service: HandoffService): 
   registerBridgeTool({
     name: 'handoff',
     description:
-      'Hand your work over to another agent on the AgentArmy board (or to a new agent in your folder). AgentArmy ' +
+      'Hand your work over to another agent on the GridHive board (or to a new agent in your folder). GridHive ' +
       'builds a brief from your conversation (what you were asked, your latest status, your tasks, the files you ' +
       'changed, your jobs, git state) and types it into that agent, which carries on from there. Put anything the ' +
       'brief would miss in note (decisions, gotchas, the exact next step). Use list_agents to pick the agent.',

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://agentarmy-site.vercel.app/sitemap.xml
+Sitemap: https://gridhive.dev/sitemap.xml

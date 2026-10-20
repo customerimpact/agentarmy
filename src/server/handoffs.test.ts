@@ -38,7 +38,7 @@ describe('HandoffService', () => {
     const { service } = setup();
     const { brief, mode } = await service.preview({ fromId: 'ada', toId: 'bex', mode: 'quick', note: 'Ship today' });
     expect(mode).toBe('quick');
-    expect(brief).toContain('[AgentArmy handoff from Ada]');
+    expect(brief).toContain('[GridHive handoff from Ada]');
     expect(brief).toContain('Ship today');
     expect(brief).toContain('- Fix the login bug');
     expect(brief).toContain('Found it in the token check.');
@@ -49,7 +49,7 @@ describe('HandoffService', () => {
     const ok = setup(async () => 'Goal: fix login');
     const smart = await ok.service.preview({ fromId: 'ada', toId: 'bex', mode: 'smart' });
     expect(smart.mode).toBe('smart');
-    expect(smart.brief).toMatch(/^\[AgentArmy handoff from Ada\]\n/);
+    expect(smart.brief).toMatch(/^\[GridHive handoff from Ada\]\n/);
     expect(smart.brief).toContain('Goal: fix login');
 
     const bad = setup(async () => {

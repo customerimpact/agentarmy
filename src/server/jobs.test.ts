@@ -18,7 +18,7 @@ describe('JobService', () => {
     expect(typed).toHaveLength(1);
     expect(typed[0].id).toBe('bex');
     expect(typed[0].text).toBe(
-      `[AgentArmy job ${shortJobId(job.id)} from Ada] Say pong\nReply with pong.\n\n` +
+      `[GridHive job ${shortJobId(job.id)} from Ada] Say pong\nReply with pong.\n\n` +
         `When finished, call the agentarmy report_job tool with job_id "${job.id}" and a short result.`,
     );
   });
@@ -44,7 +44,7 @@ describe('JobService', () => {
     const { job } = jobs.send('ada', { to: 'bex', title: 'Say pong', message: 'm' });
     manager.handleHook('bex', {
       hook_event_name: 'UserPromptSubmit',
-      prompt: `[AgentArmy job ${shortJobId(job.id)} from Ada] Say pong`,
+      prompt: `[GridHive job ${shortJobId(job.id)} from Ada] Say pong`,
     });
     expect(job.status).toBe('working');
     manager.handleHook('bex', { hook_event_name: 'Stop', last_assistant_message: 'pong' });
@@ -61,7 +61,7 @@ describe('JobService', () => {
     const second = jobs.send('ada', { to: 'bex', title: 'two', message: 'm' }).job;
     manager.handleHook('bex', {
       hook_event_name: 'UserPromptSubmit',
-      prompt: `[AgentArmy job ${shortJobId(second.id)} from Ada] two`,
+      prompt: `[GridHive job ${shortJobId(second.id)} from Ada] two`,
     });
     expect(first.status).toBe('sent');
     expect(second.status).toBe('working');
@@ -76,7 +76,7 @@ describe('JobService', () => {
     expect(job).toMatchObject({ status: 'done', result: 'pong' });
     expect(typed.at(-1)).toEqual({
       id: 'ada',
-      text: `[AgentArmy] Bex finished "Say pong" (job ${shortJobId(job.id)}): pong`,
+      text: `[GridHive] Bex finished "Say pong" (job ${shortJobId(job.id)}): pong`,
     });
     const count = typed.length;
     manager.handleHook('bex', { hook_event_name: 'Stop' });

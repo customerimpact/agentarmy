@@ -315,7 +315,7 @@ export function classifyRemoteError(text: string): NonNullable<GitRemoteResult['
 
 const REASON_HINT: Record<NonNullable<GitRemoteResult['reason']>, string> = {
   auth:
-    'The remote refused the credentials. For HTTPS, sign in with Git Credential Manager (it may open its own window) or use an SSH key. AgentArmy never asks for or stores passwords.',
+    'The remote refused the credentials. For HTTPS, sign in with Git Credential Manager (it may open its own window) or use an SSH key. GridHive never asks for or stores passwords.',
   'non-ff': 'The remote has commits you do not have.',
   'no-remote': 'This repository has no reachable remote.',
   'no-upstream': 'This branch does not track a remote branch yet.',

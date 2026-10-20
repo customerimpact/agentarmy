@@ -70,9 +70,9 @@ describe('window helpers', () => {
   });
 
   it('prefixes the title with the needs-you count', () => {
-    expect(windowTitle('Ada', 0)).toBe('Ada · AgentArmy');
-    expect(windowTitle('Shop', 2)).toBe('(2) Shop · AgentArmy');
-    expect(windowTitle('', 0)).toBe('AgentArmy');
+    expect(windowTitle('Ada', 0)).toBe('Ada · GridHive');
+    expect(windowTitle('Shop', 2)).toBe('(2) Shop · GridHive');
+    expect(windowTitle('', 0)).toBe('GridHive');
   });
 });
 

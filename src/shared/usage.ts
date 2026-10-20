@@ -48,11 +48,11 @@ export interface UsageReport {
   from: number; // epoch ms, start of the range
   generatedAt: number;
   scanning: boolean; // the background startup scan has not finished yet
-  totals: UsageTotals; // AgentArmy consoles only, within the range
+  totals: UsageTotals; // GridHive consoles only, within the range
   byConsole: UsageRow[];
   byProject: UsageRow[];
-  byModel: UsageRow[]; // AgentArmy consoles only
-  byDay: UsageDay[]; // AgentArmy consoles, oldest first, at least the last 7 days
+  byModel: UsageRow[]; // GridHive consoles only
+  byDay: UsageDay[]; // GridHive consoles, oldest first, at least the last 7 days
   machineByDay: UsageDay[]; // every Claude Code session on this machine, same days
   machineTotals: { today: UsageTotals; last5h: UsageTotals; last7d: UsageTotals };
   byAccount: AccountUsage[];
@@ -65,7 +65,7 @@ export interface UsageBroadcast {
   at: number;
   scanning: boolean;
   consoles: Record<string, { total: number; weighted: number; costUsd: number }>; // last 30 days
-  today: UsageTotals; // AgentArmy consoles
+  today: UsageTotals; // GridHive consoles
   machine: { today: UsageTotals; last5h: UsageTotals; last7d: UsageTotals };
   byAccount: AccountUsage[];
   budgets: BudgetStatus[];
@@ -74,7 +74,7 @@ export interface UsageBroadcast {
 
 // ---------- API-equivalent price estimates ----------
 // USD per million tokens at Anthropic's public API list prices (cached 2026-10). These are ESTIMATES:
-// most AgentArmy users are on a Claude subscription and pay nothing per token, so the UI labels
+// most GridHive users are on a Claude subscription and pay nothing per token, so the UI labels
 // the number "API-equivalent". Cache writes are 1.25x input (5 min) or 2x input (1 h);
 // cache reads use the listed read price (0.1x input unless the model says otherwise).
 export interface ModelPrice {

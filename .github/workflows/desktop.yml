@@ -10,7 +10,7 @@ name: Desktop
 # The installer is NOT code-signed yet, so Windows SmartScreen warns on first run
 # ("Windows protected your PC" -> More info -> Run anyway). To sign, add repository secrets with a
 # code-signing certificate and set CSC_LINK / CSC_KEY_PASSWORD on the build step below; electron-builder then
-# signs AgentArmy.exe and the installer automatically.
+# signs GridHive.exe and the installer automatically.
 #
 # The Mac app is only ad-hoc signed (no Apple Developer ID yet), so the first launch needs
 # System Settings -> Privacy & Security -> Open Anyway. It does not update itself: it tells the user
@@ -67,14 +67,14 @@ jobs:
       - name: Smoke test the packaged app
         run: npx playwright test -c playwright.desktop.config.ts
         env:
-          DESKTOP_EXE: ${{ github.workspace }}\release\win-unpacked\AgentArmy.exe
+          DESKTOP_EXE: ${{ github.workspace }}\release\win-unpacked\GridHive.exe
 
       - uses: actions/upload-artifact@v4
         with:
-          name: AgentArmy-windows
+          name: GridHive-windows
           path: |
-            release/AgentArmy-Setup-*.exe
-            release/AgentArmy-Setup-*.exe.blockmap
+            release/GridHive-Setup-*.exe
+            release/GridHive-Setup-*.exe.blockmap
             release/latest.yml
           if-no-files-found: error
 
@@ -85,13 +85,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="$(node -p "require('./package.json').version")"
-          FILES="release/AgentArmy-Setup-$VERSION.exe release/AgentArmy-Setup-$VERSION.exe.blockmap release/latest.yml"
+          FILES="release/GridHive-Setup-$VERSION.exe release/GridHive-Setup-$VERSION.exe.blockmap release/latest.yml"
           if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
             gh release upload "$GITHUB_REF_NAME" $FILES --clobber
           else
             gh release create "$GITHUB_REF_NAME" $FILES --draft --verify-tag \
-              --title "AgentArmy desktop $VERSION" \
-              --notes "Windows installer for AgentArmy $VERSION. Unsigned: SmartScreen may warn (More info -> Run anyway)."
+              --title "GridHive desktop $VERSION" \
+              --notes "Windows installer for GridHive $VERSION. Unsigned: SmartScreen may warn (More info -> Run anyway)."
           fi
 
   macos:
@@ -119,7 +119,7 @@ jobs:
       - name: Smoke test the packaged app
         run: npx playwright test -c playwright.desktop.config.ts
         env:
-          DESKTOP_EXE: ${{ github.workspace }}/release/mac-arm64/AgentArmy.app/Contents/MacOS/AgentArmy
+          DESKTOP_EXE: ${{ github.workspace }}/release/mac-arm64/GridHive.app/Contents/MacOS/GridHive
 
       - uses: actions/upload-artifact@v4
         if: failure()
@@ -129,8 +129,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: AgentArmy-macos
-          path: release/AgentArmy-*.dmg
+          name: GridHive-macos
+          path: release/GridHive-*.dmg
           if-no-files-found: error
 
       - name: Upload to the draft GitHub Release
@@ -139,4 +139,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="$(node -p "require('./package.json').version")"
-          gh release upload "$GITHUB_REF_NAME" "release/AgentArmy-$VERSION-arm64.dmg" "release/AgentArmy-$VERSION-x64.dmg" --clobber
+          gh release upload "$GITHUB_REF_NAME" "release/GridHive-$VERSION-arm64.dmg" "release/GridHive-$VERSION-x64.dmg" --clobber

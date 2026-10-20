@@ -4,6 +4,8 @@
 > Version: 1.0.0
 > Status: Planning
 
+Brand (DEC-007): **GridHive**, gridhive.dev, `npx gridhive`.
+
 Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, local-first, on the subscriptions people already pay for. See @.agent-os/product/vision.md.
 
 ## Phase 0: Technical Spike (3-4 days)
@@ -26,7 +28,7 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 ## Phase 1: MVP v0.1 (2-3 weeks)
 
 **Goal:** Daily-usable board for supervising several Claude Code agents, installable by anyone on Windows.
-**Success Criteria:** You run 5+ agents on it for a full workday; a stranger runs `npx agentarmy` and launches a console in under 2 minutes.
+**Success Criteria:** You run 5+ agents on it for a full workday; a stranger runs `npx gridhive` and launches a console in under 2 minutes.
 
 ### Must-Have Features
 
@@ -37,12 +39,12 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 - [x] Needs-you notifications - Browser notification + tab title/favicon badge; clicking it focuses the console `S`
 - [x] Persistence and resume - Save board to versioned JSON; on restart relaunch with `claude --resume <id>` `M`
 - [x] Local security - 127.0.0.1 only, per-run token, Origin/Host checks `S`
-- [ ] npm release - `npx agentarmy` starts the server and opens the browser; README with install steps (package ready, not yet published) `S`
+- [ ] npm release - `npx gridhive` starts the server and opens the browser; README with install steps (package ready, not yet published) `S`
 
 ### Should-Have Features
 
 - [x] CI on macOS and Linux - Same test matrix as Windows `S`
-- [ ] PWA window mode - Install as an app window, frees most browser shortcuts `XS`
+- [x] PWA window mode - Install as an app window, frees most browser shortcuts `XS`
 - [x] Keyboard shortcuts - New console, cycle focus, zoom to fit, jump to next "needs you" `XS`
 - [x] Command bar - Bottom prompt input that sends text to the selected console (@mention to pick) `S`
 - [x] Auto names - Friendly agent names (Ada, Bex, Cy…) when none is given `XS`
@@ -55,7 +57,7 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 
 ## Desktop Apps (parallel track)
 
-**Goal:** An app window with tray, taskbar badge and auto-update, next to `npx agentarmy` (DEC-003).
+**Goal:** An app window with tray, taskbar badge and auto-update, next to `npx gridhive` (DEC-003).
 **Success Criteria:** Windows users install with one click, close the window and keep agents running, and get updates without reinstalling.
 
 - [x] Windows desktop app - Electron wrapper, NSIS per-user installer, tray, taskbar badge, close-to-tray, Ctrl+Shift+A, auto-update from `desktop-v*` GitHub Releases `L`
@@ -72,15 +74,15 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 
 ### Must-Have Features
 
-- [ ] Workspaces - Multiple boards as tabs, each with its own consoles `M`
-- [ ] Notes, text and checklists - Board nodes beside consoles `S`
+- [x] Workspaces - Multiple boards as tabs, each with its own consoles `M`
+- [x] Notes, text and checklists - Board nodes beside consoles `S`
 - [x] Usage analytics - Tokens per console/day from `~/.claude/projects/*.jsonl` `M`
-- [ ] Update notice - Tell the user when a newer npm version exists `XS`
+- [x] Update notice - `npx gridhive` prints a line when npm has a newer version `XS`
 
 ### Should-Have Features
 
 - [x] Git worktree per console - Optional isolated branch when creating a console `M`
-- [ ] Kanban node - Simple columns of cards on the board `S`
+- [x] Kanban node - Simple columns of cards on the board `S`
 
 ### Dependencies
 
@@ -93,16 +95,16 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 
 ### Must-Have Features
 
-- [ ] Teams and roles - Group frames that auto-grid their consoles, role prompt each, one prompt to the whole group (frames, roles and template prompts done; one prompt to a whole group still missing) `M`
+- [x] Teams and roles - Group frames that auto-grid their consoles, role prompt each, one prompt to the whole group `M`
 - [x] Mission map - Graph view (team → consoles) with Working/Needs you/Idle/Done filters `M`
-- [ ] Pause all / Resume all - Send Esc to all working consoles; resume with a prompt `S`
-- [ ] Composer - Launch up to 12 consoles with roles and initial prompts in one step `M`
-- [ ] Handoffs - Summarize a session with `claude -p` from its transcript and send the brief to another console `M`
-- [ ] Loops - Re-send a prompt on schedule, on idle, or on output match; optional goal check that retires the loop `L`
+- [x] Pause all / Resume all - Send Esc to all working consoles; resume with a prompt `S`
+- [x] Composer - Launch up to 12 consoles with roles and initial prompts in one step `M`
+- [x] Handoffs - Summarize a session with `claude -p` from its transcript and send the brief to another console `M`
+- [x] Loops - Re-send a prompt on schedule, on idle, or on output match; optional goal check that retires the loop `L`
 
 ### Should-Have Features
 
-- [ ] Project memory - Per-repo and global notes pushed into a console on demand `S`
+- [x] Project memory - Per-repo and global notes pushed into a console on demand `S`
 
 ### Dependencies
 
@@ -116,12 +118,12 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 ### Must-Have Features
 
 - [x] Web tiles - Localhost preview nodes (live browser tiles + auto dev previews; DevTools not yet) `M`
-- [ ] Git panel - Branch, diff, commit, push, pull per repo (review: diff, commit, merge done; push/pull missing) `L`
-- [ ] Code viewer - File tree, syntax highlighting, pin files to the board `M`
+- [x] Git panel - Branch, diff, commit, push, pull per repo `L`
+- [x] Code viewer - File tree, syntax highlighting, pin files to the board `M`
 
 ### Should-Have Features
 
-- [ ] Ink tools - Draw and annotate on the board and on dropped images `M`
+- [x] Ink tools - Draw and annotate on the board and on dropped images `M`
 - [ ] Markdown notes vault - Linked notes with a graph view `L`
 - [ ] Diagram and document studios - Generated via `claude -p`, export PNG/PDF `L`
 
@@ -136,14 +138,14 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 
 ### Must-Have Features
 
-- [ ] Agent adapter interface - Launch, resume, status and usage per CLI `M`
-- [ ] Codex, Gemini CLI, OpenCode adapters - Using their hooks or output heuristics `L`
-- [ ] Custom executable consoles - Any command, status from PTY activity only `S`
+- [x] Agent adapter interface - Launch, resume, status and usage per CLI `M`
+- [x] Codex, Gemini CLI, OpenCode adapters - Using their hooks or output heuristics `L`
+- [x] Custom executable consoles - Any command, status from PTY activity only `S`
 - [x] Multiple accounts - Profiles via `CLAUDE_CONFIG_DIR` `S`
 
 ### Should-Have Features
 
-- [ ] Local dictation - whisper.cpp / transformers.js, on-device `M`
+- [x] Local dictation - whisper.cpp / transformers.js, on-device `M`
 - [ ] Voice planner - Spoken command to board actions via `claude -p`, confirm destructive actions `L`
 
 ### Dependencies
@@ -160,13 +162,14 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 - [ ] Optional free account - GitHub or email sign-in on the website; the app keeps working fully without it (DEC-005) `M`
 - [ ] Secure relay - The desktop app connects out to a relay with end-to-end encryption; the relay never sees terminal content or code `L`
 - [ ] Phone app (PWA first) - Fleet list, live terminal view, needs-you approvals, push notifications `L`
-- [ ] Launch from your phone - Pick a project or team recipe on the phone; agents start on your computer and you monitor them there `M`
-- [ ] Desktop ⇄ phone handoff, both ways - Move a running session to the phone and back (same session id, resumed in place), not one-way like Claude Code's remote control `L`
+- [x] Phone on this Wi-Fi (step before the relay) - Off by default; QR pairing with single-use codes, per-phone revocable tokens, allow-listed API on 0.0.0.0:4318. Fleet, live terminal, answer prompts, send messages `M`
+- [x] Launch from your phone - Pick a project or team recipe on the phone; agents start on your computer and you monitor them there `M`
+- [ ] Desktop ⇄ phone handoff, both ways (done on the same Wi-Fi; needs the relay to work from anywhere) - Move a running session to the phone and back (same session id, resumed in place), not one-way like Claude Code's remote control `L`
 
 ### Should-Have Features
 
-- [ ] Team recipes - Shareable JSON of roles, prompts, agents and loops; import by link `S`
-- [ ] Share links and "Run in AgentArmy" badge - One click from a README or a post opens the recipe in the app `S`
+- [x] Team recipes - Shareable link of roles, prompts, agents and models (gridhive.dev/r#code); import with a preview `S`
+- [x] Share links and "Run in GridHive" badge - One click from a README or a post opens the recipe in the app `S`
 - [ ] Recipe gallery - Public, community-submitted recipes with ratings, on the website `M`
 
 ### Dependencies

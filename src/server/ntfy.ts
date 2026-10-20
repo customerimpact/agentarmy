@@ -73,7 +73,7 @@ export function formatNtfyMessage(
   const verb = action.kind === 'needs_you' ? 'needs you' : action.kind === 'error' ? 'hit an error' : 'asks for something';
   const title = clip([info.projectName, `${who} ${verb}`].filter(Boolean).join(' · '), MAX_TITLE);
   const detail = action.kind === 'request' ? [action.title, action.detail].filter(Boolean).join(' — ') : (action.detail ?? '');
-  const body = clip(detail || (action.kind === 'needs_you' ? 'Claude Code is waiting for your input.' : 'Open AgentArmy to take a look.'), MAX_BODY);
+  const body = clip(detail || (action.kind === 'needs_you' ? 'Claude Code is waiting for your input.' : 'Open GridHive to take a look.'), MAX_BODY);
   const tags = action.kind === 'needs_you' ? ['raising_hand'] : action.kind === 'error' ? ['warning'] : ['memo'];
   // The phone usually cannot reach 127.0.0.1 of the PC; the link still works when you tap it on this machine
   const consoleId = info.console?.id ?? action.consoleId;
@@ -143,7 +143,7 @@ export class NtfyNotifier {
     if (now - (this.lastByConsole.get(key) ?? -Infinity) < NTFY_COOLDOWN_MS) return;
     this.lastByConsole.set(key, now);
     postNtfy(to.server, to.topic, this.messageFor(action), this.fetchImpl).catch((err: unknown) => {
-      console.warn(`[agentarmy] ${(err as Error).message}`);
+      console.warn(`[gridhive] ${(err as Error).message}`);
     });
   }
 
@@ -154,7 +154,7 @@ export class NtfyNotifier {
       to.server,
       to.topic,
       {
-        title: 'AgentArmy test',
+        title: 'GridHive test',
         body: 'Phone notifications work. You will get a push here when an agent needs you.',
         priority: 'default',
         tags: ['white_check_mark'],

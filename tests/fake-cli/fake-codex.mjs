@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Fake OpenAI Codex CLI for end-to-end tests. Understands what AgentArmy passes (`resume <id>|--last`,
+// Fake OpenAI Codex CLI for end-to-end tests. Understands what GridHive passes (`resume <id>|--last`,
 // `-c key=value` overrides) and draws a small Codex-like TUI:
 //   ask   -> "Would you like to run the following command?" with numbered Yes/No choices and, when
 //            -c tui.notifications=true, an OSC 9 "Approval requested: ..." notification.

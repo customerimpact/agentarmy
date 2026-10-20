@@ -27,6 +27,7 @@ import { useServerSettings } from '../lib/settings';
 import { useBoard } from '../lib/store';
 import { DEFAULT_THEME, THEMES, setTheme, useTheme } from '../lib/theme';
 import { NtfyBelow } from './settings/NtfySetting';
+import { PhoneAccessBelow, PhoneAccessControl } from './settings/PhoneSetting';
 import { AutoSwitchBelow, AutoSwitchControl, NewAgentAccountControl, PriorityBelow } from './settings/AccountsSettings';
 import { ProvidersHubBelow } from './settings/ProvidersSettings';
 import { UsersRound } from 'lucide-react';
@@ -732,7 +733,7 @@ function PortControl() {
 }
 
 function TokenBelow() {
-  return <CopyValue value="npx agentarmy --new-token" />;
+  return <CopyValue value="npx gridhive --new-token" />;
 }
 
 function resetEverything(): void {
@@ -788,7 +789,7 @@ function AboutControl() {
 
 const SETTINGS: SettingDef[] = [
   { id: 'theme', section: 'appearance', label: 'Theme', description: 'Colors for the board, panels and terminals.', keywords: 'appearance color colour dark light ember midnight aurora paper look', Below: ThemeCards },
-  { id: 'startup', section: 'general', label: 'On startup', description: 'What to do with saved conversations when AgentArmy starts.', keywords: 'resume restore relaunch reopen launch boot', Control: StartupControl },
+  { id: 'startup', section: 'general', label: 'On startup', description: 'What to do with saved conversations when GridHive starts.', keywords: 'resume restore relaunch reopen launch boot', Control: StartupControl },
   { id: 'sidebar-tab', section: 'general', label: 'Sidebar opens on', description: 'The tab shown when the app loads.', keywords: 'default tab panel start', Control: SidebarTabControl },
 
   { id: 'account-auto-switch', section: 'agents', group: 'Claude: when an account hits its limit', label: 'Auto-switch accounts', description: 'Move an agent that hits its plan limit to another account you own and resume its conversation there. Only use accounts you are entitled to, and check Anthropic’s terms: using extra accounts to get around usage limits may not be allowed.', keywords: 'limit rate usage switch fallback failover weekly session 5-hour', Control: AutoSwitchControl, Below: AutoSwitchBelow },
@@ -804,6 +805,7 @@ const SETTINGS: SettingDef[] = [
   { id: 'long-turn-minutes', section: 'notifications', label: 'Long turn after', description: 'One turn running longer than this.', keywords: 'stuck slow duration timeout minutes', Control: minutesStepper('longTurnMinutes', 'Long turn after', 5, 480, 5) },
   { id: 'discord', section: 'notifications', label: 'Discord', description: 'Post to a Discord channel when an agent needs you (channel webhook, max one per agent every 30 s).', keywords: 'webhook chat message phone remote', Below: () => <WebhookBelow kind="discord" /> },
   { id: 'recap-send', section: 'notifications', label: 'Daily recap', description: 'Post the end-of-day recap (Progress › Recap) to Slack / Discord at a set time.', keywords: 'summary report digest end of day schedule webhook', Control: RecapSendControl, Below: RecapSendBelow },
+  { id: 'phone-access', section: 'notifications', label: 'Phone on this Wi-Fi', description: 'Follow, answer and launch agents from your phone on the same network, and pass a session between phone and computer. Agents keep running here.', keywords: 'phone mobile remote wifi lan qr pair handoff launch iphone android', Control: PhoneAccessControl, Below: PhoneAccessBelow },
   { id: 'ntfy', section: 'notifications', label: 'Phone (ntfy)', description: 'Push to your phone with the free ntfy app, no account needed (max one per agent every 30 s).', keywords: 'phone mobile push ntfy android ios iphone remote qr', Below: NtfyBelow },
 
   { id: 'snap', section: 'board', label: 'Snap while dragging', description: 'Align consoles to neighbours and the grid. Hold Alt to place freely.', keywords: 'grid magnet align guides', Control: SnapControl },

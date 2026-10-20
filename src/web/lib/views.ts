@@ -48,9 +48,9 @@ export function popoutFeatures(view: PopoutView, screen?: { availWidth: number; 
   return `popup,width=${Math.round(width)},height=${Math.round(height)}`;
 }
 
-// "(2) Ada · AgentArmy"
+// "(2) Ada · GridHive"
 export function windowTitle(name: string, needsYou: number): string {
-  const base = name ? `${name} · AgentArmy` : 'AgentArmy';
+  const base = name ? `${name} · GridHive` : 'GridHive';
   return needsYou > 0 ? `(${needsYou}) ${base}` : base;
 }
 

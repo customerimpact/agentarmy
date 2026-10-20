@@ -13,7 +13,7 @@ export function MissingToken({ invalid }: { invalid?: boolean }) {
         <p className="mt-2 leading-relaxed text-fg-muted">
           Open the link printed by{' '}
           <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[12px] text-fg">
-            npx agentarmy
+            npx gridhive
           </code>
           . It carries a per-run token that keeps other websites from reaching your terminals.
         </p>

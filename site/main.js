@@ -63,7 +63,7 @@
   });
 
   const themeImg = document.getElementById('theme-img');
-  const themeNames = { ember: 'board', midnight: 'theme-midnight', aurora: 'theme-aurora', paper: 'theme-paper' };
+  const themeNames = { midnight: 'board', ember: 'theme-ember', aurora: 'theme-aurora', paper: 'theme-paper' };
   group([...document.querySelectorAll('.swatches [role="radio"]')], 'aria-checked', (btn) => {
     swap(themeImg, themeNames[btn.dataset.theme], `The board in the ${btn.textContent.trim()} theme`);
   });
@@ -123,4 +123,44 @@
       })
       .catch(() => {});
   }
+})();
+
+// Early-access waitlist -> POST /api/waitlist (Vercel + Neon)
+(function () {
+  var form = document.getElementById('waitlist');
+  if (!form) return;
+  var msg = form.querySelector('.waitlist-msg');
+  var button = form.querySelector('button');
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    var email = form.email.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) {
+      msg.textContent = 'Enter your email address.';
+      msg.className = 'waitlist-msg err';
+      return;
+    }
+    button.disabled = true;
+    msg.textContent = 'Saving…';
+    msg.className = 'waitlist-msg';
+    fetch('/api/waitlist', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: email, company: form.company.value, source: 'final-cta' }),
+    })
+      .then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (!res.ok) throw new Error(data.error || 'Something went wrong. Try again in a minute.');
+        });
+      })
+      .then(function () {
+        msg.textContent = "You're on the list. We'll email you once, when it's ready.";
+        msg.className = 'waitlist-msg ok';
+        form.email.value = '';
+      })
+      .catch(function (err) {
+        msg.textContent = err.message;
+        msg.className = 'waitlist-msg err';
+      })
+      .finally(function () { button.disabled = false; });
+  });
 })();

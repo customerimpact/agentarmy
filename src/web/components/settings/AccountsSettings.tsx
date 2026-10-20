@@ -90,7 +90,7 @@ function AccountCard({ account, rank }: { account: Account; rank: number }) {
     useBoard.getState().askConfirm({
       title: `Remove ${account.name}?`,
       message:
-        'AgentArmy forgets this account and deletes its config folder, including its login and conversations. Agents on it move to the default account the next time they start.',
+        'GridHive forgets this account and deletes its config folder, including its login and conversations. Agents on it move to the default account the next time they start.',
       confirmLabel: 'Remove account',
       danger: true,
       onConfirm: async () => {
