@@ -46,7 +46,7 @@
   "rewrites": [
     {
       "source": "/s/:id",
-      "destination": "/app/viewer.html"
+      "destination": "/app/viewer"
     }
   ]
 }

@@ -4,7 +4,7 @@
 // 3. The app polls token and receives a device secret once; Neon keeps only its hash.
 // The app never sees a password or the user's web session.
 import crypto from 'node:crypto';
-import { hashToken } from './_auth.js';
+import { hashToken, SCHEMA as AUTH_SCHEMA } from './_auth.js';
 
 export const CODE_MINUTES = 10;
 export const POLL_SECONDS = 3;
@@ -45,8 +45,9 @@ function cleanName(raw) {
   return name || 'Computer';
 }
 
+// Devices point at users, so the users table has to exist first
 async function ensureSchema(sql) {
-  for (const statement of DEVICE_SCHEMA) await sql.query(statement);
+  for (const statement of [...AUTH_SCHEMA, ...DEVICE_SCHEMA]) await sql.query(statement);
 }
 
 export async function startLink(body, { sql, siteUrl, now = Date.now() }) {

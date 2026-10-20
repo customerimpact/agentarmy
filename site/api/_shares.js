@@ -2,6 +2,8 @@
 // and until when; the board itself travels end-to-end encrypted through the relay (key in the link
 // after "#"). The owner's app enforces the level on every guest message.
 import crypto from 'node:crypto';
+import { SCHEMA as AUTH_SCHEMA } from './_auth.js';
+import { DEVICE_SCHEMA } from './_devices.js';
 
 export const LEVELS = ['viewer']; // collaborator and copilot come in later phases
 export const MAX_SHARE_HOURS = 24 * 30;
@@ -27,8 +29,9 @@ export const SHARE_SCHEMA = [
   )`,
 ];
 
+// Shares point at users and devices, so those tables have to exist first
 async function ensureSchema(sql) {
-  for (const statement of SHARE_SCHEMA) await sql.query(statement);
+  for (const statement of [...AUTH_SCHEMA, ...DEVICE_SCHEMA, ...SHARE_SCHEMA]) await sql.query(statement);
 }
 
 const cleanTitle = (raw) => (typeof raw === 'string' ? raw.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 80) : '') || 'GridHive board';
