@@ -245,7 +245,7 @@ function rememberBounds(win: BrowserWindow): void {
 function createMainWindow(url: string): BrowserWindow {
   const saved = restoreBounds(
     desktopState?.get().window,
-    screen.getAllDisplays().map((d) => d.workArea),
+    [screen.getPrimaryDisplay(), ...screen.getAllDisplays()].map((d) => d.workArea),
   );
   const win = new BrowserWindow({
     ...windowOptions(),

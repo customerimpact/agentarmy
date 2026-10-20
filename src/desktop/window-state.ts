@@ -68,7 +68,14 @@ function intersects(a: Rectangle, b: Rectangle): boolean {
   return w >= MIN_VISIBLE && h >= MIN_VISIBLE;
 }
 
-// Saved bounds, minus a position that is no longer on any screen (unplugged monitor)
+// Never larger than the screen it opens on (small laptops), or the bottom of dialogs is unreachable
+function fitTo(bounds: WindowBounds, area: Rectangle | undefined): WindowBounds {
+  if (!area) return bounds;
+  return { ...bounds, width: Math.min(bounds.width, area.width), height: Math.min(bounds.height, area.height) };
+}
+
+// Saved bounds, minus a position that is no longer on any screen (unplugged monitor).
+// workAreas[0] is the primary display, where a window without a position opens.
 export function restoreBounds(saved: WindowBounds | undefined, workAreas: Rectangle[]): WindowBounds {
   const valid =
     saved &&
@@ -76,7 +83,7 @@ export function restoreBounds(saved: WindowBounds | undefined, workAreas: Rectan
     Number.isFinite(saved.height) &&
     saved.width >= 400 &&
     saved.height >= 300;
-  if (!valid) return { ...DEFAULT_BOUNDS };
+  if (!valid) return fitTo({ ...DEFAULT_BOUNDS }, workAreas[0]);
   const bounds: WindowBounds = {
     width: Math.round(saved.width),
     height: Math.round(saved.height),
@@ -84,10 +91,12 @@ export function restoreBounds(saved: WindowBounds | undefined, workAreas: Rectan
   };
   if (Number.isFinite(saved.x) && Number.isFinite(saved.y)) {
     const rect = { x: saved.x!, y: saved.y!, width: bounds.width, height: bounds.height };
-    if (workAreas.some((area) => intersects(rect, area))) {
+    const area = workAreas.find((a) => intersects(rect, a));
+    if (area) {
       bounds.x = Math.round(saved.x!);
       bounds.y = Math.round(saved.y!);
+      return fitTo(bounds, area);
     }
   }
-  return bounds;
+  return fitTo(bounds, workAreas[0]);
 }

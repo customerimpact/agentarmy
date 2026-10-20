@@ -79,6 +79,12 @@ describe('restoreBounds', () => {
     });
   });
 
+  it('shrinks to fit a small screen', () => {
+    const small = [{ x: 0, y: 25, width: 1024, height: 743 }];
+    expect(restoreBounds(undefined, small)).toEqual({ width: 1024, height: 743, maximized: false });
+    expect(restoreBounds({ x: 10, y: 40, width: 1600, height: 1000, maximized: false }, small)).toMatchObject({ width: 1024, height: 743 });
+  });
+
   it('drops a position on a monitor that is gone', () => {
     const bounds = restoreBounds({ x: 3000, y: 100, width: 1200, height: 800, maximized: false }, screen);
     expect(bounds.x).toBeUndefined();
