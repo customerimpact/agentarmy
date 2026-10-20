@@ -37,7 +37,8 @@
     "desktop:build": "npm run desktop:compile && electron-builder --win --dir --publish never",
     "desktop:dist": "npm run desktop:compile && electron-builder --win --publish never",
     "desktop:dist:mac": "npm run desktop:compile && electron-builder --mac --publish never",
-    "test:desktop": "playwright test -c playwright.desktop.config.ts"
+    "test:desktop": "playwright test -c playwright.desktop.config.ts",
+    "site:shots": "npm run build && node scripts/site-shots.mjs"
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",
