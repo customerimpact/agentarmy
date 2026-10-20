@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your GridHive account</title>
+  <meta name="description" content="Sign in to GridHive with GitHub or Google. The app works fully without an account; an account adds your phone from anywhere.">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="https://gridhive.dev/account">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#08061a">
+  <meta name="color-scheme" content="dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/styles.css?v=53b5a73a0d">
+  <style>
+    .acct { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; }
+    .acct-card { width: min(460px, 100%); text-align: center; padding: 40px 32px; border-radius: 24px; border: 1px solid var(--line-2); background: rgba(21, 18, 58, 0.72); backdrop-filter: blur(10px); box-shadow: 0 40px 120px -40px rgba(105, 81, 224, 0.6); }
+    .acct-card > img.logo { width: 56px; height: 56px; border-radius: 16px; margin: 0 auto 18px; display: block; }
+    .acct-card h1 { font-size: 28px; letter-spacing: -0.02em; margin: 0 0 8px; }
+    .acct-card .sub { color: var(--fg-2); margin: 0 0 26px; }
+    .acct-btns { display: grid; gap: 10px; }
+    .acct-btns .btn { width: 100%; justify-content: center; }
+    .btn.provider { background: #fff; color: #14112e; box-shadow: none; }
+    .btn.provider:hover { filter: brightness(0.95); }
+    .acct-note { margin: 22px 0 0; font-size: 13px; color: var(--fg-3); line-height: 1.6; }
+    .acct-note a { color: inherit; }
+    .acct-err { margin: 0 0 18px; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255, 140, 140, 0.4); background: rgba(255, 120, 120, 0.1); color: #ffb3b3; font-size: 14px; }
+    .who { display: flex; align-items: center; gap: 14px; text-align: left; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255, 255, 255, 0.03); margin-bottom: 18px; }
+    .who img, .who .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; }
+    .who .avatar { display: grid; place-items: center; font-weight: 700; background: linear-gradient(95deg, #f4a6d7, #9d8cff 50%, #8fd3ff); color: #14112e; }
+    .who b { display: block; color: var(--fg); }
+    .who span { color: var(--fg-3); font-size: 14px; word-break: break-all; }
+    .soon { text-align: left; padding: 14px 16px; border-radius: 16px; border: 1px dashed var(--line-2); color: var(--fg-2); font-size: 14px; margin-bottom: 18px; }
+    .soon b { color: var(--fg); }
+  </style>
+</head>
+<body>
+  <main class="acct">
+    <div class="acct-card">
+      <a href="/" aria-label="GridHive home"><img class="logo" src="/assets/icon.svg" alt=""></a>
+      <p class="acct-err" id="error" hidden></p>
+
+      <section id="signed-out" hidden>
+        <h1>Sign in to GridHive</h1>
+        <p class="sub">A free account adds your phone from anywhere and lets you link your computers. The app keeps working without one.</p>
+        <div class="acct-btns">
+          <a class="btn lg provider" href="/api/auth/signin/github?next=/account" data-provider="github">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            Continue with GitHub
+          </a>
+          <a class="btn lg provider" href="/api/auth/signin/google?next=/account" data-provider="google">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 0 1-2.4 3.6v3h3.9c2.3-2.1 3.5-5.2 3.5-8.8Z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-3.9-3a7.2 7.2 0 0 1-10.8-3.8h-4v3.1A12 12 0 0 0 12 24Z"/><path fill="#FBBC05" d="M5.3 14.3a7.2 7.2 0 0 1 0-4.6V6.6h-4a12 12 0 0 0 0 10.8l4-3.1Z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.3 6.6l4 3.1A7.2 7.2 0 0 1 12 4.8Z"/></svg>
+            Continue with Google
+          </a>
+        </div>
+        <p class="acct-note">We only read your name, email and avatar. Your code, terminals and board never leave your computer. <a href="/privacy">Privacy notice</a></p>
+      </section>
+
+      <section id="signed-in" hidden>
+        <h1>Your account</h1>
+        <div class="who">
+          <img id="who-img" alt="" hidden>
+          <span class="avatar" id="who-initial" hidden></span>
+          <div><b id="who-name"></b><span id="who-email"></span></div>
+        </div>
+        <div class="soon"><b>Coming next:</b> link the GridHive app on your computer and use your phone from anywhere, end-to-end encrypted.</div>
+        <div class="acct-btns">
+          <a class="btn primary lg" href="/#install">Download the app</a>
+          <button class="btn ghost lg" type="button" id="signout">Sign out</button>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="/account.js?v=09382edfba" defer></script>
+</body>
+</html>

@@ -16,10 +16,11 @@ These are the tasks to be completed for the spec detailed in @.agent-os/specs/20
   - [x] 1.6 Verify a signup lands in Neon on the live site
 
 - [ ] 2. Accounts (Auth.js on Vercel, Neon adapter)
-  - [ ] 2.1 Write tests for session and sign-in routes (test provider)
-  - [ ] 2.2 Migrations 002_auth.sql
-  - [ ] 2.3 GitHub, Google and Resend providers; sign-in and account pages
-  - [ ] 2.4 Owner: OAuth apps and Resend domain, env vars in Vercel
+  - [x] 2.1 Write tests for sign-in, callback and sessions (site/api/auth.test.mjs)
+  - [x] 2.2 Tables users, auth_accounts, sessions (created on first sign-in)
+  - [x] 2.3 GitHub and Google sign-in (own OAuth + PKCE instead of Auth.js: no framework on the site); gridhive.dev/account
+  - [ ] 2.3b Email link via Resend (needs a Resend account)
+  - [x] 2.4 Owner: GitHub + Google OAuth apps, secrets in Vercel
   - [ ] 2.5 Verify all tests pass
 
 - [ ] 3. Link a computer (device code flow)

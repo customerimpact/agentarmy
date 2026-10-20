@@ -164,3 +164,13 @@
       .finally(function () { button.disabled = false; });
   });
 })();
+
+// Header: "Sign in" becomes "Account" when a session exists
+(function () {
+  var link = document.getElementById('nav-account');
+  if (!link) return;
+  fetch('/api/auth/session', { credentials: 'same-origin' })
+    .then(function (res) { return res.ok ? res.json() : null; })
+    .then(function (data) { if (data && data.user) link.textContent = 'Account'; })
+    .catch(function () {});
+})();

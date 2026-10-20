@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const site = path.resolve(import.meta.dirname, '../site');
-const assets = ['styles.css', 'main.js', 'hero-demo.js', 'r.js'];
+const assets = ['styles.css', 'main.js', 'hero-demo.js', 'r.js', 'account.js'];
 const hash = (file) => crypto.createHash('sha256').update(fs.readFileSync(path.join(site, file))).digest('hex').slice(0, 10);
 
 for (const page of fs.readdirSync(site).filter((f) => f.endsWith('.html'))) {
