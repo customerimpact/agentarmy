@@ -96,7 +96,7 @@ export function AgentAvatar({
       }}
     >
       <Mark
-        size={Math.round(size * (agent && agent !== 'claude' ? 0.6 : 0.72))}
+        size={Math.round(size * (agent === 'custom' ? 0.6 : 0.66))}
         strokeWidth={2.75}
         className={live ? 'animate-spin [animation-duration:3s] motion-reduce:animate-none' : ''}
       />

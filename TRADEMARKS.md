@@ -18,4 +18,4 @@ Forks must use their own name and icon. Ask by opening an issue at https://githu
 
 ## Third-party marks
 
-GridHive is an independent project, not affiliated with or endorsed by Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic, PBC. Other names belong to their owners.
+GridHive is an independent project, not affiliated with or endorsed by Anthropic. "Claude" and "Claude Code" are trademarks of Anthropic, PBC. The app shows the logos of Claude, OpenAI Codex, Google Gemini, OpenCode and xAI Grok only to identify which CLI an agent runs; those marks belong to their owners (icon paths from Lobe Icons, MIT). Other names belong to their owners.
