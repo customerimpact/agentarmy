@@ -28,6 +28,8 @@ describe('relay tokens', () => {
     expect(await verifyRelayToken(token, other.publicKey, 1_000)).toBeNull();
     expect(await verifyRelayToken(`${payload}`, publicKey, 1_000)).toBeNull();
     expect(await verifyRelayToken('garbage', publicKey, 1_000)).toBeNull();
+    const guest = await signRelayToken(claims({ sub: 's_abc', kind: 'guest' }), privateKey);
+    expect((await verifyRelayToken(guest, publicKey, 1_000))?.kind).toBe('guest');
     const badKind = await signRelayToken(claims({ kind: 'admin' as never }), privateKey);
     expect(await verifyRelayToken(badKind, publicKey, 1_000)).toBeNull();
     const badId = await signRelayToken(claims({ dev: '../x' }), privateKey);

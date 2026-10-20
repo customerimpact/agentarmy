@@ -2,10 +2,11 @@
 // gridhive.dev signs them with the private key (Vercel env); the relay only holds the public key,
 // so a leaked Worker config cannot mint tokens. Tokens live 10 minutes.
 
-export type DeviceKind = 'computer' | 'phone';
+// guest: someone following a shared board (sub = s_<shareId>); the owner's app enforces their level
+export type DeviceKind = 'computer' | 'phone' | 'guest';
 
 export interface RelayClaims {
-  sub: string; // account id: one Durable Object per account
+  sub: string; // account id, or s_<shareId> for a shared board: one Durable Object each
   dev: string; // device id
   kind: DeviceKind;
   exp: number; // unix seconds
@@ -53,7 +54,7 @@ export async function verifyRelayToken(token: string, publicKey: CryptoKey, nowS
   }
   if (typeof claims.sub !== 'string' || !ID.test(claims.sub)) return null;
   if (typeof claims.dev !== 'string' || !ID.test(claims.dev)) return null;
-  if (claims.kind !== 'computer' && claims.kind !== 'phone') return null;
+  if (claims.kind !== 'computer' && claims.kind !== 'phone' && claims.kind !== 'guest') return null;
   if (typeof claims.exp !== 'number' || claims.exp < nowSeconds) return null;
   return { sub: claims.sub, dev: claims.dev, kind: claims.kind, exp: claims.exp };
 }

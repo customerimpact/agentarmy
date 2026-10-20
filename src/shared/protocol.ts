@@ -615,7 +615,43 @@ export type ServerMessage =
   | { type: 'drawings'; upsert: Shape[]; remove: string[]; origin?: string } // see src/shared/drawings.ts
   | { type: 'device-handoff'; consoleId: string; to: DeviceTarget } // "Continue on computer / on phone"
   | { type: 'phone'; phone: PhoneStatus } // phone access switched, paired or a phone came online
-  | { type: 'cloud'; cloud: CloudStatus }; // account link started, confirmed, expired or removed
+  | { type: 'cloud'; cloud: CloudStatus } // account link started, confirmed, expired or removed
+  | { type: 'share'; share: ShareStatus } // share links created/revoked, guests joined or left
+  | { type: 'share-cursor'; cursor: ShareCursorEvent }; // a guest's pointer moved (c null = gone)
+
+// ---------- Live sharing (src/server/share) ----------
+// GET /api/share -> ShareStatus; POST /api/share { title?, expiresInHours? } -> ShareStatus
+// DELETE /api/share/:id -> ShareStatus; POST /api/share/cursor { c } (the owner's pointer, ~15/s)
+
+export interface ShareGuestView {
+  dev: string;
+  name: string;
+  color: string;
+}
+
+export interface ShareView {
+  id: string;
+  link: string; // https://gridhive.dev/s/<id>#k=<key>: what you send people (the key never reaches a server)
+  level: 'viewer';
+  title: string;
+  expiresAt: string | null;
+  connected: boolean;
+  guests: ShareGuestView[];
+}
+
+export interface ShareStatus {
+  linked: boolean; // this computer is signed in to GridHive (needed to share)
+  shares: ShareView[];
+  error?: string;
+}
+
+export interface ShareCursorEvent {
+  share: string;
+  dev: string;
+  name: string;
+  color: string;
+  c: { x: number; y: number; vx?: number; vy?: number; vz?: number } | null;
+}
 
 // ---------- GridHive account (src/server/cloud.ts) ----------
 // GET /api/cloud -> CloudStatus; POST /api/cloud/link | /api/cloud/cancel | /api/cloud/unlink -> CloudStatus
