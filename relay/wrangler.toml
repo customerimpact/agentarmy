@@ -7,7 +7,7 @@ account_id = "98e337973bc009cb260bd967ee75bbbd"
 workers_dev = true
 
 [vars]
-RELAY_PUBLIC_KEY = ""
+RELAY_PUBLIC_KEY = "GrCzKGswSYr9gp7wiPpgp0gn2wAAIzGCMr4VKvXc6Qw"
 
 [[durable_objects.bindings]]
 name = "RELAY"

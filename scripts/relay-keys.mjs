@@ -21,7 +21,7 @@ const run = (cmd, args, cwd, input) => {
 
 for (const target of ['production', 'preview']) {
   // --force replaces a key from an earlier run
-  run('npx', ['vercel', 'env', 'add', 'RELAY_PRIVATE_KEY', target, '--force', '--sensitive'], path.join(root, 'site'), privatePkcs8);
+  run('npx', ['vercel', 'env', 'add', 'RELAY_PRIVATE_KEY', target, '--force', '--sensitive', '--yes'], path.join(root, 'site'), privatePkcs8);
 }
 
 const toml = path.join(root, 'relay', 'wrangler.toml');
