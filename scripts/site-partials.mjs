@@ -30,7 +30,7 @@ const LANGS = { en: '', 'zh-Hans': 'zh', ja: 'ja', es: 'es', de: 'de', fr: 'fr',
 const ALTERNATES = /\n  <!-- hreflang -->[\s\S]*?<!-- \/hreflang -->/;
 const alternates = [
   '\n  <!-- hreflang -->',
-  ...Object.entries(LANGS).map(([lang, dir]) => `  <link rel="alternate" hreflang="${lang}" href="https://gridhive.dev/${dir ? `${dir}/` : ''}">`),
+  ...Object.entries(LANGS).map(([lang, dir]) => `  <link rel="alternate" hreflang="${lang}" href="https://gridhive.dev/${dir}">`),
   '  <link rel="alternate" hreflang="x-default" href="https://gridhive.dev/">',
   '  <!-- /hreflang -->',
 ].join('\n');
