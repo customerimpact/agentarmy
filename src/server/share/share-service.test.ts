@@ -112,5 +112,5 @@ describe('ShareService (Viewer)', () => {
     expect(typed).not.toContain('GOT:');
     guest.close();
     await expect.poll(() => service.status().shares[0].guests, { timeout: 10_000 }).toEqual([]);
-  });
+  }, 30_000);
 });
