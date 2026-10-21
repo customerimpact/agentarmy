@@ -64,7 +64,7 @@ describe('isValidToken', () => {
 
 describe('auth cookie', () => {
   it('builds an HttpOnly, SameSite=Strict, site-wide cookie without Secure', () => {
-    expect(tokenCookie('a/b')).toBe(`${TOKEN_COOKIE}=a%2Fb; HttpOnly; SameSite=Strict; Path=/`);
+    expect(tokenCookie('a/b')).toBe(`${TOKEN_COOKIE}=a%2Fb; HttpOnly; SameSite=Strict; Path=/; Max-Age=34560000`);
   });
 
   it('reads one cookie out of a Cookie header', () => {

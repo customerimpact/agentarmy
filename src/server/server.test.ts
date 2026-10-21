@@ -26,7 +26,7 @@ describe('auth', () => {
   it('sets the auth cookie when a page is opened with a valid ?token', async () => {
     const res = await app.inject({ url: `/?token=${TOKEN}`, headers: HOST });
     expect(res.headers['set-cookie']).toBe(
-      `${TOKEN_COOKIE}=${TOKEN}; HttpOnly; SameSite=Strict; Path=/`,
+      `${TOKEN_COOKIE}=${TOKEN}; HttpOnly; SameSite=Strict; Path=/; Max-Age=34560000`,
     );
   });
 

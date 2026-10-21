@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GridHive: la sala de control de tus agentes de programación en la terminal</title>
+  <meta name="description" content="GridHive ejecuta Claude Code, Codex, Gemini CLI, Grok y OpenCode en paralelo, en terminales reales sobre un mismo tablero, con las suscripciones que ya pagas. Orquestadores, una bandeja para cada aviso, recetas de equipo para compartir y tu teléfono como control remoto. Gratis y de código abierto.">
+  <link rel="canonical" href="https://gridhive.dev/es/">
+  <!-- hreflang -->
+  <link rel="alternate" hreflang="en" href="https://gridhive.dev/">
+  <link rel="alternate" hreflang="zh-Hans" href="https://gridhive.dev/zh/">
+  <link rel="alternate" hreflang="ja" href="https://gridhive.dev/ja/">
+  <link rel="alternate" hreflang="es" href="https://gridhive.dev/es/">
+  <link rel="alternate" hreflang="de" href="https://gridhive.dev/de/">
+  <link rel="alternate" hreflang="fr" href="https://gridhive.dev/fr/">
+  <link rel="alternate" hreflang="nl" href="https://gridhive.dev/nl/">
+  <link rel="alternate" hreflang="x-default" href="https://gridhive.dev/">
+  <!-- /hreflang -->
+  <meta name="theme-color" content="#08061a">
+  <meta name="color-scheme" content="dark">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GridHive">
+  <meta property="og:title" content="GridHive: la sala de control de tus agentes de programación en la terminal">
+  <meta property="og:description" content="Gratis y de código abierto. Claude Code, Codex, Gemini CLI, Grok y OpenCode en terminales reales sobre un mismo tablero, con orquestadores, una sola bandeja para cada aviso, recetas de equipo y control desde el teléfono.">
+  <meta property="og:url" content="https://gridhive.dev/es/">
+  <meta property="og:image" content="https://gridhive.dev/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="El tablero de GridHive: un agente orquestador envía tareas a agentes trabajadores por líneas luminosas">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GridHive: la sala de control de tus agentes de programación en la terminal">
+  <meta name="twitter:description" content="Gratis y de código abierto. Claude Code, Codex, Gemini CLI, Grok y OpenCode en terminales reales sobre un mismo tablero, con orquestadores, una sola bandeja para cada aviso, recetas de equipo y control desde el teléfono.">
+  <meta name="twitter:image" content="https://gridhive.dev/assets/og.png">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/styles.css?v=2ad657ba86">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "GridHive",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Windows 10, Windows 11, macOS 12+",
+    "softwareVersion": "0.0.6",
+    "license": "https://opensource.org/licenses/MIT",
+    "url": "https://gridhive.dev/",
+    "downloadUrl": "https://gridhive.dev/#install",
+    "codeRepository": "https://github.com/customerimpact/gridhive",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "description": "Sala de control gratuita y de código abierto para agentes de programación en la terminal (Claude Code, Codex, Gemini CLI, Grok, OpenCode), en local y con tus propias cuentas."
+  }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Saltar al contenido</a>
+  <div class="bg" aria-hidden="true"><div class="bg-grid"></div><div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div><div class="sweep"></div></div>
+
+  <header class="nav" id="top">
+    <div class="wrap nav-in">
+      <a class="brand" href="/es/" aria-label="Inicio de GridHive">
+        <img src="/assets/icon.svg" width="30" height="30" alt="">
+        <span>GridHive</span>
+      </a>
+      <nav class="links" aria-label="Principal">
+        <a href="/quickstart">Inicio rápido</a>
+        <a href="#features">Funciones</a>
+        <a href="/developers">Desarrolladores</a>
+        <a href="#compare">Comparar</a>
+        <a href="#faq">Preguntas</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="icon-link" href="https://github.com/customerimpact/gridhive" rel="noopener" aria-label="GridHive en GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+          <span class="count" data-stars hidden></span>
+        </a>
+        <details class="lang">
+          <summary class="icon-link" aria-label="Idioma">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.6 3.9 5.8 3.9 9.5s-1.3 6.9-3.9 9.5c-2.6-2.6-3.9-5.8-3.9-9.5s1.3-6.9 3.9-9.5Z"/></svg>
+          </summary>
+          <ul class="lang-menu" data-lang-menu>
+            <li><a href="/" hreflang="en" lang="en">English</a></li>
+            <li><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+            <li><a href="/ja/" hreflang="ja" lang="ja">日本語</a></li>
+            <li><a href="/es/" hreflang="es" lang="es">Español</a></li>
+            <li><a href="/de/" hreflang="de" lang="de">Deutsch</a></li>
+            <li><a href="/fr/" hreflang="fr" lang="fr">Français</a></li>
+            <li><a href="/nl/" hreflang="nl" lang="nl">Nederlands</a></li>
+          </ul>
+        </details>
+        <a class="btn ghost sm hide-sm" href="/account" id="nav-account">Iniciar sesión</a>
+        <a class="btn primary sm" href="#install" data-download>Descargar</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero gridded">
+      <div class="aurora" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="pill"><b>NUEVO</b> Control desde el teléfono y recetas de equipo para compartir · Windows y Mac</p>
+        <h1>La sala de control de tus <span class="hl">agentes en la terminal</span>.</h1>
+        <p class="lede">Claude Code, Codex, Gemini CLI, Grok y OpenCode en paralelo, en terminales reales sobre un mismo tablero. Los orquestadores reparten el trabajo, una sola bandeja te dice quién te necesita y desde el teléfono puedes seguirlos, responderles y lanzarlos sin levantarte del sofá. Todo corre en tu computadora, con las suscripciones que ya tienes.</p>
+        <div class="npx">
+          <code><span class="pr">$</span> npx gridhive</code>
+          <button class="copy-btn" type="button" data-copy="npx gridhive" aria-label="Copiar el comando">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Copiar</span>
+          </button>
+        </div>
+        <p class="npx-note">Abre el tablero en tu navegador. Requiere Node 20+. ¿Prefieres una app? Descárgala más abajo.</p>
+        <div class="ctas">
+          <a class="btn primary lg" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-Setup-0.0.6.exe" rel="noopener" data-os="win">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.1 10.4 4v7.2H3V5.1Zm0 13.8 7.4 1.1v-7.1H3v6Zm8.2 1.2L21 21.5V12.9h-9.8v7.2Zm0-16.2v7.3H21V2.5l-9.8 1.4Z"/></svg>
+            Descargar para Windows
+          </a>
+          <a class="btn primary lg" href="#install-mac" data-os="mac">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66ZM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27Z"/></svg>
+            Descargar para Mac
+          </a>
+          <a class="btn ghost lg" href="https://github.com/customerimpact/gridhive" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            Estrella en GitHub
+            <span class="count" data-stars hidden></span>
+          </a>
+          <a class="btn ghost lg" href="/app">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M2.5 9h19" stroke="currentColor" stroke-width="1.8"/><path d="m10 13 2 2-2 2M13.5 17h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Abrir app web
+          </a>
+        </div>
+        <p class="fine">v0.0.6 · Windows 10/11 x64 · macOS 12+ (Apple Silicon e Intel) · Linux: <span class="mono">npx gridhive</span> · <a href="/quickstart">Guía de inicio rápido</a></p>
+      </div>
+
+      <div class="wrap wide">
+        <figure class="frame hero-shot hero-demo" id="demo" data-step="0" data-tab="agents" aria-label="Demo animada de la app GridHive: inicia una sesión, crea un equipo de agentes, las tareas viajan entre ellos, responde desde el teléfono lo que te necesita y el trabajo continúa.">
+          <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>GridHive · Shop</span></div>
+          <div class="demo-stage" aria-hidden="true">
+            <!-- Sidebar, like the app's: tabs Agents / Actions / Progress -->
+            <aside class="x-side">
+              <div class="x-brand"><span class="x-logo">&gt;_</span><b>GridHive</b><span class="x-chip">Map</span></div>
+              <div class="x-tabs">
+                <span class="x-tab" data-t="agents">Agents <em class="x-count">0</em></span>
+                <span class="x-tab" data-t="actions">Actions <em class="x-badge">1</em></span>
+                <span class="x-tab" data-t="progress">Progress</span>
+              </div>
+
+              <div class="x-pane x-pane-agents">
+                <p class="x-empty">No agents yet. Type a goal below.</p>
+                <div class="x-group" data-g="orch">
+                  <p class="x-ghead"><i style="--c: var(--p-violet)"></i>SHOP · ORCHESTRATOR <span class="x-gsum">1 working</span></p>
+                  <div class="x-row" data-a="ada"><span class="x-av" style="--c: var(--p-violet)">A</span><span class="x-who"><b>Ada</b><small>Orchestrator · Sonnet 5.5</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                </div>
+                <div class="x-group" data-g="team">
+                  <p class="x-ghead"><i style="--c: var(--p-orange)"></i>SHOP · TEAM <span class="x-gsum">0/3 working</span><span class="x-needs-tag">1 needs you</span></p>
+                  <div class="x-row" data-a="bex"><span class="x-av" style="--c: var(--p-orange)">B</span><span class="x-who"><b>Bex</b><small>Frontend · Claude</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                  <div class="x-row" data-a="cy"><span class="x-av" style="--c: var(--p-orange)">C</span><span class="x-who"><b>Cy</b><small class="x-sub">Backend · Codex</small><small class="x-why">Codex needs your permission to run npm test</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                  <div class="x-row" data-a="dax"><span class="x-av" style="--c: var(--p-orange)">D</span><span class="x-who"><b>Dax</b><small>Reviewer · Gemini</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                </div>
+              </div>
+
+              <div class="x-pane x-pane-actions">
+                <p class="x-ptitle"><b>Action inbox</b><small class="x-inbox-sub">1 waiting on you</small></p>
+                <div class="x-act">
+                  <p class="x-act-head"><span class="x-hand">✋</span><b>Cy needs you</b><small>just now</small></p>
+                  <small class="x-act-meta">Cy · Shop · Team</small>
+                  <p class="x-act-q">Codex wants to run <code>npm test</code>. Do you want to proceed?</p>
+                  <span class="x-opt x-opt-yes"><i>1</i>Yes</span>
+                  <span class="x-opt"><i>2</i>Yes, and don't ask again</span>
+                  <span class="x-opt x-opt-no"><i>3</i>No, and tell Codex what to do</span>
+                  <p class="x-act-done">✓ Answered "Yes" from your phone</p>
+                </div>
+              </div>
+
+              <div class="x-pane x-pane-progress">
+                <p class="x-ptitle"><b>Progress</b><small>Shop · Team</small></p>
+                <div class="x-prog" data-a="bex"><p><b>Bex</b><span class="x-pn">0/3</span></p><i><u></u></i></div>
+                <div class="x-prog" data-a="cy"><p><b>Cy</b><span class="x-pn">0/3</span></p><i><u></u></i></div>
+                <div class="x-prog" data-a="dax"><p><b>Dax</b><span class="x-pn">0/2</span></p><i><u></u></i></div>
+                <div class="x-prog x-prog-all"><p><b>Team</b><span class="x-pn">0/8 tasks</span></p><i><u></u></i></div>
+              </div>
+            </aside>
+
+            <!-- Board -->
+            <div class="x-board">
+              <div class="x-top">
+                <span class="x-zoom">+</span><span class="x-ws">Main <em class="x-ws-badge">1</em></span><span class="x-ws-add">+</span>
+                <span class="x-spacer"></span>
+                <span class="x-btn x-btn-primary">+ New agent</span><span class="x-btn">+ Add</span><span class="x-btn">Arrange</span>
+              </div>
+
+              <svg class="x-edges" viewBox="0 0 1248 1000">
+                <defs>
+                  <linearGradient id="xflow" gradientUnits="userSpaceOnUse" x1="0" y1="368" x2="0" y2="556"><stop offset="0" stop-color="#2f7bff"/><stop offset="1" stop-color="#3ce0ff"/></linearGradient>
+                  <filter id="xglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
+                </defs>
+                <g class="x-edge" data-w="bex">
+                  <path class="x-halo" d="M624 368 C 624 470, 243 450, 243 556"/>
+                  <path class="x-line" d="M624 368 C 624 470, 243 450, 243 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.6s" repeatCount="indefinite" path="M624 368 C 624 470, 243 450, 243 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.4s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 C 624 470, 243 450, 243 556"/></circle>
+                </g>
+                <g class="x-edge" data-w="cy">
+                  <path class="x-halo" d="M624 368 L 624 556"/>
+                  <path class="x-line" d="M624 368 L 624 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.2s" begin="0.3s" repeatCount="indefinite" path="M624 368 L 624 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.1s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 L 624 556"/></circle>
+                </g>
+                <g class="x-edge" data-w="dax">
+                  <path class="x-halo" d="M624 368 C 624 470, 1005 450, 1005 556"/>
+                  <path class="x-line" d="M624 368 C 624 470, 1005 450, 1005 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.6s" begin="0.6s" repeatCount="indefinite" path="M624 368 C 624 470, 1005 450, 1005 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.4s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 C 624 470, 1005 450, 1005 556"/></circle>
+                </g>
+              </svg>
+              <span class="x-label" data-w="bex"><i></i>Checkout UI</span>
+              <span class="x-label" data-w="cy"><i></i>Payments API</span>
+              <span class="x-label" data-w="dax"><i></i>Review changes</span>
+
+              <!-- Orchestrator project frame -->
+              <div class="x-frame x-frame-orch" style="--c: var(--p-violet)">
+                <p class="x-ftitle"><i></i>SHOP · ORCHESTRATOR <span class="x-fsum">1</span></p>
+              </div>
+              <!-- Team project frame -->
+              <div class="x-frame x-frame-team" style="--c: var(--p-orange)">
+                <p class="x-ftitle"><i></i>SHOP · TEAM <span class="x-fsum">3 · 0 working</span><span class="x-fneeds">1 needs you</span></p>
+              </div>
+
+              <div class="x-node" data-a="ada" style="--c: var(--p-violet)">
+                <header>
+                  <span class="x-nav">A</span><b>Ada</b>
+                  <span class="x-agent"><i class="x-ic-claude">✱</i>CLAUDE</span>
+                  <span class="x-role">ORCHESTRATOR</span>
+                  <span class="x-model">Sonnet 5.5</span><span class="x-cwd">· shop</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="bex" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">B</span><b>Bex</b>
+                  <span class="x-agent"><i class="x-ic-claude">✱</i>CLAUDE</span>
+                  <span class="x-role">FRONTEND</span>
+                  <span class="x-model">Sonnet 5.5</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="cy" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">C</span><b>Cy</b>
+                  <span class="x-agent"><i class="x-ic-codex">&gt;_</i>CODEX</span>
+                  <span class="x-role">BACKEND</span>
+                  <span class="x-model">gpt-5</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="dax" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">D</span><b>Dax</b>
+                  <span class="x-agent"><i class="x-ic-gemini">✦</i>GEMINI</span>
+                  <span class="x-role">REVIEWER</span>
+                  <span class="x-model">2.5 Pro</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+
+              <!-- Command bar, like the app's -->
+              <div class="x-cmd">
+                <div class="x-chips"><span>+ New agent</span><span>Templates</span><span>Compose team</span><span>Spawn 4</span><span>Group</span></div>
+                <div class="x-input"><span class="x-target"><i></i><b class="x-target-name">Board</b></span><span class="x-typed"></span><span class="x-ph">Message the selected agent · @ to direct · @all or a team for many</span><span class="x-send">➤</span></div>
+              </div>
+
+              <!-- The phone page (src/web/phone) -->
+              <div class="x-phone">
+                <div class="x-ph-screen">
+                  <p class="x-ph-head"><span class="x-ph-back">←</span><b>Cy</b><i class="x-ph-dot"></i><span class="x-ph-btn">On computer</span></p>
+                  <p class="x-ph-status"><span class="x-ph-pill">Needs you</span>shop</p>
+                  <pre class="x-ph-term">● Write api/pay.ts
+● Stripe webhook
+? Run npm test</pre>
+                  <div class="x-ph-card">
+                    <b>Cy: Bash command</b>
+                    <span>Run <code>npm test</code>?</span>
+                    <div class="x-ph-opts"><i class="x-ph-yes">Yes</i><i>Always</i><i>No</i></div>
+                  </div>
+                  <i class="x-tap"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="demo-steps" role="tablist" aria-label="Pasos de la demo">
+            <li><button type="button" data-go="0"><b>1</b> Inicia una sesión</button></li>
+            <li><button type="button" data-go="1"><b>2</b> Crea un equipo</button></li>
+            <li><button type="button" data-go="2"><b>3</b> Vuelan las tareas</button></li>
+            <li><button type="button" data-go="3"><b>4</b> Responde desde el teléfono</button></li>
+            <li><button type="button" data-go="4"><b>5</b> El trabajo sigue</button></li>
+          </ol>
+        </figure>
+        <ul class="proof" aria-label="Lo más destacado">
+          <li><b>Sin claves de API</b><span>Usa las sesiones de CLI que ya tienes</span></li>
+          <li><b>100 % local</b><span>Nada pasa por nuestros servidores</span></li>
+          <li><b>Todos los agentes</b><span>Claude Code, Codex, Gemini, Grok, OpenCode</span></li>
+          <li><b>Licencia MIT</b><span>Gratis para siempre, haz un fork</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Works with -->
+    <section class="works" aria-labelledby="works-title">
+      <div class="wrap">
+        <p class="works-title" id="works-title">Funciona con los agentes que ya pagas</p>
+        <ul class="works-list">
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="#D97757" fill-rule="nonzero"></path></svg><span>Claude Code</span></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M19.503 0H4.496A4.496 4.496 0 000 4.496v15.007A4.496 4.496 0 004.496 24h15.007A4.496 4.496 0 0024 19.503V4.496A4.496 4.496 0 0019.503 0z" fill="#fff"></path><path d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388zm3.482 10.565a.637.637 0 000 1.272h3.636a.637.637 0 100-1.272h-3.636zM8.462 9.23a.637.637 0 00-1.106.631l1.272 2.224-1.266 2.136a.636.636 0 101.095.649l1.454-2.455a.636.636 0 00.005-.64L8.462 9.23z" fill="url(#site-codex-0)"></path><defs><linearGradient gradientUnits="userSpaceOnUse" id="site-codex-0" x1="12" x2="12" y1="3" y2="21"><stop stop-color="#B1A7FF"></stop><stop offset=".5" stop-color="#7A9DFF"></stop><stop offset="1" stop-color="#3941FF"></stop></linearGradient></defs></svg><span>Codex</span></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="#3186FF"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#site-gemini-0)"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#site-gemini-1)"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#site-gemini-2)"></path><defs><linearGradient gradientUnits="userSpaceOnUse" id="site-gemini-0" x1="7" x2="11" y1="15.5" y2="12"><stop stop-color="#08B962"></stop><stop offset="1" stop-color="#08B962" stop-opacity="0"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="site-gemini-1" x1="8" x2="11.5" y1="5.5" y2="11"><stop stop-color="#F94543"></stop><stop offset="1" stop-color="#F94543" stop-opacity="0"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="site-gemini-2" x1="3.5" x2="17.5" y1="13.5" y2="12"><stop stop-color="#FABC12"></stop><stop offset=".46" stop-color="#FABC12" stop-opacity="0"></stop></linearGradient></defs></svg><span>Gemini CLI</span></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"></path></svg><span>Grok Build</span></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M16 6H8v12h8V6zm4 16H4V2h16v20z"></path></svg><span>OpenCode</span></li>
+          <li class="works-any"><span class="any-ic">&gt;_</span><span>Cualquier comando</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section grid-soft" id="how">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="eyebrow">Cómo funciona</p>
+          <h2>Un orquestador. Tantos trabajadores como quieras.</h2>
+          <p class="sub">Dale un objetivo al orquestador. Él divide el trabajo y envía tareas a los demás agentes. Tú lo ves todo en el tablero y solo intervienes cuando alguien te necesita.</p>
+          <ol class="steps">
+            <li><span class="n">1</span><div><b>Lanza un equipo</b><p>Elige una carpeta y una plantilla como <em>Dev HQ</em>: un orquestador más agentes de frontend, backend y revisión, cada uno en su propia terminal.</p></div></li>
+            <li><span class="n">2</span><div><b>Las tareas cruzan el tablero</b><p>El orquestador asigna una tarea a cada trabajador. Cada tarea es una línea en vivo del emisor al trabajador, con una etiqueta que indica de qué se trata.</p></div></li>
+            <li><span class="n">3</span><div><b>Los trabajadores informan</b><p>Cuando un trabajador termina, su informe se escribe en la terminal del orquestador, que planifica el siguiente paso.</p></div></li>
+          </ol>
+        </div>
+        <div class="diagram" role="img" aria-label="Diagrama: un agente orquestador arriba envía tareas a tres agentes trabajadores (frontend, backend y revisión), y sus informes vuelven hacia arriba.">
+          <svg viewBox="0 0 520 440" aria-hidden="true">
+            <defs>
+              <linearGradient id="og" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4a6d7"/><stop offset=".5" stop-color="#9d8cff"/><stop offset="1" stop-color="#8fd3ff"/></linearGradient>
+              <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+            </defs>
+            <path id="p1" d="M260 118 C 260 190, 90 190, 90 282" class="wire"/>
+            <path id="p2" d="M260 118 L 260 282" class="wire"/>
+            <path id="p3" d="M260 118 C 260 190, 430 190, 430 282" class="wire"/>
+            <path d="M260 118 C 260 190, 90 190, 90 282" class="wire hot"/>
+            <path d="M260 118 L 260 282" class="wire hot d2"/>
+            <path d="M260 118 C 260 190, 430 190, 430 282" class="wire hot d3"/>
+
+            <g class="pulse"><circle r="5" fill="#8fd3ff"/><circle r="11" fill="#8fd3ff" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#p1"/></animateMotion></g>
+            <g class="pulse"><circle r="5" fill="#8fd3ff"/><circle r="11" fill="#8fd3ff" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" begin="0.9s" repeatCount="indefinite"><mpath href="#p2"/></animateMotion></g>
+            <g class="pulse"><circle r="5" fill="#8fd3ff"/><circle r="11" fill="#8fd3ff" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" begin="1.7s" repeatCount="indefinite"><mpath href="#p3"/></animateMotion></g>
+            <g class="pulse"><circle r="4.5" fill="#f4a6d7"/>
+              <animateMotion dur="3.2s" begin="1.3s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p1"/></animateMotion></g>
+            <g class="pulse"><circle r="4.5" fill="#f4a6d7"/>
+              <animateMotion dur="3.2s" begin="2.6s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p3"/></animateMotion></g>
+
+            <rect x="232" y="186" width="56" height="20" rx="10" class="tag"/><text x="260" y="200" class="tag-t">tarea</text>
+            <rect x="96" y="176" width="70" height="20" rx="10" class="tag"/><text x="131" y="190" class="tag-t">checkout</text>
+            <rect x="360" y="176" width="64" height="20" rx="10" class="tag g"/><text x="392" y="190" class="tag-t">informe</text>
+
+            <g class="node orch">
+              <rect x="150" y="26" width="220" height="92" rx="16"/>
+              <circle cx="176" cy="54" r="11" fill="url(#og)"/>
+              <text x="196" y="59" class="nt">Ada</text>
+              <text x="236" y="58" class="nr">orquestador</text>
+              <rect x="166" y="78" width="188" height="7" rx="3.5" class="ln"/>
+              <rect x="166" y="94" width="124" height="7" rx="3.5" class="ln"/>
+            </g>
+            <g class="node w">
+              <rect x="20" y="282" width="140" height="100" rx="16"/>
+              <text x="38" y="310" class="nt">Bex</text><text x="38" y="328" class="nr">Frontend</text>
+              <rect x="38" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="38" y="356" width="70" height="7" rx="3.5" class="ln"/>
+              <circle cx="140" cy="306" r="5" class="st work"/>
+            </g>
+            <g class="node w">
+              <rect x="190" y="282" width="140" height="100" rx="16"/>
+              <text x="208" y="310" class="nt">Fay</text><text x="208" y="328" class="nr">Backend</text>
+              <rect x="208" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="208" y="356" width="80" height="7" rx="3.5" class="ln"/>
+              <circle cx="310" cy="306" r="5" class="st work"/>
+            </g>
+            <g class="node w">
+              <rect x="360" y="282" width="140" height="100" rx="16"/>
+              <text x="378" y="310" class="nt">Jo</text><text x="378" y="328" class="nr">Revisión</text>
+              <rect x="378" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="378" y="356" width="60" height="7" rx="3.5" class="ln"/>
+              <circle cx="480" cy="306" r="5" class="st done"/>
+            </g>
+            <text x="260" y="420" class="cap">Las tareas bajan. Los informes suben.</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ways to start -->
+    <section class="section" id="start">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">Empieza como quieras</p>
+          <h2>Tres formas de poner en marcha tu primer equipo</h2>
+          <p class="sub">Tengas lo que tengas en mente, estás a un clic de un tablero lleno de agentes.</p>
+        </div>
+        <ul class="ways">
+          <li class="card way">
+            <span class="way-n">01</span>
+            <h3>Lanza una plantilla</h3>
+            <p>Elige una carpeta e inicia <em>Dev HQ</em>: un orquestador más agentes de frontend, backend y revisión. O <em>Bug squad</em>, <em>Docs crew</em> y otras.</p>
+            <a class="way-link" href="/quickstart#launch">Cómo lanzar un equipo &rarr;</a>
+          </li>
+          <li class="card way">
+            <span class="way-n">02</span>
+            <h3>Abre el enlace de una receta</h3>
+            <p>¿Alguien compartió la configuración de su equipo? Abre el enlace y GridHive te muestra antes cada rol y cada prompt. Nada arranca hasta que pulses Launch.</p>
+            <a class="way-link" href="/developers#recipes">Sobre las recetas &rarr;</a>
+          </li>
+          <li class="card way">
+            <span class="way-n">03</span>
+            <h3>Describe un objetivo</h3>
+            <p>Haz clic en <b>New agent</b> y escribe lo que quieres en la barra de comandos. ¿Necesitas más manos? El agente puede repartir tareas a los demás agentes del tablero con las herramientas de orquestación de GridHive.</p>
+            <a class="way-link" href="/quickstart#first-agent">Inicia un agente &rarr;</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section grid-soft" id="features">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">Funciones</p>
+          <h2>Todo lo que necesitas para dirigir una flota de agentes</h2>
+          <p class="sub">Pensado para quienes ejecutan cinco, diez o veinte sesiones de agentes a la vez, de distintos proveedores, y están hartos de hacer malabares con ventanas de terminal.</p>
+        </div>
+        <ul class="grid">
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 10 3 2.5L7 15M13 15h4"/></svg></span>
+            <h3>Cada agente, en una terminal real</h3>
+            <p>Claude Code, Codex, Gemini CLI, Grok Build, OpenCode o cualquier comando: cada uno es la CLI real en su propia terminal. Los comandos slash, los prompts y las TUI funcionan como siempre. Combínalos en un mismo equipo.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="12" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v9M12 9c0 4-7 3.5-7 7.5M12 9c0 4 7 3.5 7 7.5"/></svg></span>
+            <h3>Orquestadores que delegan</h3>
+            <p>Un orquestador envía tareas a los agentes trabajadores. Cada tarea aparece como una línea animada, y el informe del trabajador vuelve directamente.</p>
+          </li>
+          <li class="card new">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/><path d="M9 8h6M9 11h4"/></svg></span>
+            <h3>Tu teléfono como control remoto <span class="badge-new">Nuevo</span></h3>
+            <p>Escanea un código QR y sigue a cada agente desde el teléfono: lee su terminal, responde a los avisos de "te necesita", envía un mensaje o lanza un equipo en tu computadora.</p>
+          </li>
+          <li class="card new">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="11" height="8" rx="2"/><rect x="15" y="9" width="7" height="12" rx="2"/><path d="M6 16h5l-2-2M11 16l-2 2"/></svg></span>
+            <h3>Traspaso en ambos sentidos <span class="badge-new">Nuevo</span></h3>
+            <p>Pasa una sesión de la computadora al teléfono y de vuelta con un toque. El agente sigue ejecutándose en tu computadora todo el tiempo; nada se reinicia.</p>
+          </li>
+          <li class="card new">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span>
+            <h3>Recetas de equipo para compartir <span class="badge-new">Nuevo</span></h3>
+            <p>Comparte un equipo (roles, agentes, modelos, primeros prompts) como un enlace o como una insignia "Run in GridHive" para tu README. Cualquiera lo abre en su app y ve antes cada prompt.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>
+            <h3>Bucles y traspasos</h3>
+            <p>Reenvía un prompt según un horario o cuando un agente queda inactivo, y pon a un agente al tanto del trabajo de otro, incluso entre proveedores cuando uno llega a su límite.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+            <h3>Plantillas y marcos de proyecto</h3>
+            <p>Lanza <em>Dev HQ</em> (13 agentes), <em>Bug squad</em>, <em>Docs crew</em> y otras con un clic. Los equipos se agrupan en marcos con nombre sobre el tablero.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1Z"/></svg></span>
+            <h3>Bandeja de acciones</h3>
+            <p>Responde avisos de permisos y preguntas desde una sola lista. Se acabó buscar la terminal que lleva diez minutos esperando.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+            <h3>Alertas de agentes atascados</h3>
+            <p>Detecta agentes que se atascan o tardan demasiado, y te deja darles un empujón, interrumpirlos o ignorarlos desde la bandeja.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="18" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 12h7M8 11c3-1 4-6 7.5-6M8 13c3 1 4 6 7.5 6"/></svg></span>
+            <h3>Progreso y Mission Map</h3>
+            <p>Avance de tareas por equipo y un mapa del orquestador, los equipos y los agentes que puedes filtrar por Working, Needs you, Idle o Done.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></svg></span>
+            <h3>Uso y presupuestos</h3>
+            <p>Consumo de tokens por tablero, cuenta y modelo, leído de los registros locales de Claude Code. Define presupuestos diarios, de 5 horas o semanales.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14a6.5 6.5 0 0 1 3 6"/></svg></span>
+            <h3>Varias cuentas por agente</h3>
+            <p>Inicia sesión en varias cuentas de Claude, Codex o Gemini. Cuando una llega al límite de su plan, el agente pasa a la siguiente cuenta, o a otro proveedor, y sigue donde se quedó.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 7.5v9M18 11.5c0 4-6 3-11 5.5"/></svg></span>
+            <h3>Un worktree por agente</h3>
+            <p>Si quieres, da a cada agente su propio worktree y su rama de git; luego revisa el diff, haz commit y merge desde un panel.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 9h20M6 6.5h.01M9 6.5h.01"/><path d="m11 13 6 2-2.5 1-1 2.5Z"/></svg></span>
+            <h3>Navegadores en vivo en el tablero</h3>
+            <p>Ventanas de navegador en el tablero que los agentes pueden manejar, con un cursor visible. Arranca un servidor de desarrollo y se te ofrece una vista previa.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/><path d="M14.5 6.5 10 11h4l-4.5 4.5"/></svg></span>
+            <h3>Resúmenes y avisos al teléfono</h3>
+            <p>Un resumen diario en Slack o Discord. Alertas de "te necesita" en Slack, Discord o la pantalla de bloqueo del teléfono con la app gratuita ntfy.</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2.5"/><path d="M8 21h8M12 17v4"/><circle cx="18" cy="7" r="2.5" fill="currentColor" stroke="none"/></svg></span>
+            <h3>Una app real para Windows y Mac</h3>
+            <p>Icono en la bandeja del sistema o en la barra de menús, insignia en la barra de tareas o en el Dock y notificaciones nativas. Saca consolas a un segundo monitor y elige entre cuatro temas.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Tour -->
+    <section class="section" id="tour">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">Haz el recorrido</p>
+          <h2>Míralo en acción</h2>
+          <p class="sub">Capturas de un tablero de demostración con 13 agentes trabajando en una tienda web ficticia.</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Capturas de pantalla">
+          <button role="tab" id="t-board" aria-controls="tour-panel" aria-selected="true" data-shot="board" data-cap="El tablero: un orquestador, tres equipos en marcos, tareas dibujadas como líneas y una vista previa en vivo de la tienda que construye un agente.">Tablero</button>
+          <button role="tab" id="t-map" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="map" data-cap="Mission Map: orquestador, equipos y agentes en forma de grafo, con filtros para Working, Needs you, Idle y Done.">Mission Map</button>
+          <button role="tab" id="t-actions" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="actions" data-cap="Bandeja de acciones: responde a un aviso de permisos desde la barra lateral, sin buscar la terminal.">Bandeja de acciones</button>
+          <button role="tab" id="t-progress" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="progress" data-cap="Progreso: listas de tareas por equipo y por agente, además de uso y presupuestos.">Progreso</button>
+          <button role="tab" id="t-preview" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="preview" data-cap="Vista previa en vivo: un agente arrancó el servidor de desarrollo y el sitio se abrió en un navegador junto a su terminal.">Vista previa</button>
+          <button role="tab" id="t-accounts" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="accounts" data-cap="Cuentas: varias cuentas de Claude, cada una con su propio uso. Los agentes pueden cambiar de cuenta cuando una llega a su límite.">Cuentas</button>
+          <button role="tab" id="t-integrations" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="integrations" data-cap="Settings › Integrations: webhooks de Slack y Discord, avisos al teléfono con ntfy y un resumen diario.">Ajustes</button>
+        </div>
+        <figure class="frame tour" id="tour-panel" role="tabpanel" aria-labelledby="t-board">
+          <img id="tour-img" src="/assets/shots/board-1600.webp"
+               srcset="/assets/shots/board-800.webp 800w, /assets/shots/board-1600.webp 1600w"
+               sizes="(min-width: 1240px) 1180px, 94vw" width="1600" height="1000" loading="lazy" decoding="async"
+               alt="El tablero: un orquestador, tres equipos en marcos, tareas dibujadas como líneas y una vista previa en vivo de la tienda que construye un agente.">
+          <figcaption id="tour-cap">El tablero: un orquestador, tres equipos en marcos, tareas dibujadas como líneas y una vista previa en vivo de la tienda que construye un agente.</figcaption>
+        </figure>
+
+        <div class="themes">
+          <div class="themes-copy">
+            <h3>Cuatro temas</h3>
+            <p>La app arranca con el cálido Ember; las imágenes de esta página usan el frío Midnight. ¿Prefieres el verde de aurora boreal o un tablero claro? Cambia cuando quieras.</p>
+            <div class="swatches" role="radiogroup" aria-label="Vista previa del tema">
+              <button role="radio" aria-checked="true" data-theme="midnight"><i style="--c:#3cc4ff"></i>Midnight</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="ember"><i style="--c:#e8774a"></i>Ember</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="aurora"><i style="--c:#2dd4a0"></i>Aurora</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="paper"><i style="--c:#f3efe6"></i>Paper</button>
+            </div>
+          </div>
+          <figure class="frame theme-shot">
+            <img id="theme-img" src="/assets/shots/board-800.webp" srcset="/assets/shots/board-800.webp 800w, /assets/shots/board-1600.webp 1600w" sizes="(min-width: 960px) 640px, 94vw" width="1600" height="1000" loading="lazy" decoding="async" alt="El tablero con el tema Ember">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compare -->
+    <section class="section grid-soft" id="compare">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">Comparativa</p>
+          <h2>GridHive frente a lo de siempre</h2>
+          <p class="sub">La mayoría ejecuta sus agentes en un montón de pestañas de terminal o en la app de un solo proveedor. Esto es lo que cambia.</p>
+        </div>
+        <div class="compare-scroll">
+          <table class="compare">
+            <thead>
+              <tr>
+                <th scope="col"><span class="sr-only">Función</span></th>
+                <th scope="col" class="us"><img src="/assets/icon.svg" width="22" height="22" alt="">GridHive</th>
+                <th scope="col">Pestañas de terminal</th>
+                <th scope="col">App de un proveedor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Todos los agentes en una pantalla</th><td class="us yes">Sí, en un tablero</td><td class="no">Pestaña a pestaña</td><td class="yes">Sí</td></tr>
+              <tr><th scope="row">Claude, Codex, Gemini, Grok y OpenCode juntos</th><td class="us yes">Sí, combinados en un equipo</td><td class="yes">Sí, a mano</td><td class="no">Solo el agente de ese proveedor</td></tr>
+              <tr><th scope="row">Sabe quién te necesita</th><td class="us yes">Una bandeja, alertas, avisos al teléfono</td><td class="no">Revisas cada pestaña</td><td class="part">Para su propio agente</td></tr>
+              <tr><th scope="row">Un orquestador reparte tareas</th><td class="us yes">Sí, dibujadas en vivo en el tablero</td><td class="no">No</td><td class="part">Depende</td></tr>
+              <tr><th scope="row">Responder desde el teléfono</th><td class="us yes">Sí, escaneando un código QR</td><td class="no">No</td><td class="part">Depende</td></tr>
+              <tr><th scope="row">Compartir un equipo con un enlace</th><td class="us yes">Recetas e insignias para README</td><td class="no">No</td><td class="no">No</td></tr>
+              <tr><th scope="row">Sobrevive a un reinicio</th><td class="us yes">Vuelven el tablero y las conversaciones</td><td class="no">A buscar IDs de sesión</td><td class="yes">Sí</td></tr>
+              <tr><th scope="row">Código abierto</th><td class="us yes">MIT</td><td class="yes">Tu terminal</td><td class="no">Mayormente cerrado</td></tr>
+              <tr><th scope="row">Precio</th><td class="us yes">$0, con tus propias cuentas</td><td class="yes">$0</td><td class="part">Incluido en su plan</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Free & local -->
+    <section class="section" id="local">
+      <div class="wrap">
+        <div class="local">
+          <div class="local-copy">
+            <p class="eyebrow">Gratis y local</p>
+            <h2>Tu máquina. Tu cuenta. Tu código.</h2>
+            <p class="sub">GridHive es una app local, no un servicio. No necesitas cuenta y no hay nada que pagar.</p>
+          </div>
+          <ul class="checks">
+            <li><b>Sin claves de API.</b> Los agentes usan la sesión de suscripción de cada CLI. GridHive incluso oculta <span class="mono">ANTHROPIC_API_KEY</span> a sus terminales para que no te cobren por token sin querer.</li>
+            <li><b>Nada en la nube.</b> El tablero es un servidor local enlazado a 127.0.0.1 con un token por ejecución. El acceso desde el teléfono está desactivado hasta que lo actives, y solo entran los teléfonos que vincules. Tu código solo va adonde lo envían los propios agentes.</li>
+            <li><b>Tu configuración sigue siendo tuya.</b> Los hooks se pasan a cada agente con un archivo de configuración temporal. No se modifica nada en <span class="mono">~/.claude</span>.</li>
+            <li><b>MIT y de código abierto.</b> Lee cada línea, abre issues, envía pull requests, haz un fork.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Install -->
+    <section class="section grid-soft" id="install">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">Primeros pasos</p>
+          <h2>Listo en dos minutos</h2>
+        </div>
+        <div class="install">
+          <div class="req card">
+            <h3>Requisitos</h3>
+            <ul>
+              <li><b>Windows 10 u 11</b> (x64), o <b>macOS 12 o posterior</b> (Apple Silicon o Intel) para la app de escritorio</li>
+              <li><b><a href="https://docs.claude.com/en/docs/claude-code" rel="noopener">Claude Code</a></b> instalado y con la sesión iniciada. Antes, ejecuta <span class="mono">claude</span> una vez en una terminal.</li>
+              <li><b>Linux, o sin instalador:</b> <span class="mono">npx gridhive</span> (requiere Node 20+)</li>
+            </ul>
+          </div>
+          <ol class="howto">
+            <li class="card">
+              <span class="n">1</span>
+              <div>
+                <h3>Descarga la app</h3>
+                <p>Windows: <span class="mono">GridHive-Setup-0.0.6.exe</span>. Mac: la imagen de disco para tu chip. ¿No lo sabes? Menú Apple &rarr; <b>About This Mac</b> (Acerca de esta Mac): "Apple M1/M2/M3/M4…" es Apple Silicon, "Intel" es Intel.</p>
+                <div class="dl-row" id="install-mac">
+                  <a class="btn primary" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-Setup-0.0.6.exe" rel="noopener">Windows</a>
+                  <a class="btn primary" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-0.0.6-arm64.dmg" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66ZM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27Z"/></svg> Mac · Apple Silicon</a>
+                  <a class="btn ghost" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-0.0.6-x64.dmg" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66ZM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27Z"/></svg> Mac · Intel</a>
+                </div>
+              </div>
+            </li>
+            <li class="card">
+              <span class="n">2</span>
+              <div>
+                <h3>Instálala y permítela la primera vez</h3>
+                <p><b>Windows:</b> se instala solo para tu usuario, sin permisos de administrador. La app aún no tiene firma de código, así que Windows puede mostrar <em>"Windows protected your PC"</em>. Haz clic en <b>More info</b> (Más información) y luego en <b>Run anyway</b> (Ejecutar de todas formas).</p>
+                <p><b>Mac:</b> abre la imagen de disco y arrastra GridHive a <b>Aplicaciones</b>. La app aún no está firmada por Apple, así que el primer arranque se bloquea: abre <b>System Settings &rarr; Privacy &amp; Security</b> (Ajustes del Sistema → Privacidad y seguridad), desplázate hacia abajo, haz clic en <b>Open Anyway</b> (Abrir igualmente) y confirma. Solo tienes que hacerlo una vez. Las versiones nuevas se anuncian en el menú de la barra de menús.</p>
+              </div>
+            </li>
+            <li class="card">
+              <span class="n">3</span>
+              <div>
+                <h3>Lanza un equipo</h3>
+                <p>Abre GridHive, haz clic en <b>Templates</b>, elige una carpeta e inicia <em>Dev HQ</em>, o añade un solo agente con <b>New agent</b>.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+        <div class="source card" id="npx">
+          <div class="source-head">
+            <h3>O ejecútalo con npx <span class="muted">(Windows, macOS, Linux)</span></h3>
+            <button class="copy-btn" type="button" data-copy="npx gridhive">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Copiar</span>
+            </button>
+          </div>
+          <pre><code><span class="pr">$</span> npx gridhive   <span class="cm"># inicia el tablero y lo abre en tu navegador</span></code></pre>
+          <p class="source-note">Requiere Node 20 o posterior. Añade <span class="mono">--port 5000</span> para usar otro puerto, o instálalo una vez con <span class="mono">npm i -g gridhive</span> y ejecuta <span class="mono">gridhive</span>.</p>
+        </div>
+        <div class="source card">
+          <div class="source-head">
+            <h3>Ejecutar desde el código fuente <span class="muted">(Windows, macOS, Linux)</span></h3>
+            <button class="copy-btn" type="button" data-copy="git clone https://github.com/customerimpact/gridhive && cd gridhive && npm install && npm run build && npm start">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Copiar</span>
+            </button>
+          </div>
+          <pre><code><span class="pr">$</span> git clone https://github.com/customerimpact/gridhive
+<span class="pr">$</span> cd gridhive
+<span class="pr">$</span> npm install &amp;&amp; npm run build
+<span class="pr">$</span> npm start   <span class="cm"># abre el tablero en tu navegador</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section grid-soft" id="faq">
+      <div class="wrap narrow">
+        <div class="head">
+          <p class="eyebrow">Preguntas frecuentes</p>
+          <h2>Resolvemos tus dudas</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>¿De verdad es gratis?</summary>
+            <p>Sí. GridHive es código abierto con licencia MIT. No hay suscripción ni verificación de licencia, y no necesitas cuenta. Solo necesitas los planes de los agentes que uses.</p>
+          </details>
+          <details>
+            <summary>¿Qué agentes admite?</summary>
+            <p>Claude Code, OpenAI Codex CLI, Gemini CLI, Grok Build y OpenCode, además de cualquier comando que quieras. Instala cada uno e inicia sesión desde <b>Settings &rarr; Agents &amp; accounts</b>. Los agentes de Claude Code y Codex también pueden usar las herramientas de orquestación para repartir tareas.</p>
+          </details>
+          <details>
+            <summary>¿Puedo usarlo desde el teléfono?</summary>
+            <p>Sí, en la misma red Wi-Fi: activa <b>Settings &rarr; Integrations &rarr; Phone</b> y escanea el código QR. El teléfono muestra cada agente, su terminal y sus avisos, y puede lanzar agentes nuevos; los agentes siguen ejecutándose en tu computadora. Pronto podrás acceder desde cualquier lugar con una cuenta gratuita: apúntate abajo a la lista de acceso anticipado.</p>
+          </details>
+          <details>
+            <summary>¿Qué es una receta?</summary>
+            <p>La configuración de un equipo en un enlace: roles, agentes, modelos y primeros prompts. Compártela con un compañero o pon una insignia "Run in GridHive" en tu README. Al abrir una receta, se guarda como plantilla y te muestra antes cada prompt; nada arranca hasta que pulses Launch. Tus cuentas y carpetas nunca van en el enlace.</p>
+          </details>
+          <details>
+            <summary>¿Gasta mis créditos de API?</summary>
+            <p>No. Los agentes ejecutan cada CLI con tu propia sesión de suscripción, igual que en una terminal normal. GridHive oculta <span class="mono">ANTHROPIC_API_KEY</span> y <span class="mono">ANTHROPIC_AUTH_TOKEN</span> a sus terminales para que Claude Code no pase por sorpresa a cobrarte por token.</p>
+          </details>
+          <details>
+            <summary>¿Aprueba permisos automáticamente?</summary>
+            <p>No. Cada agente mantiene sus propios avisos de permisos. GridHive te avisa cuando uno está esperando y te deja responderlo desde la bandeja Actions.</p>
+          </details>
+          <details>
+            <summary>¿Hay versión para Mac?</summary>
+            <p>Sí. Descarga más arriba la imagen de disco para Mac con Apple Silicon (M1 o posterior) o Intel; requiere macOS 12 o posterior. Aún no está firmada por Apple, así que permítela una vez en System Settings &rarr; Privacy &amp; Security &rarr; <b>Open Anyway</b>. En Linux, ejecuta GridHive desde el código fuente y úsalo en tu navegador.</p>
+          </details>
+          <details>
+            <summary>¿Dónde se guardan mis datos?</summary>
+            <p>En tu PC. La disposición del tablero y la configuración se guardan en <span class="mono">~/.gridhive</span>, en tu carpeta personal. Las conversaciones se quedan en las carpetas de Claude Code. La app de escritorio solo hace una llamada de red propia: buscar actualizaciones en GitHub Releases.</p>
+          </details>
+          <details>
+            <summary>¿Por qué Windows dice "Windows protected your PC"?</summary>
+            <p>El instalador aún no tiene firma de código, así que SmartScreen no lo reconoce. Haz clic en <b>More info</b> y luego en <b>Run anyway</b>. Todo el código fuente y el flujo de compilación están en GitHub si prefieres revisarlo o compilarlo tú mismo.</p>
+          </details>
+          <details>
+            <summary>¿GridHive está afiliado a Anthropic?</summary>
+            <p>No. Es un proyecto independiente de código abierto, sin afiliación ni respaldo de Anthropic. "Claude" y "Claude Code" son marcas comerciales de Anthropic.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="section final">
+      <div class="wrap">
+        <div class="final-card gridded">
+          <div class="aurora" aria-hidden="true"></div>
+          <img src="/assets/icon.svg" width="64" height="64" alt="" loading="lazy">
+          <h2>¿Listo para poner en marcha tu colmena?</h2>
+          <p class="sub">Gratis, de código abierto y funcionando en tu propia máquina en dos minutos.</p>
+          <div class="ctas">
+            <a class="btn primary lg" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-Setup-0.0.6.exe" rel="noopener">Descargar para Windows</a>
+            <a class="btn primary lg" href="#install-mac"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66ZM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27Z"/></svg> Descargar para Mac</a>
+            <a class="btn ghost lg" href="https://github.com/customerimpact/gridhive" rel="noopener">Estrella en GitHub</a>
+          </div>
+          <form class="waitlist" id="waitlist" novalidate>
+            <p class="waitlist-title"><span class="tag-new">PRONTO</span> Tus agentes desde cualquier lugar: una cuenta gratuita, tu teléfono en cualquier red y sesiones que pasan del teléfono a la computadora y viceversa.</p>
+            <div class="waitlist-row">
+              <label class="sr-only" for="waitlist-email">Correo electrónico</label>
+              <input id="waitlist-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+              <input class="hp" name="company" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+              <button class="btn primary" type="submit">Pedir acceso anticipado</button>
+            </div>
+            <p class="waitlist-msg" role="status" aria-live="polite"></p>
+            <p class="waitlist-note">Un solo correo cuando esté listo. Sin spam; consulta el <a href="/privacy">aviso de privacidad</a>.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap foot-in">
+      <div class="foot-brand">
+        <a class="brand" href="/es/"><img src="/assets/icon.svg" width="26" height="26" alt=""><span>GridHive</span></a>
+        <p>La sala de control de tus agentes de programación en la terminal. Gratis y con licencia MIT. Un proyecto independiente de código abierto, sin afiliación ni respaldo de Anthropic, OpenAI, Google ni xAI.</p>
+      </div>
+      <nav class="foot-cols" aria-label="Pie de página">
+        <div><h4>Producto</h4><a href="#features">Funciones</a><a href="#compare">Comparar</a><a href="#install">Descargar</a><a href="/app">Abrir app web</a></div>
+        <div><h4>Desarrolladores</h4><a href="/quickstart">Inicio rápido</a><a href="/developers">Guía para desarrolladores</a><a href="/developers#recipes">Recetas e insignias</a><a href="https://github.com/customerimpact/gridhive/releases" rel="noopener">Registro de cambios</a></div>
+        <div><h4>Comunidad</h4><a href="https://github.com/customerimpact/gridhive" rel="noopener">GitHub</a><a href="https://github.com/customerimpact/gridhive/issues" rel="noopener">Reportar un problema</a></div>
+        <div><h4>Legal</h4><a href="/privacy">Privacidad</a><a href="https://github.com/customerimpact/gridhive/blob/main/LICENSE" rel="noopener">Licencia</a><a href="https://github.com/customerimpact/gridhive/blob/main/TRADEMARKS.md" rel="noopener">Marcas comerciales</a></div>
+      </nav>
+    </div>
+    <p class="wrap foot-copy">&copy; 2026 GridHive · Claude, Codex, Gemini, Grok y OpenCode son marcas comerciales de sus respectivos titulares.</p>
+  </footer>
+
+  <script src="/main.js?v=ea593a37c1" defer></script>
+  <script src="/hero-demo.js?v=0579434e29" defer></script>
+</body>
+</html>

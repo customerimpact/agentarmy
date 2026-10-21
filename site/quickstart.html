@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quickstart · GridHive</title>
+  <meta name="description" content="Install GridHive, log in to your agent CLIs, launch your first team, answer what needs you and follow it from your phone. Five steps, about five minutes.">
+  <link rel="canonical" href="https://gridhive.dev/quickstart">
+  <meta name="theme-color" content="#08061a">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:title" content="GridHive Quickstart">
+  <meta property="og:description" content="From install to a team of agents on your board in five steps.">
+  <meta property="og:image" content="https://gridhive.dev/assets/og.png">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/styles.css?v=2ad657ba86">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <div class="bg" aria-hidden="true"><div class="bg-grid"></div><div class="glow g1"></div><div class="glow g2"></div></div>
+
+  <header class="nav" id="top">
+    <div class="wrap nav-in">
+      <a class="brand" href="/" aria-label="GridHive home">
+        <img src="/assets/icon.svg" width="30" height="30" alt="">
+        <span>GridHive</span>
+      </a>
+      <nav class="links" aria-label="Main">
+        <a href="/quickstart">Quickstart</a>
+        <a href="/#features">Features</a>
+        <a href="/developers">Developers</a>
+        <a href="/#compare">Compare</a>
+        <a href="/#faq">FAQ</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="icon-link" href="https://github.com/customerimpact/gridhive" rel="noopener" aria-label="GridHive on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+          <span class="count" data-stars hidden></span>
+        </a>
+        <details class="lang">
+          <summary class="icon-link" aria-label="Language">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.6 3.9 5.8 3.9 9.5s-1.3 6.9-3.9 9.5c-2.6-2.6-3.9-5.8-3.9-9.5s1.3-6.9 3.9-9.5Z"/></svg>
+          </summary>
+          <ul class="lang-menu" data-lang-menu>
+            <li><a href="/" hreflang="en" lang="en">English</a></li>
+            <li><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+            <li><a href="/ja/" hreflang="ja" lang="ja">日本語</a></li>
+            <li><a href="/es/" hreflang="es" lang="es">Español</a></li>
+            <li><a href="/de/" hreflang="de" lang="de">Deutsch</a></li>
+            <li><a href="/fr/" hreflang="fr" lang="fr">Français</a></li>
+            <li><a href="/nl/" hreflang="nl" lang="nl">Nederlands</a></li>
+          </ul>
+        </details>
+        <a class="btn ghost sm hide-sm" href="/account" id="nav-account">Sign in</a>
+        <a class="btn primary sm" href="/#install" data-download>Download</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="doc">
+    <div class="wrap doc-in">
+      <nav class="toc" aria-label="On this page">
+        <p>Quickstart</p>
+        <a href="#need">What you need</a>
+        <a href="#install">1. Install GridHive</a>
+        <a href="#agents">2. Log in to your agents</a>
+        <a href="#launch">3. Launch a team</a>
+        <a href="#needs-you">4. Answer what needs you</a>
+        <a href="#phone">5. Take it to your phone</a>
+        <a href="#share">Optional: sign in and share</a>
+        <a href="#next">Next steps</a>
+      </nav>
+
+      <article class="doc-body">
+        <p class="eyebrow">Quickstart</p>
+        <h1>From zero to a team of agents</h1>
+        <p class="lead">Five steps, about five minutes. At the end you have an orchestrator handing out jobs to Claude Code, Codex or Gemini agents on one board, and you can answer them from your phone.</p>
+
+        <h2 id="need">What you need</h2>
+        <ul>
+          <li><b>Windows 10 or 11</b>, <b>macOS 12 or later</b>, or <b>Linux</b>.</li>
+          <li>At least one agent CLI you're already logged in to: <a href="https://docs.claude.com/en/docs/claude-code" rel="noopener">Claude Code</a>, Codex CLI, Gemini CLI, Grok Build or OpenCode. GridHive uses your own subscription login; no API keys.</li>
+          <li>For <code>npx gridhive</code>: Node 20 or later. The desktop app needs nothing else.</li>
+        </ul>
+
+        <h2 id="install"><span class="step-n">1</span>Install GridHive</h2>
+        <p>Pick the desktop app (tray icon, notifications, auto-update) or run it straight from the terminal.</p>
+        <div class="ostabs" role="tablist" aria-label="How to install">
+          <button type="button" role="tab" id="tab-win" aria-controls="os-win" aria-selected="true" data-tab-os="win">Windows</button>
+          <button type="button" role="tab" id="tab-mac" aria-controls="os-mac" aria-selected="false" tabindex="-1" data-tab-os="mac">Mac</button>
+          <button type="button" role="tab" id="tab-npx" aria-controls="os-npx" aria-selected="false" tabindex="-1">npx / Linux</button>
+        </div>
+        <div class="ospanel" id="os-win" role="tabpanel" aria-labelledby="tab-win">
+          <div class="dl-row doc-dl"><a class="btn primary" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-Setup-0.0.6.exe" rel="noopener">Download for Windows</a></div>
+          <p>Run the installer. It installs for your user only, no admin needed. The app isn't code-signed yet, so Windows may say <em>"Windows protected your PC"</em>: click <b>More info</b>, then <b>Run anyway</b>.</p>
+        </div>
+        <div class="ospanel" id="os-mac" role="tabpanel" aria-labelledby="tab-mac" hidden>
+          <div class="dl-row doc-dl">
+            <a class="btn primary" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-0.0.6-arm64.dmg" rel="noopener">Mac · Apple Silicon</a>
+            <a class="btn ghost" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-0.0.6-x64.dmg" rel="noopener">Mac · Intel</a>
+          </div>
+          <p>Not sure which? Apple menu &rarr; <b>About This Mac</b>: "Apple M1/M2/M3/M4…" is Apple Silicon. Open the disk image and drag GridHive to <b>Applications</b>.</p>
+          <p>The app isn't signed by Apple yet, so the first launch is blocked: open <b>System Settings &rarr; Privacy &amp; Security</b>, scroll down, click <b>Open Anyway</b> and confirm. You only do this once.</p>
+        </div>
+        <div class="ospanel" id="os-npx" role="tabpanel" aria-labelledby="tab-npx" hidden>
+          <pre><code><span class="pr">$</span> npx gridhive</code></pre>
+          <p>This starts the board and opens it in your browser. Keep the terminal open; closing it stops your agents. Other options: <code>--port 5000</code>, <code>--no-open</code>, or install once with <code>npm i -g gridhive</code> and run <code>gridhive</code>.</p>
+        </div>
+
+        <h2 id="agents"><span class="step-n">2</span>Log in to your agents</h2>
+        <p>GridHive runs the real CLIs, so each one needs its own login, just like in a normal terminal. If you already use <code>claude</code> or <code>codex</code>, you're done.</p>
+        <p>Otherwise open <b>Settings &rarr; Agents &amp; accounts</b>. It shows which CLIs are installed and logged in, and lets you install and log in to each one. You can add several accounts per agent; when one hits its plan limit, GridHive can move the agent to the next account.</p>
+        <div class="callout"><b>No surprise bills.</b> GridHive hides <code>ANTHROPIC_API_KEY</code> from its terminals, so Claude Code uses your subscription instead of pay-per-token API billing.</div>
+
+        <h2 id="launch"><span class="step-n">3</span>Launch a team</h2>
+        <p>Click <b>Templates</b> in the command bar at the bottom, pick a project folder and start <em>Dev HQ</em>: one orchestrator plus Frontend, Backend and Reviewer agents, each in its own terminal. Or pick <em>Bug squad</em>, <em>Docs crew</em> and others, or build your own with <b>Compose team</b>.</p>
+        <p>Then tell the orchestrator what you want in the command bar, for example:</p>
+        <pre><code>Add a checkout page with Stripe payments, with tests.</code></pre>
+        <p>The orchestrator splits the work and sends a job to each worker. Every job shows as a live line on the board, and each worker's report goes straight back to the orchestrator.</p>
+        <h3 id="first-agent">Just one agent?</h3>
+        <p>Click <b>New agent</b>, pick a folder and an agent (Claude Code, Codex, Gemini CLI, Grok Build, OpenCode or any command). Type <code>@</code> in the command bar to send a message to a specific agent, or <code>@all</code> for everyone.</p>
+
+        <h2 id="needs-you"><span class="step-n">4</span>Answer what needs you</h2>
+        <p>Agents keep their own permission prompts; GridHive never auto-approves. When one is waiting, it shows <b>Needs you</b> on the board, you get a notification, and the prompt lands in the <b>Actions</b> tab of the sidebar. Answer it there without finding the terminal.</p>
+        <p>The <b>Progress</b> tab shows each team's todo list, and the Mission Map shows who is working, idle or done. Close the window and agents keep running in the tray (Windows) or menu bar (Mac).</p>
+
+        <h2 id="phone"><span class="step-n">5</span>Take it to your phone</h2>
+        <p>Open <b>Settings &rarr; Integrations &rarr; Phone</b>, turn it on and scan the QR code with your phone on the same Wi-Fi. Your phone shows every agent, its live terminal and its prompts; you can answer, send a message, launch a team, or hand a session to the phone and back. The agents keep running on your computer.</p>
+        <div class="callout"><b>Phone from anywhere</b> (not just your Wi-Fi) is coming with the free account. Until then, use your home or office network, or a VPN.</div>
+
+        <h2 id="share">Optional: sign in and share</h2>
+        <p>GridHive works fully without an account. Sign in with GitHub or Google (the app asks once; you can skip) to link this computer to your free account. Then the <b>Share</b> button at the top right gives you a link: whoever opens it follows your board live, with everyone's mouse pointers, Figma-style. Viewers can watch, not type.</p>
+
+        <h2 id="next">Next steps</h2>
+        <div class="next">
+          <a href="/developers#recipes">Share a team as a recipe<span>One link or a "Run in GridHive" badge for your README.</span></a>
+          <a href="/developers">Developer guide<span>Build from source, the orchestrator tools, adding an agent.</span></a>
+          <a href="/#faq">FAQ<span>Pricing, privacy, which agents, and the unsigned-app warnings.</span></a>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap foot-in">
+      <div class="foot-brand">
+        <a class="brand" href="/"><img src="/assets/icon.svg" width="26" height="26" alt=""><span>GridHive</span></a>
+        <p>The control room for your terminal coding agents. Free and MIT licensed. An independent open-source project, not affiliated with or endorsed by Anthropic, OpenAI, Google or xAI.</p>
+      </div>
+      <nav class="foot-cols" aria-label="Footer">
+        <div><h4>Product</h4><a href="/#features">Features</a><a href="/#compare">Compare</a><a href="/#install">Download</a><a href="/app">Open web app</a></div>
+        <div><h4>Developers</h4><a href="/quickstart">Quickstart</a><a href="/developers">Developer guide</a><a href="/developers#recipes">Recipes &amp; badges</a><a href="https://github.com/customerimpact/gridhive/releases" rel="noopener">Changelog</a></div>
+        <div><h4>Community</h4><a href="https://github.com/customerimpact/gridhive" rel="noopener">GitHub</a><a href="https://github.com/customerimpact/gridhive/issues" rel="noopener">Report an issue</a></div>
+        <div><h4>Legal</h4><a href="/privacy">Privacy</a><a href="https://github.com/customerimpact/gridhive/blob/main/LICENSE" rel="noopener">License</a><a href="https://github.com/customerimpact/gridhive/blob/main/TRADEMARKS.md" rel="noopener">Trademarks</a></div>
+      </nav>
+    </div>
+    <p class="wrap foot-copy">&copy; 2026 GridHive · Claude, Codex, Gemini, Grok and OpenCode are trademarks of their owners.</p>
+  </footer>
+
+  <script src="/main.js?v=ea593a37c1" defer></script>
+</body>
+</html>

@@ -68,7 +68,7 @@
     swap(themeImg, themeNames[btn.dataset.theme], `The board in the ${btn.textContent.trim()} theme`);
   });
 
-  // Copy the run-from-source command
+  // Copy buttons (npx line, run from source)
   document.querySelectorAll('[data-copy]').forEach((btn) => {
     const label = btn.querySelector('span');
     btn.addEventListener('click', async () => {
@@ -88,7 +88,7 @@
 
   // Fade sections in as they scroll into view
   if (!reduce && 'IntersectionObserver' in window) {
-    const items = document.querySelectorAll('.section .head, .split > *, .grid .card, .tabs, .tour, .themes > *, .local, .install > *, .source, .faq, .final-card');
+    const items = document.querySelectorAll('.section .head, .split > *, .grid .card, .tabs, .tour, .themes > *, .local, .install > *, .source, .faq, .final-card, .ways .card, .compare-scroll');
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
@@ -109,19 +109,64 @@
   // Freeze the SVG animation for people who asked for less motion
   if (reduce) document.querySelectorAll('.diagram svg').forEach((svg) => svg.pauseAnimations && svg.pauseAnimations());
 
-  // GitHub star count (optional; the button works without it)
-  const count = document.querySelector('[data-stars]');
-  if (count && 'fetch' in window) {
+  // GitHub star count on every star button (optional; the buttons work without it)
+  const counts = document.querySelectorAll('[data-stars]');
+  if (counts.length && 'fetch' in window) {
     fetch('https://api.github.com/repos/customerimpact/gridhive', { headers: { Accept: 'application/vnd.github+json' } })
       .then((r) => (r.ok ? r.json() : null))
       .then((repo) => {
-        // Only worth showing once there are a few
-        if (!repo || typeof repo.stargazers_count !== 'number' || repo.stargazers_count < 10) return;
+        if (!repo || typeof repo.stargazers_count !== 'number' || repo.stargazers_count < 1) return;
         const n = repo.stargazers_count;
-        count.textContent = n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
-        count.hidden = false;
+        counts.forEach((count) => {
+          count.textContent = `★ ${n >= 1000 ? `${(n / 1000).toFixed(1)}k` : n}`;
+          count.hidden = false;
+        });
       })
       .catch(() => {});
+  }
+
+  // Show only the download for this computer's OS (both stay when we can't tell, e.g. Linux)
+  const ua = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent;
+  const os = /mac/i.test(ua) ? 'mac' : /win/i.test(ua) ? 'win' : null;
+  if (os) {
+    document.querySelectorAll('[data-os]').forEach((btn) => {
+      if (btn.dataset.os !== os) btn.hidden = true;
+    });
+  }
+
+  // Language menu: mark the current language, close on outside click or Escape
+  const lang = document.querySelector('.lang');
+  if (lang) {
+    const here = location.pathname.split('/')[1];
+    lang.querySelectorAll('a').forEach((a) => {
+      const code = a.getAttribute('href').split('/')[1];
+      if (code === here || (!code && !/^(zh|ja|es|de|fr|nl)$/.test(here))) a.setAttribute('aria-current', 'true');
+    });
+    document.addEventListener('click', (e) => { if (!lang.contains(e.target)) lang.open = false; });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') lang.open = false; });
+  }
+
+  // OS tabs on the docs pages
+  document.querySelectorAll('.ostabs').forEach((bar) => {
+    const buttons = [...bar.querySelectorAll('[role="tab"]')];
+    group(buttons, 'aria-selected', (btn) => {
+      buttons.forEach((b) => { document.getElementById(b.getAttribute('aria-controls')).hidden = b !== btn; });
+    });
+    const mine = os && buttons.find((b) => b.dataset.tabOs === os);
+    if (mine) mine.click();
+  });
+
+  // Docs pages: highlight the section you're reading in the side menu
+  const tocLinks = [...document.querySelectorAll('.toc a')];
+  if (tocLinks.length && 'IntersectionObserver' in window) {
+    const byId = new Map(tocLinks.map((a) => [a.getAttribute('href').slice(1), a]));
+    const spy = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        tocLinks.forEach((a) => a.classList.toggle('on', a === byId.get(e.target.id)));
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    byId.forEach((_, id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
   }
 })();
 

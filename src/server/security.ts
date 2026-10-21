@@ -61,7 +61,10 @@ export function readCookie(header: string | undefined, name: string): string | u
 }
 
 // No Secure flag: the app is served over plain http://127.0.0.1. SameSite=Strict plus the
-// Origin/Host checks keep other sites from riding on the cookie.
+// Origin/Host checks keep other sites from riding on the cookie. It outlives the browser session
+// (400 days, the browser maximum) so a bookmarked 127.0.0.1:4317 opens; the token file is stable too.
+export const TOKEN_COOKIE_MAX_AGE = 400 * 24 * 60 * 60;
+
 export function tokenCookie(token: string): string {
-  return `${TOKEN_COOKIE}=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/`;
+  return `${TOKEN_COOKIE}=${encodeURIComponent(token)}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${TOKEN_COOKIE_MAX_AGE}`;
 }

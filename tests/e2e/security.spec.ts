@@ -99,7 +99,7 @@ test('f5. the WebSocket requires the token and a local Origin', async () => {
 
 test('f6. the UI explains a missing or invalid token', async ({ page }) => {
   await page.goto(`${server.origin}/`);
-  await expect(page.getByRole('heading', { name: 'Open the link from your terminal' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Open your board from GridHive' })).toBeVisible();
   await page.goto(`${server.origin}/?token=wrong`);
   await expect(page.getByRole('heading', { name: 'This link is no longer valid' })).toBeVisible();
 });

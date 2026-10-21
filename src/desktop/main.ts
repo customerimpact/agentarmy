@@ -422,6 +422,8 @@ function createTray(): void {
     { count: 0, items: [], pausedUntil: 0, openAtLogin: loginItemState(), update: { kind: 'idle' } },
     {
       open: () => showWindow(mainWindow),
+      // The ?token link signs this browser in; the board's cookie keeps it signed in afterwards
+      openInBrowser: () => backend && openExternal(backend.url),
       flyTo,
       togglePause,
       toggleOpenAtLogin: () => {

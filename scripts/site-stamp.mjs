@@ -8,7 +8,14 @@ const site = path.resolve(import.meta.dirname, '../site');
 const assets = ['styles.css', 'main.js', 'hero-demo.js', 'r.js', 'account.js', 'link.js'];
 const hash = (file) => crypto.createHash('sha256').update(fs.readFileSync(path.join(site, file))).digest('hex').slice(0, 10);
 
-for (const page of fs.readdirSync(site).filter((f) => f.endsWith('.html'))) {
+// Top-level pages plus the translated homepages in site/<lang>/
+const pages = fs.readdirSync(site, { withFileTypes: true }).flatMap((entry) => {
+  if (entry.isFile() && entry.name.endsWith('.html')) return [entry.name];
+  const index = path.join(entry.name, 'index.html');
+  return entry.isDirectory() && /^[a-z]{2}$/.test(entry.name) && fs.existsSync(path.join(site, index)) ? [index] : [];
+});
+
+for (const page of pages) {
   const file = path.join(site, page);
   const before = fs.readFileSync(file, 'utf8');
   let after = before;

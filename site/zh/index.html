@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GridHive：终端编程智能体的控制室</title>
+  <meta name="description" content="GridHive 让 Claude Code、Codex、Gemini CLI、Grok 和 OpenCode 在同一块看板上的真实终端里并排运行，用的就是你已经在付费的订阅。编排智能体分派任务，一个收件箱汇总所有提示，团队配方一键分享，手机就是遥控器。免费开源。">
+  <link rel="canonical" href="https://gridhive.dev/zh/">
+  <!-- hreflang -->
+  <link rel="alternate" hreflang="en" href="https://gridhive.dev/">
+  <link rel="alternate" hreflang="zh-Hans" href="https://gridhive.dev/zh/">
+  <link rel="alternate" hreflang="ja" href="https://gridhive.dev/ja/">
+  <link rel="alternate" hreflang="es" href="https://gridhive.dev/es/">
+  <link rel="alternate" hreflang="de" href="https://gridhive.dev/de/">
+  <link rel="alternate" hreflang="fr" href="https://gridhive.dev/fr/">
+  <link rel="alternate" hreflang="nl" href="https://gridhive.dev/nl/">
+  <link rel="alternate" hreflang="x-default" href="https://gridhive.dev/">
+  <!-- /hreflang -->
+  <meta name="theme-color" content="#08061a">
+  <meta name="color-scheme" content="dark">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GridHive">
+  <meta property="og:title" content="GridHive：终端编程智能体的控制室">
+  <meta property="og:description" content="免费开源。Claude Code、Codex、Gemini CLI、Grok 和 OpenCode 在同一块看板上的真实终端里运行，配有编排智能体、统一收件箱、团队配方和手机遥控。">
+  <meta property="og:url" content="https://gridhive.dev/zh/">
+  <meta property="og:image" content="https://gridhive.dev/assets/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="GridHive 看板：编排智能体通过发光的连线向工作智能体分派任务">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="GridHive：终端编程智能体的控制室">
+  <meta name="twitter:description" content="免费开源。Claude Code、Codex、Gemini CLI、Grok 和 OpenCode 在同一块看板上的真实终端里运行，配有编排智能体、统一收件箱、团队配方和手机遥控。">
+  <meta name="twitter:image" content="https://gridhive.dev/assets/og.png">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/styles.css?v=2ad657ba86">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "GridHive",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "Windows 10, Windows 11, macOS 12+",
+    "softwareVersion": "0.0.6",
+    "license": "https://opensource.org/licenses/MIT",
+    "url": "https://gridhive.dev/",
+    "downloadUrl": "https://gridhive.dev/#install",
+    "codeRepository": "https://github.com/customerimpact/gridhive",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "description": "免费开源的终端编程智能体控制室（支持 Claude Code、Codex、Gemini CLI、Grok、OpenCode），在本地运行，使用你自己的登录账号。"
+  }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <div class="bg" aria-hidden="true"><div class="bg-grid"></div><div class="glow g1"></div><div class="glow g2"></div><div class="glow g3"></div><div class="sweep"></div></div>
+
+  <header class="nav" id="top">
+    <div class="wrap nav-in">
+      <a class="brand" href="/zh/" aria-label="GridHive 首页">
+        <img src="/assets/icon.svg" width="30" height="30" alt="">
+        <span>GridHive</span>
+      </a>
+      <nav class="links" aria-label="主导航">
+        <a href="/quickstart">快速上手</a>
+        <a href="#features">功能</a>
+        <a href="/developers">开发者</a>
+        <a href="#compare">对比</a>
+        <a href="#faq">常见问题</a>
+      </nav>
+      <div class="nav-cta">
+        <a class="icon-link" href="https://github.com/customerimpact/gridhive" rel="noopener" aria-label="GitHub 上的 GridHive">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+          <span class="count" data-stars hidden></span>
+        </a>
+        <details class="lang">
+          <summary class="icon-link" aria-label="语言">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.6 2.6 3.9 5.8 3.9 9.5s-1.3 6.9-3.9 9.5c-2.6-2.6-3.9-5.8-3.9-9.5s1.3-6.9 3.9-9.5Z"/></svg>
+          </summary>
+          <ul class="lang-menu" data-lang-menu>
+            <li><a href="/" hreflang="en" lang="en">English</a></li>
+            <li><a href="/zh/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+            <li><a href="/ja/" hreflang="ja" lang="ja">日本語</a></li>
+            <li><a href="/es/" hreflang="es" lang="es">Español</a></li>
+            <li><a href="/de/" hreflang="de" lang="de">Deutsch</a></li>
+            <li><a href="/fr/" hreflang="fr" lang="fr">Français</a></li>
+            <li><a href="/nl/" hreflang="nl" lang="nl">Nederlands</a></li>
+          </ul>
+        </details>
+        <a class="btn ghost sm hide-sm" href="/account" id="nav-account">登录</a>
+        <a class="btn primary sm" href="#install" data-download>下载</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- Hero -->
+    <section class="hero gridded">
+      <div class="aurora" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="pill"><b>新功能</b> 手机遥控与可分享的团队配方 · Windows 和 Mac</p>
+        <h1><span class="nb">你的</span><span class="hl nb">终端智能体</span><span class="nb">控制室。</span></h1>
+        <p class="lede">Claude Code、Codex、Gemini CLI、Grok 和 OpenCode 在同一块看板上的真实终端里并排运行。编排智能体负责分派任务，统一收件箱告诉你谁在等你，躺在沙发上也能用手机跟进、回复和启动它们。一切都在你自己的电脑上运行，用的是你已有的订阅。</p>
+        <div class="npx">
+          <code><span class="pr">$</span> npx gridhive</code>
+          <button class="copy-btn" type="button" data-copy="npx gridhive" aria-label="复制命令">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>复制</span>
+          </button>
+        </div>
+        <p class="npx-note">在浏览器中启动看板，需要 Node 20+。更想用桌面应用？在下方下载。</p>
+        <div class="ctas">
+          <a class="btn primary lg" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-Setup-0.0.6.exe" rel="noopener" data-os="win">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.1 10.4 4v7.2H3V5.1Zm0 13.8 7.4 1.1v-7.1H3v6Zm8.2 1.2L21 21.5V12.9h-9.8v7.2Zm0-16.2v7.3H21V2.5l-9.8 1.4Z"/></svg>
+            下载 Windows 版
+          </a>
+          <a class="btn primary lg" href="#install-mac" data-os="mac">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66ZM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27Z"/></svg>
+            下载 Mac 版
+          </a>
+          <a class="btn ghost lg" href="https://github.com/customerimpact/gridhive" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.7 5.4-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+            在 GitHub 上点星
+            <span class="count" data-stars hidden></span>
+          </a>
+          <a class="btn ghost lg" href="/app">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="4" width="19" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M2.5 9h19" stroke="currentColor" stroke-width="1.8"/><path d="m10 13 2 2-2 2M13.5 17h3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            打开网页版
+          </a>
+        </div>
+        <p class="fine">v0.0.6 · Windows 10/11 x64 · macOS 12+（Apple Silicon 和 Intel）· Linux：<span class="mono">npx gridhive</span> · <a href="/quickstart">快速上手指南</a></p>
+      </div>
+
+      <div class="wrap wide">
+        <figure class="frame hero-shot hero-demo" id="demo" data-step="0" data-tab="agents" aria-label="GridHive 应用动画演示：开启会话，组建一支智能体团队，任务在它们之间流转，用手机回复需要你处理的请求，工作继续推进。">
+          <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i><span>GridHive · Shop</span></div>
+          <div class="demo-stage" aria-hidden="true">
+            <!-- Sidebar, like the app's: tabs Agents / Actions / Progress -->
+            <aside class="x-side">
+              <div class="x-brand"><span class="x-logo">&gt;_</span><b>GridHive</b><span class="x-chip">Map</span></div>
+              <div class="x-tabs">
+                <span class="x-tab" data-t="agents">Agents <em class="x-count">0</em></span>
+                <span class="x-tab" data-t="actions">Actions <em class="x-badge">1</em></span>
+                <span class="x-tab" data-t="progress">Progress</span>
+              </div>
+
+              <div class="x-pane x-pane-agents">
+                <p class="x-empty">No agents yet. Type a goal below.</p>
+                <div class="x-group" data-g="orch">
+                  <p class="x-ghead"><i style="--c: var(--p-violet)"></i>SHOP · ORCHESTRATOR <span class="x-gsum">1 working</span></p>
+                  <div class="x-row" data-a="ada"><span class="x-av" style="--c: var(--p-violet)">A</span><span class="x-who"><b>Ada</b><small>Orchestrator · Sonnet 5.5</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                </div>
+                <div class="x-group" data-g="team">
+                  <p class="x-ghead"><i style="--c: var(--p-orange)"></i>SHOP · TEAM <span class="x-gsum">0/3 working</span><span class="x-needs-tag">1 needs you</span></p>
+                  <div class="x-row" data-a="bex"><span class="x-av" style="--c: var(--p-orange)">B</span><span class="x-who"><b>Bex</b><small>Frontend · Claude</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                  <div class="x-row" data-a="cy"><span class="x-av" style="--c: var(--p-orange)">C</span><span class="x-who"><b>Cy</b><small class="x-sub">Backend · Codex</small><small class="x-why">Codex needs your permission to run npm test</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                  <div class="x-row" data-a="dax"><span class="x-av" style="--c: var(--p-orange)">D</span><span class="x-who"><b>Dax</b><small>Reviewer · Gemini</small></span><span class="x-pill"></span><span class="x-time">0s</span></div>
+                </div>
+              </div>
+
+              <div class="x-pane x-pane-actions">
+                <p class="x-ptitle"><b>Action inbox</b><small class="x-inbox-sub">1 waiting on you</small></p>
+                <div class="x-act">
+                  <p class="x-act-head"><span class="x-hand">✋</span><b>Cy needs you</b><small>just now</small></p>
+                  <small class="x-act-meta">Cy · Shop · Team</small>
+                  <p class="x-act-q">Codex wants to run <code>npm test</code>. Do you want to proceed?</p>
+                  <span class="x-opt x-opt-yes"><i>1</i>Yes</span>
+                  <span class="x-opt"><i>2</i>Yes, and don't ask again</span>
+                  <span class="x-opt x-opt-no"><i>3</i>No, and tell Codex what to do</span>
+                  <p class="x-act-done">✓ Answered "Yes" from your phone</p>
+                </div>
+              </div>
+
+              <div class="x-pane x-pane-progress">
+                <p class="x-ptitle"><b>Progress</b><small>Shop · Team</small></p>
+                <div class="x-prog" data-a="bex"><p><b>Bex</b><span class="x-pn">0/3</span></p><i><u></u></i></div>
+                <div class="x-prog" data-a="cy"><p><b>Cy</b><span class="x-pn">0/3</span></p><i><u></u></i></div>
+                <div class="x-prog" data-a="dax"><p><b>Dax</b><span class="x-pn">0/2</span></p><i><u></u></i></div>
+                <div class="x-prog x-prog-all"><p><b>Team</b><span class="x-pn">0/8 tasks</span></p><i><u></u></i></div>
+              </div>
+            </aside>
+
+            <!-- Board -->
+            <div class="x-board">
+              <div class="x-top">
+                <span class="x-zoom">+</span><span class="x-ws">Main <em class="x-ws-badge">1</em></span><span class="x-ws-add">+</span>
+                <span class="x-spacer"></span>
+                <span class="x-btn x-btn-primary">+ New agent</span><span class="x-btn">+ Add</span><span class="x-btn">Arrange</span>
+              </div>
+
+              <svg class="x-edges" viewBox="0 0 1248 1000">
+                <defs>
+                  <linearGradient id="xflow" gradientUnits="userSpaceOnUse" x1="0" y1="368" x2="0" y2="556"><stop offset="0" stop-color="#2f7bff"/><stop offset="1" stop-color="#3ce0ff"/></linearGradient>
+                  <filter id="xglow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5"/></filter>
+                </defs>
+                <g class="x-edge" data-w="bex">
+                  <path class="x-halo" d="M624 368 C 624 470, 243 450, 243 556"/>
+                  <path class="x-line" d="M624 368 C 624 470, 243 450, 243 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.6s" repeatCount="indefinite" path="M624 368 C 624 470, 243 450, 243 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.4s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 C 624 470, 243 450, 243 556"/></circle>
+                </g>
+                <g class="x-edge" data-w="cy">
+                  <path class="x-halo" d="M624 368 L 624 556"/>
+                  <path class="x-line" d="M624 368 L 624 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.2s" begin="0.3s" repeatCount="indefinite" path="M624 368 L 624 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.1s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 L 624 556"/></circle>
+                </g>
+                <g class="x-edge" data-w="dax">
+                  <path class="x-halo" d="M624 368 C 624 470, 1005 450, 1005 556"/>
+                  <path class="x-line" d="M624 368 C 624 470, 1005 450, 1005 556"/>
+                  <circle class="x-spark" r="5"><animateMotion dur="1.6s" begin="0.6s" repeatCount="indefinite" path="M624 368 C 624 470, 1005 450, 1005 556"/></circle>
+                  <circle class="x-spark x-back" r="5"><animateMotion dur="1.4s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path="M624 368 C 624 470, 1005 450, 1005 556"/></circle>
+                </g>
+              </svg>
+              <span class="x-label" data-w="bex"><i></i>Checkout UI</span>
+              <span class="x-label" data-w="cy"><i></i>Payments API</span>
+              <span class="x-label" data-w="dax"><i></i>Review changes</span>
+
+              <!-- Orchestrator project frame -->
+              <div class="x-frame x-frame-orch" style="--c: var(--p-violet)">
+                <p class="x-ftitle"><i></i>SHOP · ORCHESTRATOR <span class="x-fsum">1</span></p>
+              </div>
+              <!-- Team project frame -->
+              <div class="x-frame x-frame-team" style="--c: var(--p-orange)">
+                <p class="x-ftitle"><i></i>SHOP · TEAM <span class="x-fsum">3 · 0 working</span><span class="x-fneeds">1 needs you</span></p>
+              </div>
+
+              <div class="x-node" data-a="ada" style="--c: var(--p-violet)">
+                <header>
+                  <span class="x-nav">A</span><b>Ada</b>
+                  <span class="x-agent"><i class="x-ic-claude">✱</i>CLAUDE</span>
+                  <span class="x-role">ORCHESTRATOR</span>
+                  <span class="x-model">Sonnet 5.5</span><span class="x-cwd">· shop</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="bex" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">B</span><b>Bex</b>
+                  <span class="x-agent"><i class="x-ic-claude">✱</i>CLAUDE</span>
+                  <span class="x-role">FRONTEND</span>
+                  <span class="x-model">Sonnet 5.5</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="cy" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">C</span><b>Cy</b>
+                  <span class="x-agent"><i class="x-ic-codex">&gt;_</i>CODEX</span>
+                  <span class="x-role">BACKEND</span>
+                  <span class="x-model">gpt-5</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+              <div class="x-node" data-a="dax" style="--c: var(--p-orange)">
+                <header>
+                  <span class="x-nav">D</span><b>Dax</b>
+                  <span class="x-agent"><i class="x-ic-gemini">✦</i>GEMINI</span>
+                  <span class="x-role">REVIEWER</span>
+                  <span class="x-model">2.5 Pro</span>
+                  <span class="x-status"><span class="x-st"></span><span class="x-sec">0s</span></span>
+                </header>
+                <pre class="x-term"></pre>
+              </div>
+
+              <!-- Command bar, like the app's -->
+              <div class="x-cmd">
+                <div class="x-chips"><span>+ New agent</span><span>Templates</span><span>Compose team</span><span>Spawn 4</span><span>Group</span></div>
+                <div class="x-input"><span class="x-target"><i></i><b class="x-target-name">Board</b></span><span class="x-typed"></span><span class="x-ph">Message the selected agent · @ to direct · @all or a team for many</span><span class="x-send">➤</span></div>
+              </div>
+
+              <!-- The phone page (src/web/phone) -->
+              <div class="x-phone">
+                <div class="x-ph-screen">
+                  <p class="x-ph-head"><span class="x-ph-back">←</span><b>Cy</b><i class="x-ph-dot"></i><span class="x-ph-btn">On computer</span></p>
+                  <p class="x-ph-status"><span class="x-ph-pill">Needs you</span>shop</p>
+                  <pre class="x-ph-term">● Write api/pay.ts
+● Stripe webhook
+? Run npm test</pre>
+                  <div class="x-ph-card">
+                    <b>Cy: Bash command</b>
+                    <span>Run <code>npm test</code>?</span>
+                    <div class="x-ph-opts"><i class="x-ph-yes">Yes</i><i>Always</i><i>No</i></div>
+                  </div>
+                  <i class="x-tap"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="demo-steps" role="tablist" aria-label="演示步骤">
+            <li><button type="button" data-go="0"><b>1</b> 开启会话</button></li>
+            <li><button type="button" data-go="1"><b>2</b> 组建团队</button></li>
+            <li><button type="button" data-go="2"><b>3</b> 任务流转</button></li>
+            <li><button type="button" data-go="3"><b>4</b> 用手机回复</button></li>
+            <li><button type="button" data-go="4"><b>5</b> 工作继续</button></li>
+          </ol>
+        </figure>
+        <ul class="proof" aria-label="亮点">
+          <li><b>无需 API 密钥</b><span>直接使用你已有的 CLI 登录</span></li>
+          <li><b>100% 本地</b><span>不经过我们的任何服务器</span></li>
+          <li><b>支持所有智能体</b><span>Claude Code、Codex、Gemini、Grok、OpenCode</span></li>
+          <li><b>MIT 许可</b><span>永久免费，随意 fork</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Works with -->
+    <section class="works" aria-labelledby="works-title">
+      <div class="wrap">
+        <p class="works-title" id="works-title">支持你已经在付费使用的智能体</p>
+        <ul class="works-list">
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="#D97757" fill-rule="nonzero"></path></svg><span>Claude Code</span></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M19.503 0H4.496A4.496 4.496 0 000 4.496v15.007A4.496 4.496 0 004.496 24h15.007A4.496 4.496 0 0024 19.503V4.496A4.496 4.496 0 0019.503 0z" fill="#fff"></path><path d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388zm3.482 10.565a.637.637 0 000 1.272h3.636a.637.637 0 100-1.272h-3.636zM8.462 9.23a.637.637 0 00-1.106.631l1.272 2.224-1.266 2.136a.636.636 0 101.095.649l1.454-2.455a.636.636 0 00.005-.64L8.462 9.23z" fill="url(#site-codex-0)"></path><defs><linearGradient gradientUnits="userSpaceOnUse" id="site-codex-0" x1="12" x2="12" y1="3" y2="21"><stop stop-color="#B1A7FF"></stop><stop offset=".5" stop-color="#7A9DFF"></stop><stop offset="1" stop-color="#3941FF"></stop></linearGradient></defs></svg><span>Codex</span></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="#3186FF"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#site-gemini-0)"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#site-gemini-1)"></path><path d="M20.616 10.835a14.147 14.147 0 01-4.45-3.001 14.111 14.111 0 01-3.678-6.452.503.503 0 00-.975 0 14.134 14.134 0 01-3.679 6.452 14.155 14.155 0 01-4.45 3.001c-.65.28-1.318.505-2.002.678a.502.502 0 000 .975c.684.172 1.35.397 2.002.677a14.147 14.147 0 014.45 3.001 14.112 14.112 0 013.679 6.453.502.502 0 00.975 0c.172-.685.397-1.351.677-2.003a14.145 14.145 0 013.001-4.45 14.113 14.113 0 016.453-3.678.503.503 0 000-.975 13.245 13.245 0 01-2.003-.678z" fill="url(#site-gemini-2)"></path><defs><linearGradient gradientUnits="userSpaceOnUse" id="site-gemini-0" x1="7" x2="11" y1="15.5" y2="12"><stop stop-color="#08B962"></stop><stop offset="1" stop-color="#08B962" stop-opacity="0"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="site-gemini-1" x1="8" x2="11.5" y1="5.5" y2="11"><stop stop-color="#F94543"></stop><stop offset="1" stop-color="#F94543" stop-opacity="0"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="site-gemini-2" x1="3.5" x2="17.5" y1="13.5" y2="12"><stop stop-color="#FABC12"></stop><stop offset=".46" stop-color="#FABC12" stop-opacity="0"></stop></linearGradient></defs></svg><span>Gemini CLI</span></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M9.27 15.29l7.978-5.897c.391-.29.95-.177 1.137.272.98 2.369.542 5.215-1.41 7.169-1.951 1.954-4.667 2.382-7.149 1.406l-2.711 1.257c3.889 2.661 8.611 2.003 11.562-.953 2.341-2.344 3.066-5.539 2.388-8.42l.006.007c-.983-4.232.242-5.924 2.75-9.383.06-.082.12-.164.179-.248l-3.301 3.305v-.01L9.267 15.292M7.623 16.723c-2.792-2.67-2.31-6.801.071-9.184 1.761-1.763 4.647-2.483 7.166-1.425l2.705-1.25a7.808 7.808 0 00-1.829-1A8.975 8.975 0 005.984 5.83c-2.533 2.536-3.33 6.436-1.962 9.764 1.022 2.487-.653 4.246-2.34 6.022-.599.63-1.199 1.259-1.682 1.925l7.62-6.815"></path></svg><span>Grok Build</span></li>
+          <li><svg viewBox="0 0 24 24" fill="currentColor" fill-rule="evenodd" aria-hidden="true"><path d="M16 6H8v12h8V6zm4 16H4V2h16v20z"></path></svg><span>OpenCode</span></li>
+          <li class="works-any"><span class="any-ic">&gt;_</span><span>任意命令</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section grid-soft" id="how">
+      <div class="wrap split">
+        <div class="copy">
+          <p class="eyebrow">工作原理</p>
+          <h2>一个编排者，工作者要多少有多少。</h2>
+          <p class="sub">给编排智能体一个目标，它会拆分工作，把任务派给其他智能体。你在看板上看着一切发生，只在有人需要你时才介入。</p>
+          <ol class="steps">
+            <li><span class="n">1</span><div><b>启动团队</b><p>选一个文件夹和模板，比如 <em>Dev HQ</em>：一个编排智能体，外加前端、后端和代码审查智能体，各自运行在独立的终端里。</p></div></li>
+            <li><span class="n">2</span><div><b>任务在看板上流转</b><p>编排智能体给每个工作者分派一项任务。每项任务都是一条从发送方连到工作者的实时连线，并标明任务内容。</p></div></li>
+            <li><span class="n">3</span><div><b>工作者回报结果</b><p>工作者完成后，报告会直接输入编排智能体的终端，由它规划下一步。</p></div></li>
+          </ol>
+        </div>
+        <div class="diagram" role="img" aria-label="示意图：顶部的编排智能体向下方三个工作智能体（前端、后端、代码审查）分派任务，它们的报告再回流到上方。">
+          <svg viewBox="0 0 520 440" aria-hidden="true">
+            <defs>
+              <linearGradient id="og" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4a6d7"/><stop offset=".5" stop-color="#9d8cff"/><stop offset="1" stop-color="#8fd3ff"/></linearGradient>
+              <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter>
+            </defs>
+            <path id="p1" d="M260 118 C 260 190, 90 190, 90 282" class="wire"/>
+            <path id="p2" d="M260 118 L 260 282" class="wire"/>
+            <path id="p3" d="M260 118 C 260 190, 430 190, 430 282" class="wire"/>
+            <path d="M260 118 C 260 190, 90 190, 90 282" class="wire hot"/>
+            <path d="M260 118 L 260 282" class="wire hot d2"/>
+            <path d="M260 118 C 260 190, 430 190, 430 282" class="wire hot d3"/>
+
+            <g class="pulse"><circle r="5" fill="#8fd3ff"/><circle r="11" fill="#8fd3ff" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" repeatCount="indefinite" keyPoints="0;1" keyTimes="0;1" calcMode="linear"><mpath href="#p1"/></animateMotion></g>
+            <g class="pulse"><circle r="5" fill="#8fd3ff"/><circle r="11" fill="#8fd3ff" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" begin="0.9s" repeatCount="indefinite"><mpath href="#p2"/></animateMotion></g>
+            <g class="pulse"><circle r="5" fill="#8fd3ff"/><circle r="11" fill="#8fd3ff" opacity=".35" filter="url(#soft)"/>
+              <animateMotion dur="2.6s" begin="1.7s" repeatCount="indefinite"><mpath href="#p3"/></animateMotion></g>
+            <g class="pulse"><circle r="4.5" fill="#f4a6d7"/>
+              <animateMotion dur="3.2s" begin="1.3s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p1"/></animateMotion></g>
+            <g class="pulse"><circle r="4.5" fill="#f4a6d7"/>
+              <animateMotion dur="3.2s" begin="2.6s" repeatCount="indefinite" keyPoints="1;0" keyTimes="0;1" calcMode="linear"><mpath href="#p3"/></animateMotion></g>
+
+            <rect x="232" y="186" width="56" height="20" rx="10" class="tag"/><text x="260" y="200" class="tag-t">任务</text>
+            <rect x="96" y="176" width="70" height="20" rx="10" class="tag"/><text x="131" y="190" class="tag-t">checkout</text>
+            <rect x="360" y="176" width="64" height="20" rx="10" class="tag g"/><text x="392" y="190" class="tag-t">报告</text>
+
+            <g class="node orch">
+              <rect x="150" y="26" width="220" height="92" rx="16"/>
+              <circle cx="176" cy="54" r="11" fill="url(#og)"/>
+              <text x="196" y="59" class="nt">Ada</text>
+              <text x="236" y="58" class="nr">编排者</text>
+              <rect x="166" y="78" width="188" height="7" rx="3.5" class="ln"/>
+              <rect x="166" y="94" width="124" height="7" rx="3.5" class="ln"/>
+            </g>
+            <g class="node w">
+              <rect x="20" y="282" width="140" height="100" rx="16"/>
+              <text x="38" y="310" class="nt">Bex</text><text x="38" y="328" class="nr">前端</text>
+              <rect x="38" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="38" y="356" width="70" height="7" rx="3.5" class="ln"/>
+              <circle cx="140" cy="306" r="5" class="st work"/>
+            </g>
+            <g class="node w">
+              <rect x="190" y="282" width="140" height="100" rx="16"/>
+              <text x="208" y="310" class="nt">Fay</text><text x="208" y="328" class="nr">后端</text>
+              <rect x="208" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="208" y="356" width="80" height="7" rx="3.5" class="ln"/>
+              <circle cx="310" cy="306" r="5" class="st work"/>
+            </g>
+            <g class="node w">
+              <rect x="360" y="282" width="140" height="100" rx="16"/>
+              <text x="378" y="310" class="nt">Jo</text><text x="378" y="328" class="nr">代码审查</text>
+              <rect x="378" y="342" width="100" height="7" rx="3.5" class="ln"/><rect x="378" y="356" width="60" height="7" rx="3.5" class="ln"/>
+              <circle cx="480" cy="306" r="5" class="st done"/>
+            </g>
+            <text x="260" y="420" class="cap">任务向下派发，报告向上回传。</text>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- Ways to start -->
+    <section class="section" id="start">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">从哪里开始都行</p>
+          <h2>三种方式，让第一支团队跑起来</h2>
+          <p class="sub">不管你想做什么，离满屏的智能体都只差一次点击。</p>
+        </div>
+        <ul class="ways">
+          <li class="card way">
+            <span class="way-n">01</span>
+            <h3>启动模板</h3>
+            <p>选一个文件夹并启动 <em>Dev HQ</em>：一个编排智能体，外加前端、后端和代码审查智能体。也可以选 <em>Bug squad</em>、<em>Docs crew</em> 等模板。</p>
+            <a class="way-link" href="/quickstart#launch">如何启动团队 &rarr;</a>
+          </li>
+          <li class="card way">
+            <span class="way-n">02</span>
+            <h3>打开配方链接</h3>
+            <p>有人分享了团队配置？打开链接，GridHive 会先展示每个角色和提示词。在你点击 Launch 之前，什么都不会启动。</p>
+            <a class="way-link" href="/developers#recipes">关于配方 &rarr;</a>
+          </li>
+          <li class="card way">
+            <span class="way-n">03</span>
+            <h3>描述目标</h3>
+            <p>点击 <b>New agent</b>，在命令栏里输入你想做的事。人手不够？它可以借助 GridHive 的编排工具，把任务分派给看板上的其他智能体。</p>
+            <a class="way-link" href="/quickstart#first-agent">启动单个智能体 &rarr;</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section grid-soft" id="features">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">功能</p>
+          <h2>管理一整支智能体舰队，所需功能一应俱全</h2>
+          <p class="sub">专为同时运行五个、十个甚至二十个智能体会话、横跨多家厂商、受够了在终端窗口之间来回切换的人打造。</p>
+        </div>
+        <ul class="grid">
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m7 10 3 2.5L7 15M13 15h4"/></svg></span>
+            <h3>每个智能体，都在真实终端里</h3>
+            <p>Claude Code、Codex、Gemini CLI、Grok Build、OpenCode 或任意命令，每个都是原生 CLI，运行在独立终端中。斜杠命令、提示和 TUI 一切照常。还能在一个团队里混搭使用。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="19" r="2.5"/><circle cx="12" cy="19" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M12 7.5v9M12 9c0 4-7 3.5-7 7.5M12 9c0 4 7 3.5 7 7.5"/></svg></span>
+            <h3>会分派任务的编排智能体</h3>
+            <p>编排智能体把任务派给工作智能体。每项任务显示为一条动画连线，工作者的报告直接回传。</p>
+          </li>
+          <li class="card new">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/><path d="M9 8h6M9 11h4"/></svg></span>
+            <h3>手机就是遥控器 <span class="badge-new">新</span></h3>
+            <p>扫描二维码，就能在手机上跟进每个智能体：查看终端、回复“需要你”的提示、发送消息，或在电脑上启动一支团队。</p>
+          </li>
+          <li class="card new">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="11" height="8" rx="2"/><rect x="15" y="9" width="7" height="12" rx="2"/><path d="M6 16h5l-2-2M11 16l-2 2"/></svg></span>
+            <h3>双向交接 <span class="badge-new">新</span></h3>
+            <p>轻点一下，就能把会话从电脑移到手机，再移回来。智能体始终在你的电脑上运行，什么都不用重启。</p>
+          </li>
+          <li class="card new">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span>
+            <h3>可分享的团队配方 <span class="badge-new">新</span></h3>
+            <p>把一支团队（角色、智能体、模型、首条提示词）分享为一个链接，或做成放在 README 里的“Run in GridHive”徽章。任何人都能在自己的应用中打开，并先看到每条提示词。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></svg></span>
+            <h3>循环与交接</h3>
+            <p>按计划或在智能体空闲时重新发送提示词；把一个智能体的工作成果转交给另一个，某家额度用完时甚至能跨厂商接力。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span>
+            <h3>模板与项目框</h3>
+            <p>一键启动 <em>Dev HQ</em>（13 个智能体）、<em>Bug squad</em>、<em>Docs crew</em> 等模板。各团队位于看板上带标签的框中。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1Z"/></svg></span>
+            <h3>Actions 收件箱</h3>
+            <p>在一个列表里处理所有权限提示和提问。再也不用到处找那个已经干等了十分钟的终端。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+            <h3>卡住提醒</h3>
+            <p>自动发现停滞不前或运行时间过长的智能体，让你直接在收件箱里催一下、中断或忽略。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="18" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 12h7M8 11c3-1 4-6 7.5-6M8 13c3 1 4 6 7.5 6"/></svg></span>
+            <h3>进度与任务地图</h3>
+            <p>按团队显示待办进度，另有一张涵盖编排智能体、团队和智能体的地图，可按工作中、需要你、空闲或已完成筛选。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></svg></span>
+            <h3>用量与预算</h3>
+            <p>按看板、账号和模型统计 token 用量，数据来自 Claude Code 的本地日志。可设置每日、每 5 小时或每周预算。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14a6.5 6.5 0 0 1 3 6"/></svg></span>
+            <h3>一个智能体，多个账号</h3>
+            <p>可登录多个 Claude、Codex 或 Gemini 账号。某个账号用完套餐额度时，智能体会切换到下一个账号或其他厂商，从中断处接着干。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 7.5v9M18 11.5c0 4-6 3-11 5.5"/></svg></span>
+            <h3>每个智能体一个 worktree</h3>
+            <p>可以为每个智能体分配独立的 git worktree 和分支，然后在面板里查看 diff、提交并合并。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M2 9h20M6 6.5h.01M9 6.5h.01"/><path d="m11 13 6 2-2.5 1-1 2.5Z"/></svg></span>
+            <h3>实时浏览器磁贴</h3>
+            <p>看板上的浏览器磁贴可由智能体操控，光标清晰可见。启动开发服务器后，预览磁贴会自动出现。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/><path d="M14.5 6.5 10 11h4l-4.5 4.5"/></svg></span>
+            <h3>日报与手机提醒</h3>
+            <p>每日汇总发送到 Slack 或 Discord。“需要你”提醒可发到 Slack、Discord，或通过免费的 ntfy 应用推送到手机锁屏。</p>
+          </li>
+          <li class="card">
+            <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2.5"/><path d="M8 21h8M12 17v4"/><circle cx="18" cy="7" r="2.5" fill="currentColor" stroke="none"/></svg></span>
+            <h3>真正的 Windows 和 Mac 应用</h3>
+            <p>托盘或菜单栏图标、任务栏或 Dock 角标，以及原生通知。可以把控制台弹出到第二块显示器，还有四种主题可选。</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Tour -->
+    <section class="section" id="tour">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">产品导览</p>
+          <h2>看看实际效果</h2>
+          <p class="sub">截图来自一块演示看板：13 个智能体正在开发一个虚构的网店。</p>
+        </div>
+        <div class="tabs" role="tablist" aria-label="截图">
+          <button role="tab" id="t-board" aria-controls="tour-panel" aria-selected="true" data-shot="board" data-cap="看板：一个编排智能体、三支各自框起来的团队、以连线呈现的任务，以及某个智能体正在搭建的网店的实时预览。">看板</button>
+          <button role="tab" id="t-map" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="map" data-cap="任务地图：以关系图呈现编排智能体、团队和智能体，可按工作中、需要你、空闲和已完成筛选。">任务地图</button>
+          <button role="tab" id="t-actions" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="actions" data-cap="Actions 收件箱：直接在侧边栏回复权限提示，无需去找对应的终端。">Actions 收件箱</button>
+          <button role="tab" id="t-progress" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="progress" data-cap="进度：按团队和智能体列出的待办清单，以及用量和预算。">进度</button>
+          <button role="tab" id="t-preview" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="preview" data-cap="实时预览：智能体启动了开发服务器，网站随即在它终端旁的浏览器磁贴中打开。">实时预览</button>
+          <button role="tab" id="t-accounts" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="accounts" data-cap="账号：多个 Claude 登录，各自单独统计用量。某个账号触及上限时，智能体可以切换。">账号</button>
+          <button role="tab" id="t-integrations" aria-controls="tour-panel" aria-selected="false" tabindex="-1" data-shot="integrations" data-cap="Settings › Integrations：Slack 和 Discord webhook、通过 ntfy 推送到手机，以及每日汇总。">设置</button>
+        </div>
+        <figure class="frame tour" id="tour-panel" role="tabpanel" aria-labelledby="t-board">
+          <img id="tour-img" src="/assets/shots/board-1600.webp"
+               srcset="/assets/shots/board-800.webp 800w, /assets/shots/board-1600.webp 1600w"
+               sizes="(min-width: 1240px) 1180px, 94vw" width="1600" height="1000" loading="lazy" decoding="async"
+               alt="看板：一个编排智能体、三支各自框起来的团队、以连线呈现的任务，以及某个智能体正在搭建的网店的实时预览。">
+          <figcaption id="tour-cap">看板：一个编排智能体、三支各自框起来的团队、以连线呈现的任务，以及某个智能体正在搭建的网店的实时预览。</figcaption>
+        </figure>
+
+        <div class="themes">
+          <div class="themes-copy">
+            <h3>四种主题</h3>
+            <p>应用默认使用暖色调的 Ember；本页截图用的是冷色调的 Midnight。喜欢极光绿或浅色看板？随时可以切换。</p>
+            <div class="swatches" role="radiogroup" aria-label="主题预览">
+              <button role="radio" aria-checked="true" data-theme="midnight"><i style="--c:#3cc4ff"></i>Midnight</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="ember"><i style="--c:#e8774a"></i>Ember</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="aurora"><i style="--c:#2dd4a0"></i>Aurora</button>
+              <button role="radio" aria-checked="false" tabindex="-1" data-theme="paper"><i style="--c:#f3efe6"></i>Paper</button>
+            </div>
+          </div>
+          <figure class="frame theme-shot">
+            <img id="theme-img" src="/assets/shots/board-800.webp" srcset="/assets/shots/board-800.webp 800w, /assets/shots/board-1600.webp 1600w" sizes="(min-width: 960px) 640px, 94vw" width="1600" height="1000" loading="lazy" decoding="async" alt="Ember 主题下的看板">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- Compare -->
+    <section class="section grid-soft" id="compare">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">对比</p>
+          <h2>GridHive 与常规做法对比</h2>
+          <p class="sub">大多数人要么在一堆终端标签页里跑智能体，要么用某家厂商自己的应用。来看看有什么不同。</p>
+        </div>
+        <div class="compare-scroll">
+          <table class="compare">
+            <thead>
+              <tr>
+                <th scope="col"><span class="sr-only">功能</span></th>
+                <th scope="col" class="us"><img src="/assets/icon.svg" width="22" height="22" alt="">GridHive</th>
+                <th scope="col">终端标签页</th>
+                <th scope="col">单一厂商的应用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">所有智能体尽在一屏</th><td class="us yes">是，集中在看板上</td><td class="no">逐个标签页切换</td><td class="yes">是</td></tr>
+              <tr><th scope="row">Claude、Codex、Gemini、Grok 和 OpenCode 同时使用</th><td class="us yes">是，可在一个团队里混搭</td><td class="yes">可以，但要手动管理</td><td class="no">只支持自家智能体</td></tr>
+              <tr><th scope="row">知道谁在等你</th><td class="us yes">统一收件箱、提醒、手机推送</td><td class="no">你得逐个标签页查看</td><td class="part">仅限自家智能体</td></tr>
+              <tr><th scope="row">编排智能体分派任务</th><td class="us yes">是，在看板上实时绘制</td><td class="no">否</td><td class="part">视情况而定</td></tr>
+              <tr><th scope="row">用手机回复</th><td class="us yes">是，扫二维码即可</td><td class="no">否</td><td class="part">视情况而定</td></tr>
+              <tr><th scope="row">以链接分享团队配置</th><td class="us yes">配方和 README 徽章</td><td class="no">否</td><td class="no">否</td></tr>
+              <tr><th scope="row">重启后自动恢复</th><td class="us yes">看板和对话原样恢复</td><td class="no">到处翻找会话 ID</td><td class="yes">是</td></tr>
+              <tr><th scope="row">开源</th><td class="us yes">MIT</td><td class="yes">取决于你的终端</td><td class="no">大多闭源</td></tr>
+              <tr><th scope="row">费用</th><td class="us yes">$0，使用你自己的登录</td><td class="yes">$0</td><td class="part">包含在其套餐内</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Free & local -->
+    <section class="section" id="local">
+      <div class="wrap">
+        <div class="local">
+          <div class="local-copy">
+            <p class="eyebrow">免费且本地</p>
+            <h2>你的机器，你的登录，你的代码。</h2>
+            <p class="sub">GridHive 是本地应用，不是云服务。无需注册账号，也无需付费。</p>
+          </div>
+          <ul class="checks">
+            <li><b>无需 API 密钥。</b>智能体使用各个 CLI 的订阅登录运行。GridHive 甚至会在其终端中隐藏 <span class="mono">ANTHROPIC_API_KEY</span>，以免你被意外按 token 计费。</li>
+            <li><b>不上云。</b>看板是绑定在 127.0.0.1 上的本地服务器，每次运行都会生成独立令牌。手机访问默认关闭，开启后也只有你配对过的手机才能连入。你的代码只会发往智能体自己发送的地方。</li>
+            <li><b>你的设置原封不动。</b>hooks 通过临时设置文件按智能体单独传入，<span class="mono">~/.claude</span> 中的内容一概不改。</li>
+            <li><b>MIT 开源。</b>每一行代码都能看，欢迎提 issue、发 pull request，或者直接 fork。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Install -->
+    <section class="section grid-soft" id="install">
+      <div class="wrap">
+        <div class="head">
+          <p class="eyebrow">开始使用</p>
+          <h2>两分钟即可上手</h2>
+        </div>
+        <div class="install">
+          <div class="req card">
+            <h3>系统要求</h3>
+            <ul>
+              <li>桌面应用需要 <b>Windows 10 或 11</b>（x64），或 <b>macOS 12 及以上</b>（Apple Silicon 或 Intel）</li>
+              <li>已安装并登录 <b><a href="https://docs.claude.com/en/docs/claude-code" rel="noopener">Claude Code</a></b>。请先在终端里运行一次 <span class="mono">claude</span>。</li>
+              <li><b>Linux，或不想用安装程序：</b><span class="mono">npx gridhive</span>（需要 Node 20+）</li>
+            </ul>
+          </div>
+          <ol class="howto">
+            <li class="card">
+              <span class="n">1</span>
+              <div>
+                <h3>下载应用</h3>
+                <p>Windows：<span class="mono">GridHive-Setup-0.0.6.exe</span>。Mac：选择与芯片对应的磁盘映像。不确定是哪种？打开苹果菜单 &rarr; <b>About This Mac</b>（关于本机）：显示“Apple M1/M2/M3/M4…”的是 Apple Silicon，显示“Intel”的是 Intel。</p>
+                <div class="dl-row" id="install-mac">
+                  <a class="btn primary" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-Setup-0.0.6.exe" rel="noopener">Windows</a>
+                  <a class="btn primary" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-0.0.6-arm64.dmg" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66ZM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27Z"/></svg> Mac · Apple Silicon</a>
+                  <a class="btn ghost" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-0.0.6-x64.dmg" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66ZM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27Z"/></svg> Mac · Intel</a>
+                </div>
+              </div>
+            </li>
+            <li class="card">
+              <span class="n">2</span>
+              <div>
+                <h3>安装，并在首次启动时放行</h3>
+                <p><b>Windows：</b>仅为当前用户安装，无需管理员权限。应用暂未进行代码签名，Windows 可能会提示<em>“Windows 已保护你的电脑”</em>。点击 <b>More info</b>（更多信息），再点击 <b>Run anyway</b>（仍要运行）。</p>
+                <p><b>Mac：</b>打开磁盘映像，把 GridHive 拖进 <b>Applications</b>（应用程序）文件夹。应用暂未经过 Apple 签名，首次启动会被拦截：打开 <b>System Settings &rarr; Privacy &amp; Security</b>（系统设置 → 隐私与安全性），向下滚动并点击 <b>Open Anyway</b>（仍要打开），然后确认。只需操作一次。有新版本时，菜单栏菜单中会提示。</p>
+              </div>
+            </li>
+            <li class="card">
+              <span class="n">3</span>
+              <div>
+                <h3>启动团队</h3>
+                <p>打开 GridHive，点击 <b>Templates</b>，选一个文件夹并启动 <em>Dev HQ</em>；或者用 <b>New agent</b> 添加单个智能体。</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+        <div class="source card" id="npx">
+          <div class="source-head">
+            <h3>或者用 npx 运行 <span class="muted">（Windows、macOS、Linux）</span></h3>
+            <button class="copy-btn" type="button" data-copy="npx gridhive">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>复制</span>
+            </button>
+          </div>
+          <pre><code><span class="pr">$</span> npx gridhive   <span class="cm"># 启动看板并在浏览器中打开</span></code></pre>
+          <p class="source-note">需要 Node 20 或更高版本。加上 <span class="mono">--port 5000</span> 可换用其他端口；也可以用 <span class="mono">npm i -g gridhive</span> 全局安装一次，之后直接运行 <span class="mono">gridhive</span>。</p>
+        </div>
+        <div class="source card">
+          <div class="source-head">
+            <h3>从源码运行 <span class="muted">（Windows、macOS、Linux）</span></h3>
+            <button class="copy-btn" type="button" data-copy="git clone https://github.com/customerimpact/gridhive && cd gridhive && npm install && npm run build && npm start">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>复制</span>
+            </button>
+          </div>
+          <pre><code><span class="pr">$</span> git clone https://github.com/customerimpact/gridhive
+<span class="pr">$</span> cd gridhive
+<span class="pr">$</span> npm install &amp;&amp; npm run build
+<span class="pr">$</span> npm start   <span class="cm"># 在浏览器中打开看板</span></code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="section grid-soft" id="faq">
+      <div class="wrap narrow">
+        <div class="head">
+          <p class="eyebrow">常见问题</p>
+          <h2>你可能想问</h2>
+        </div>
+        <div class="faq">
+          <details>
+            <summary>真的免费吗？</summary>
+            <p>是的。GridHive 是采用 MIT 许可的开源软件。没有订阅，没有许可证校验，也不需要账号。你只需要所用智能体本身的套餐。</p>
+          </details>
+          <details>
+            <summary>支持哪些智能体？</summary>
+            <p>Claude Code、OpenAI Codex CLI、Gemini CLI、Grok Build 和 OpenCode，以及任何你想运行的命令。可以在 <b>Settings &rarr; Agents &amp; accounts</b> 中逐个安装并登录。Claude Code 和 Codex 智能体还能使用编排工具来分派任务。</p>
+          </details>
+          <details>
+            <summary>能用手机操作吗？</summary>
+            <p>可以，只要在同一个 Wi-Fi 下：打开 <b>Settings &rarr; Integrations &rarr; Phone</b> 并扫描二维码。手机上能看到每个智能体、它的终端和提示，还能启动新的智能体；智能体始终在你的电脑上运行。借助免费账号、随时随地用手机访问的功能即将推出，欢迎在下方加入抢先体验名单。</p>
+          </details>
+          <details>
+            <summary>什么是配方？</summary>
+            <p>装进一个链接里的团队配置：角色、智能体、模型和首条提示词。可以分享给队友，也可以在 README 里放一个“Run in GridHive”徽章。打开配方会把它保存为模板，并先展示每条提示词；在你点击 Launch 之前，什么都不会启动。链接里绝不会包含你的账号和文件夹。</p>
+          </details>
+          <details>
+            <summary>会消耗我的 API 额度吗？</summary>
+            <p>不会。智能体用你自己的订阅登录运行各个 CLI，和在普通终端里一样。GridHive 会在其终端中隐藏 <span class="mono">ANTHROPIC_API_KEY</span> 和 <span class="mono">ANTHROPIC_AUTH_TOKEN</span>，避免 Claude Code 意外切换到按 token 计费。</p>
+          </details>
+          <details>
+            <summary>会自动批准权限请求吗？</summary>
+            <p>不会。每个智能体都保留自己的权限提示。有提示在等待时，GridHive 会通知你，并让你在 Actions 收件箱中回复。</p>
+          </details>
+          <details>
+            <summary>有 Mac 版吗？</summary>
+            <p>有。请在上方下载适用于 Apple Silicon（M1 及更新机型）或 Intel Mac 的磁盘映像，需要 macOS 12 或更高版本。应用暂未经过 Apple 签名，需要在 System Settings &rarr; Privacy &amp; Security &rarr; <b>Open Anyway</b> 中放行一次。在 Linux 上，请从源码运行 GridHive，并在浏览器中使用。</p>
+          </details>
+          <details>
+            <summary>我的数据存在哪里？</summary>
+            <p>就在你的电脑上。看板布局和设置保存在主目录下的 <span class="mono">~/.gridhive</span> 中，对话则留在 Claude Code 自己的文件夹里。桌面应用自身只会发起一种网络请求：检查 GitHub Releases 上有没有更新。</p>
+          </details>
+          <details>
+            <summary>为什么 Windows 提示“Windows 已保护你的电脑”？</summary>
+            <p>安装程序暂未进行代码签名，所以 SmartScreen 无法识别它。点击 <b>More info</b>（更多信息），再点击 <b>Run anyway</b>（仍要运行）即可。如果你想自己检查或构建，完整源码和构建流程都在 GitHub 上。</p>
+          </details>
+          <details>
+            <summary>GridHive 和 Anthropic 有关系吗？</summary>
+            <p>没有。这是一个独立的开源项目，与 Anthropic 没有关联，也未获其背书。“Claude”和“Claude Code”是 Anthropic 的商标。</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="section final">
+      <div class="wrap">
+        <div class="final-card gridded">
+          <div class="aurora" aria-hidden="true"></div>
+          <img src="/assets/icon.svg" width="64" height="64" alt="" loading="lazy">
+          <h2>准备好让你的蜂巢运转起来了吗？</h2>
+          <p class="sub">免费、开源，两分钟就能在你自己的机器上跑起来。</p>
+          <div class="ctas">
+            <a class="btn primary lg" href="https://github.com/customerimpact/gridhive/releases/download/desktop-v0.0.6/GridHive-Setup-0.0.6.exe" rel="noopener">下载 Windows 版</a>
+            <a class="btn primary lg" href="#install-mac"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M16.37 12.6c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.78-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.82-.81-3-.79-1.54.02-2.96.9-3.76 2.27-1.6 2.78-.41 6.9 1.15 9.15.76 1.1 1.67 2.34 2.86 2.3 1.15-.05 1.58-.74 2.97-.74 1.38 0 1.77.74 2.98.72 1.23-.02 2.01-1.12 2.76-2.23.87-1.28 1.23-2.52 1.25-2.58-.03-.01-2.4-.92-2.42-3.66ZM14.1 5.84c.63-.77 1.06-1.83.94-2.89-.91.04-2.01.61-2.66 1.37-.58.67-1.09 1.75-.96 2.79 1.02.08 2.05-.52 2.68-1.27Z"/></svg> 下载 Mac 版</a>
+            <a class="btn ghost lg" href="https://github.com/customerimpact/gridhive" rel="noopener">在 GitHub 上点星</a>
+          </div>
+          <form class="waitlist" id="waitlist" novalidate>
+            <p class="waitlist-title"><span class="tag-new">即将推出</span> 随时随地掌控你的智能体：免费账号、任意网络下的手机访问，会话可在手机和电脑之间自由切换。</p>
+            <div class="waitlist-row">
+              <label class="sr-only" for="waitlist-email">邮箱</label>
+              <input id="waitlist-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+              <input class="hp" name="company" type="text" tabindex="-1" autocomplete="off" aria-hidden="true">
+              <button class="btn primary" type="submit">抢先体验</button>
+            </div>
+            <p class="waitlist-msg" role="status" aria-live="polite"></p>
+            <p class="waitlist-note">上线时只发一封邮件，绝无垃圾邮件；详见<a href="/privacy">隐私声明</a>。</p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap foot-in">
+      <div class="foot-brand">
+        <a class="brand" href="/zh/"><img src="/assets/icon.svg" width="26" height="26" alt=""><span>GridHive</span></a>
+        <p>终端编程智能体的控制室。免费，采用 MIT 许可。独立开源项目，与 Anthropic、OpenAI、Google 或 xAI 均无关联，也未获其背书。</p>
+      </div>
+      <nav class="foot-cols" aria-label="页脚">
+        <div><h4>产品</h4><a href="#features">功能</a><a href="#compare">对比</a><a href="#install">下载</a><a href="/app">打开网页版</a></div>
+        <div><h4>开发者</h4><a href="/quickstart">快速上手</a><a href="/developers">开发者指南</a><a href="/developers#recipes">配方与徽章</a><a href="https://github.com/customerimpact/gridhive/releases" rel="noopener">更新日志</a></div>
+        <div><h4>社区</h4><a href="https://github.com/customerimpact/gridhive" rel="noopener">GitHub</a><a href="https://github.com/customerimpact/gridhive/issues" rel="noopener">报告问题</a></div>
+        <div><h4>法律</h4><a href="/privacy">隐私</a><a href="https://github.com/customerimpact/gridhive/blob/main/LICENSE" rel="noopener">许可证</a><a href="https://github.com/customerimpact/gridhive/blob/main/TRADEMARKS.md" rel="noopener">商标</a></div>
+      </nav>
+    </div>
+    <p class="wrap foot-copy">&copy; 2026 GridHive · Claude、Codex、Gemini、Grok 和 OpenCode 是其各自所有者的商标。</p>
+  </footer>
+
+  <script src="/main.js?v=ea593a37c1" defer></script>
+  <script src="/hero-demo.js?v=0579434e29" defer></script>
+</body>
+</html>

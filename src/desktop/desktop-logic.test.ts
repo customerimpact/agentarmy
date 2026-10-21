@@ -5,6 +5,7 @@ import { DEFAULT_BOUNDS, restoreBounds } from './window-state';
 
 const actions = (): TrayActions => ({
   open: vi.fn(),
+  openInBrowser: vi.fn(),
   flyTo: vi.fn(),
   togglePause: vi.fn(),
   toggleOpenAtLogin: vi.fn(),
@@ -33,6 +34,14 @@ describe('tray', () => {
     expect(labels).toContain('2 more…');
     menu.find((m) => m.label === 'Agent 3 needs you')!.click!({} as never, undefined, {} as never);
     expect(a.flyTo).toHaveBeenCalledWith('c3');
+  });
+
+  it('offers to open the board in the browser', () => {
+    const a = actions();
+    const menu = trayMenuTemplate(base, a);
+    expect(menu.slice(0, 2).map((m) => m.label)).toEqual(['Open GridHive', 'Open in browser']);
+    menu[1].click!({} as never, undefined, {} as never);
+    expect(a.openInBrowser).toHaveBeenCalled();
   });
 
   it('shows pause, start-with-Windows, updates and quit', () => {

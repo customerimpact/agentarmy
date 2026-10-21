@@ -23,6 +23,7 @@ export interface TrayState {
 
 export interface TrayActions {
   open(): void;
+  openInBrowser(): void;
   flyTo(consoleId: string | null): void;
   togglePause(): void;
   toggleOpenAtLogin(): void;
@@ -50,7 +51,10 @@ export function trayMenuTemplate(
   now = Date.now(),
   platform: NodeJS.Platform = 'win32',
 ): MenuItemConstructorOptions[] {
-  const template: MenuItemConstructorOptions[] = [{ label: 'Open GridHive', click: () => actions.open() }];
+  const template: MenuItemConstructorOptions[] = [
+    { label: 'Open GridHive', click: () => actions.open() },
+    { label: 'Open in browser', click: () => actions.openInBrowser() },
+  ];
 
   if (state.count > 0) {
     template.push({ type: 'separator' }, { label: needsYouText(state.count), enabled: false });

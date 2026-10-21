@@ -8,14 +8,14 @@ export function MissingToken({ invalid }: { invalid?: boolean }) {
           <KeyRound size={20} />
         </div>
         <h1 className="mt-5 text-xl font-semibold tracking-tight text-fg">
-          {invalid ? 'This link is no longer valid' : 'Open the link from your terminal'}
+          {invalid ? 'This link is no longer valid' : 'Open your board from GridHive'}
         </h1>
         <p className="mt-2 leading-relaxed text-fg-muted">
-          Open the link printed by{' '}
+          In the desktop app, click the tray or menu bar icon and choose <b className="text-fg">Open in browser</b>. Or run{' '}
           <code className="rounded bg-surface-2 px-1.5 py-0.5 font-mono text-[12px] text-fg">
             npx gridhive
-          </code>
-          . It carries a per-run token that keeps other websites from reaching your terminals.
+          </code>{' '}
+          and open the link it prints. The link carries a secret token that keeps other websites from reaching your terminals; after that, this browser remembers it.
         </p>
         {invalid && (
           <p className="mt-3 text-[12px] text-fg-subtle">
