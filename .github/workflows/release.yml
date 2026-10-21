@@ -1,8 +1,14 @@
 name: Release
 
+# Publishes the npm package (npx gridhive) from the same desktop-v<version> tag that builds the
+# desktop apps, so one tag push releases everything. Uses npm trusted publishing (OIDC): no npm token
+# or 2FA code in CI. One-time setup on npmjs.com: package gridhive -> Settings -> Trusted publishing ->
+# GitHub Actions, organization customerimpact, repository gridhive, workflow release.yml.
+
 on:
   push:
-    tags: ['v*']
+    tags: ['desktop-v*']
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -11,8 +17,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # create the GitHub Release
-      id-token: write # npm provenance
+      id-token: write # npm trusted publishing + provenance
     steps:
       - uses: actions/checkout@v7
 
@@ -22,25 +27,28 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
 
+      # Trusted publishing needs npm 11.5.1 or newer
+      - run: npm install -g npm@latest
+
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
 
       - name: Check tag matches package.json version
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
-          PKG_VERSION="v$(node -p "require('./package.json').version")"
-          if [ "$PKG_VERSION" != "$GITHUB_REF_NAME" ]; then
-            echo "Tag $GITHUB_REF_NAME does not match package.json version $PKG_VERSION"
+          EXPECTED="desktop-v$(node -p "require('./package.json').version")"
+          if [ "$EXPECTED" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version ($EXPECTED)"
             exit 1
           fi
 
-      - name: Publish to npm
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Create GitHub Release
-        run: gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Publish to npm (skipped when this version is already out)
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          if npm view "gridhive@$VERSION" version >/dev/null 2>&1; then
+            echo "gridhive@$VERSION is already on npm"
+          else
+            npm publish --provenance --access public
+          fi
