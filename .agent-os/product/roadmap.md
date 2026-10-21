@@ -39,7 +39,7 @@ Positioning (DEC-004): the control room for terminal agents. Vendor-neutral, loc
 - [x] Needs-you notifications - Browser notification + tab title/favicon badge; clicking it focuses the console `S`
 - [x] Persistence and resume - Save board to versioned JSON; on restart relaunch with `claude --resume <id>` `M`
 - [x] Local security - 127.0.0.1 only, per-run token, Origin/Host checks `S`
-- [ ] npm release - `npx gridhive` starts the server and opens the browser; README with install steps (package ready, not yet published) `S`
+- [x] npm release - `npx gridhive` starts the server and opens the browser; README with install steps (0.0.7 on npm) `S`
 
 ### Should-Have Features
 
