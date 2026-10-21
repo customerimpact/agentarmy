@@ -27,9 +27,6 @@ jobs:
           cache: npm
           registry-url: https://registry.npmjs.org
 
-      # Trusted publishing needs npm 11.5.1 or newer
-      - run: npm install -g npm@latest
-
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
@@ -43,6 +40,10 @@ jobs:
             echo "Tag $GITHUB_REF_NAME does not match package.json version ($EXPECTED)"
             exit 1
           fi
+
+      # Trusted publishing needs npm 11.5.1 or newer. Upgrade after npm ci: npm 12 blocks
+      # install scripts by default, and node-pty needs its install script for the tests.
+      - run: npm install -g npm@11
 
       - name: Publish to npm (skipped when this version is already out)
         run: |
